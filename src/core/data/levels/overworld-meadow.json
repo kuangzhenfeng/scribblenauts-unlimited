@@ -1,0 +1,106 @@
+{
+  "id": "overworld-meadow",
+  "type": "overworld",
+  "theme": "meadow",
+  "bounds": {
+    "minX": -1200,
+    "minY": -200,
+    "maxX": 1600,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": -100,
+    "y": 300
+  },
+  "terrain": [
+    { "x": -700, "y": 200, "w": 200, "h": 24 },
+    { "x": 400, "y": 160, "w": 220, "h": 24 },
+    { "x": 1000, "y": 240, "w": 200, "h": 24 }
+  ],
+  "spawns": [
+    { "typeId": "tree", "x": -500, "y": 320, "layer": 0 },
+    { "typeId": "tree", "x": -300, "y": 320, "layer": 0 },
+    { "typeId": "tree", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "tree", "x": 700, "y": 320, "layer": 0 },
+    { "typeId": "stone", "x": 150, "y": 330, "layer": 0 },
+    { "typeId": "stone", "x": 900, "y": 330, "layer": 0 }
+  ],
+  "npcs": [
+    {
+      "id": "npc-farmer",
+      "typeId": "human",
+      "x": -100,
+      "y": 320,
+      "gender": "male",
+      "drawParams": { "shirtColor": "#c9932b", "pantsColor": "#6b4226", "hat": "straw" }
+    },
+    {
+      "id": "npc-girl",
+      "typeId": "human",
+      "x": 200,
+      "y": 320,
+      "gender": "female",
+      "drawParams": { "shirtColor": "#e64980", "pantsColor": "#8b3a5c" }
+    }
+  ],
+  "challenges": [
+    {
+      "id": "ch-fruit",
+      "giverNpcId": "npc-farmer",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "object-present",
+            "typeId": "apple",
+            "near": { "npcId": "npc-farmer", "radius": 200 }
+          }
+        ]
+      },
+      "reward": { "type": "shard", "count": 1 },
+      "dialog": [
+        { "zh": "农夫：我饿了，能给我一个苹果吗？", "en": "Farmer: I'm hungry. Can you bring me an apple?" },
+        { "zh": "（输入「苹果」并放在农夫附近）", "en": "(type 'apple' and place it near the farmer)" }
+      ]
+    },
+    {
+      "id": "ch-light",
+      "giverNpcId": "npc-girl",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "object-present",
+            "typeId": "fire",
+            "near": { "npcId": "npc-girl", "radius": 250 }
+          }
+        ]
+      },
+      "reward": { "type": "shard", "count": 1 },
+      "dialog": [
+        { "zh": "女孩：天黑了，我需要火。", "en": "Girl: It's getting dark. I need fire." },
+        { "zh": "（输入「火」并放在女孩附近）", "en": "(type 'fire' and place it near the girl)" }
+      ]
+    }
+  ],
+  "decorations": [
+    { "kind": "bush", "x": -800, "y": 560 },
+    { "kind": "bush", "x": -200, "y": 565 },
+    { "kind": "bush", "x": 350, "y": 560 },
+    { "kind": "bush", "x": 850, "y": 565 },
+    { "kind": "bush", "x": 1300, "y": 560 },
+    { "kind": "flower", "x": -50, "y": 575 },
+    { "kind": "flower", "x": 250, "y": 578 },
+    { "kind": "flower", "x": 600, "y": 575 },
+    { "kind": "flower", "x": 1100, "y": 578 },
+    { "kind": "fence", "x": -400, "y": 555 },
+    { "kind": "fence", "x": 500, "y": 555 },
+    { "kind": "fence", "x": 1200, "y": 555 }
+  ],
+  "transitions": [
+    {
+      "toLevelId": "stage-cave",
+      "at": { "minX": 1500, "minY": 260, "maxX": 1600, "maxY": 360 }
+    }
+  ]
+}
