@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "date_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 20,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 20,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 20,
+        "h": 36
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "date.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 20,
+      "h": 36
+    },
+    "scale": "1"
+  }
+}

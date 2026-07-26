@@ -14,6 +14,7 @@ import type { Physics } from '@/engine/physics/Physics';
 import type { GameEntity } from '@/game/Entity';
 import { attach, detach, type Attachment } from '@/engine/physics/Composite';
 import { log } from '@/util/log';
+import { sfx } from '@/audio/SoundEffects';
 
 /** 水平移动速度（世界像素/帧，@60fps≈192px/s） */
 const MOVE_SPEED = 3.2;
@@ -26,16 +27,26 @@ const GROUND_PROBE = 4;
 /** 着地探针在 x 方向的左右两脚 */
 const FEET_SPREAD = 8;
 
+/** 摇杆死区阈值：|moveX| 超过此值才视为方向输入（玩家移动是开关语义） */
+const VIRTUAL_MOVE_DEADZONE = 0.5;
+
 export class PlayerController {
   private readonly keys = new Set<string>();
   private facing = 1;
   private lastGroundedPos = { x: 0, y: 0 };
+  /** 上一帧是否着地，用于检测"刚着地"瞬间播放音效 */
+  private wasGrounded = false;
   /** 拾取的约束（item 附着在玩家手部） */
   private heldAttachment: Attachment | undefined;
   /** 骑乘的约束（玩家附在载具座位） */
   private riding: Attachment | undefined;
   /** 骑乘的载具实体 */
   private ridingEntity: GameEntity | undefined;
+
+  /** 虚拟摇杆 X 轴 -1..1（电平，触屏控制写入） */
+  private virtualMoveX = 0;
+  /** 虚拟跳跃按钮按住态（电平，触屏控制写入） */
+  private virtualJump = false;
 
   constructor(
     private readonly entities: EntityManager,
@@ -67,22 +78,33 @@ export class PlayerController {
     if (!p || p.dead) return;
     // 骑乘时移动作用于载具 body，否则作用于玩家 body
     const target = this.ridingEntity ?? p;
-    const left = this.keys.has('a') || this.keys.has('arrowleft');
-    const right = this.keys.has('d') || this.keys.has('arrowright');
+    // 键盘 + 虚拟摇杆合并：摇杆 |moveX| 超过死区视为方向输入
+    const left = this.keys.has('a') || this.keys.has('arrowleft') || this.virtualMoveX < -VIRTUAL_MOVE_DEADZONE;
+    const right = this.keys.has('d') || this.keys.has('arrowright') || this.virtualMoveX > VIRTUAL_MOVE_DEADZONE;
     let vx = 0;
     if (left) vx -= MOVE_SPEED;
     if (right) vx += MOVE_SPEED;
     if (vx !== 0) this.facing = vx < 0 ? -1 : 1;
     const grounded = this.probeGrounded(p);
-    const jump = this.keys.has(' ') || this.keys.has('w') || this.keys.has('arrowup');
+    const jump = this.keys.has(' ') || this.keys.has('w') || this.keys.has('arrowup') || this.virtualJump;
     const bodyVel = (target.body as { velocity: { x: number; y: number } }).velocity;
     const vy = grounded && jump ? JUMP_VELOCITY : bodyVel.y;
+    // 跳跃起跳音效（仅在着地状态下按下跳跃）
+    if (grounded && jump) sfx.play('jump');
+    // 着地音效（上一帧不在地面、本帧着地）
+    if (!this.wasGrounded && grounded) sfx.play('land');
+    this.wasGrounded = grounded;
     target.setBodyVelocity(vx, vy);
     if (grounded) {
       this.lastGroundedPos = { x: p.bodyPositionX, y: p.bodyPositionY };
     }
     p.state.facing = this.facing;
-    p.state.locomotion = !grounded ? 'jump' : (vx !== 0 ? 'walk' : 'idle');
+    // jump（vy<0 上升）/ fall（vy≥0 下落）按原版区分
+    if (!grounded) {
+      p.state.locomotion = bodyVel.y < 0 ? 'jump' : 'fall';
+    } else {
+      p.state.locomotion = vx !== 0 ? 'walk' : 'idle';
+    }
 
     if (this.keys.has('f') && !this.heldAttachment && !this.riding) {
       this.tryPickUpNearby();
@@ -91,6 +113,30 @@ export class PlayerController {
       if (this.riding) this.dismount();
       else if (this.heldAttachment) this.releaseThrow();
     }
+  }
+
+  /**
+   * 虚拟摇杆 X 轴输入（触屏控制写入）。
+   * dx ∈ [-1,1]，由 TouchControls 计算后注入；update 中按死区判定方向。
+   */
+  setVirtualMove(dx: number): void {
+    this.virtualMoveX = Math.max(-1, Math.min(1, dx));
+  }
+
+  /** 虚拟跳跃按钮电平（触屏控制写入，按住 true / 松开 false） */
+  setVirtualJump(v: boolean): void {
+    this.virtualJump = v;
+  }
+
+  /**
+   * 统一交互触发（触屏按钮调用）：
+   * 骑乘中→下马，持物中→投掷，否则→拾取面前物体。
+   * 与键盘 F/G 语义对齐，由 PlayerController 自身状态决定分支，调用方无需关心语义。
+   */
+  triggerInteract(): void {
+    if (this.riding) this.dismount();
+    else if (this.heldAttachment) this.releaseThrow();
+    else this.tryPickUpNearby();
   }
 
   /** 双脚探针着地判定 */
@@ -125,6 +171,7 @@ export class PlayerController {
     const p = this.entities.getPlayer() as GameEntity | undefined;
     if (!p || !target || this.heldAttachment) return;
     this.heldAttachment = attach(this.physics, p, target, [this.facing * 14, -8]);
+    sfx.play('interact');
     log.info('player picked up', { target: target.id });
   }
 
@@ -147,6 +194,7 @@ export class PlayerController {
     this.riding = attach(this.physics, target, p, [0, -10]);
     this.ridingEntity = target;
     p.hidden = true;
+    sfx.play('interact');
     log.info('player mounted', { target: target.id });
   }
 
@@ -161,5 +209,10 @@ export class PlayerController {
 
   get respawnPoint(): { x: number; y: number } {
     return this.lastGroundedPos;
+  }
+
+  /** 设置重生点（WorldScene 在 spawnPlayer 后 + 关卡切换后调用，兜底跨关卡失效问题） */
+  setRespawnPoint(x: number, y: number): void {
+    this.lastGroundedPos = { x, y };
   }
 }

@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "clock_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 36
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "clock.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 36,
+      "h": 36
+    },
+    "scale": "1"
+  }
+}

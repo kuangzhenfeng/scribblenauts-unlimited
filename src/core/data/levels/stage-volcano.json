@@ -1,0 +1,177 @@
+{
+  "id": "stage-volcano",
+  "type": "self-contained",
+  "theme": "volcano",
+  "bounds": {
+    "minX": -800,
+    "minY": -200,
+    "maxX": 800,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": -600,
+    "y": 320
+  },
+  "transitions": [
+    {
+      "toLevelId": "stage-desert",
+      "at": {
+        "minX": -800,
+        "minY": 350,
+        "maxX": -700,
+        "maxY": 620
+      }
+    },
+    {
+      "toLevelId": "overworld-meadow",
+      "at": {
+        "minX": 700,
+        "minY": 350,
+        "maxX": 800,
+        "maxY": 620
+      }
+    }
+  ],
+  "terrain": [
+    {
+      "x": -400,
+      "y": 200,
+      "w": 180,
+      "h": 24
+    },
+    {
+      "x": -50,
+      "y": 120,
+      "w": 160,
+      "h": 24
+    },
+    {
+      "x": 300,
+      "y": 200,
+      "w": 200,
+      "h": 24
+    }
+  ],
+  "spawns": [
+    {
+      "typeId": "stone",
+      "x": -250,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "stone",
+      "x": 250,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "lava",
+      "x": 0,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "rope",
+      "x": 100,
+      "y": 200,
+      "layer": 0
+    },
+    {
+      "typeId": "dragon",
+      "x": 400,
+      "y": 200,
+      "layer": 0
+    }
+  ],
+  "npcs": [
+    {
+      "id": "npc-blacksmith",
+      "typeId": "human",
+      "x": -200,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#5a3020",
+        "pantsColor": "#3a2010",
+        "hat": "miner"
+      }
+    },
+    {
+      "id": "npc-firemage",
+      "typeId": "human",
+      "x": 100,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#6b1a0a",
+        "pantsColor": "#3a0a0a"
+      }
+    },
+    {
+      "id": "npc-volcanologist",
+      "typeId": "human",
+      "x": 350,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#2e4053",
+        "pantsColor": "#1a2a3a"
+      }
+    }
+  ],
+  "decorations": [
+    {
+      "kind": "stalactite",
+      "x": -500,
+      "y": 0
+    },
+    {
+      "kind": "stalactite",
+      "x": -200,
+      "y": 0
+    },
+    {
+      "kind": "stalactite",
+      "x": 250,
+      "y": 0
+    },
+    {
+      "kind": "stalactite",
+      "x": 550,
+      "y": 0
+    },
+    {
+      "kind": "lantern",
+      "x": -350,
+      "y": 540
+    },
+    {
+      "kind": "lantern",
+      "x": 50,
+      "y": 540
+    },
+    {
+      "kind": "lantern",
+      "x": 450,
+      "y": 540
+    },
+    {
+      "kind": "ruin-pillar",
+      "x": -600,
+      "y": 510,
+      "scale": 0.9
+    },
+    {
+      "kind": "ruin-pillar",
+      "x": 450,
+      "y": 510,
+      "scale": 1
+    }
+  ],
+  "starite": {
+    "x": 600,
+    "y": 300
+  },
+  "challengeSlots": 3
+}

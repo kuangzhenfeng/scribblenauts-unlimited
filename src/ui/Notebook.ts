@@ -11,9 +11,11 @@ import { parse } from '@/core/lex/InputParser';
 import { ImeController } from './ime';
 import { Autocomplete } from './Autocomplete';
 import { CandidateMenu } from './CandidateMenu';
-import { HAND_FONT, PAPER_BG, INK, paperPanel, paperInput, TORN_EDGE, PAPER_SHADOW } from './paperStyle';
+import { UI_FONT, PAPER_BG, INK, paperPanel, paperInput, TORN_EDGE, PAPER_SHADOW } from './paperStyle';
 import { ICON_BOOK } from './icons';
 import { log } from '@/util/log';
+import { sfx } from '@/audio/SoundEffects';
+import { t } from '@/core/i18n/I18n';
 
 export interface NotebookCallbacks {
   /** 用户确定生成某个候选 */
@@ -24,35 +26,48 @@ export interface NotebookCallbacks {
   selectedEntityId?: () => string | undefined;
 }
 
+export type NotebookMode = 'spawn' | 'adjective';
+
 export class Notebook {
   private composing = false;
+  /** 最近一次 IME 合成结束时间戳，用于过滤确认候选词后紧随的余波 Enter */
+  private lastComposeEnd = 0;
   private readonly el: HTMLDivElement;
   private readonly input: HTMLInputElement;
+  private readonly labelText: HTMLSpanElement;
   private readonly ime: ImeController;
   private readonly autocomplete: Autocomplete;
   private readonly menu: CandidateMenu;
+  private mode: NotebookMode = 'spawn';
 
   constructor(private readonly cb: NotebookCallbacks) {
     this.el = document.createElement('div');
     this.el.id = 'notebook';
     this.el.style.cssText = paperPanel([
       'left:50%',
-      'bottom:32px',
+      `bottom:max(32px,env(safe-area-inset-bottom))`,
       'transform:translateX(-50%) rotate(-0.4deg)',
-      'width:min(560px,92vw)',
+      'width:min(560px,calc(92vw - 16px))',
       'padding:18px 22px',
       'z-index:50',
     ]);
 
     const label = document.createElement('div');
-    label.innerHTML = `${ICON_BOOK}<span style="margin-left:6px;vertical-align:middle;font-weight:700;letter-spacing:2px">笔记本</span>`;
+    label.innerHTML = `${ICON_BOOK}<span style="margin-left:6px;vertical-align:middle;font-weight:700;letter-spacing:2px"></span>`;
+    this.labelText = label.querySelector('span')!;
+    this.labelText.textContent = t('notebook.label');
     label.style.cssText = `opacity:0.9;margin-bottom:10px;color:${INK}`;
 
     this.input = document.createElement('input');
     this.input.type = 'text';
-    this.input.placeholder = '输入一个词（中/英），回车生成…';
+    this.input.placeholder = t('notebook.placeholder');
     this.input.spellcheck = false;
     this.input.autocomplete = 'off';
+    // 提示浏览器/输入法使用英文输入模式：移动端弹出拉丁键盘，桌面端部分输入法据此
+    // 在聚焦时切换到英文输入状态，减少用户手动切换输入法的频次（词条以英文为主）。
+    this.input.lang = 'en';
+    this.input.setAttribute('inputmode', 'latin');
+    this.input.setAttribute('enterkeyhint', 'done');
     this.input.style.cssText = paperInput();
 
     // 墨迹斑（角落装饰）
@@ -61,11 +76,13 @@ export class Notebook {
       'position:absolute;top:-8px;right:24px;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,rgba(43,43,43,0.15),transparent 70%);pointer-events:none';
 
     this.autocomplete = new Autocomplete({
-      onPick: (c) => {
-        this.input.value = c.zh;
+      // 回填完整文本（已确认前缀 + 选中名），保留多词组合
+      onPick: (fullText: string) => {
+        this.input.value = fullText;
         this.input.focus();
         this.autocomplete.hide();
       },
+      isAdjectiveMode: () => this.mode === 'adjective',
     });
 
     this.menu = new CandidateMenu({
@@ -82,6 +99,8 @@ export class Notebook {
       },
       onComposeEnd: () => {
         this.composing = false;
+        // 记录合成结束时间：紧随其后 300ms 内的 Enter 视为 IME 确认余波，忽略
+        this.lastComposeEnd = performance.now();
         this.refreshAutocomplete();
       },
     });
@@ -94,7 +113,14 @@ export class Notebook {
 
     this.input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        if (this.composing) return;
+        // IME 合成中：合成未结束，直接忽略（浏览器通常已 isComposing=true）
+        if (this.composing) { e.preventDefault(); return; }
+        // 紧随合成结束的 Enter 余波：keyCode 13 且距合成结束 < 300ms，视为确认候选词，忽略
+        if (e.keyCode === 13 && this.lastComposeEnd > 0 && performance.now() - this.lastComposeEnd < 300) {
+          e.preventDefault();
+          this.lastComposeEnd = 0;
+          return;
+        }
         e.preventDefault();
         if (this.menu.isActive) {
           this.menu.confirm();
@@ -127,14 +153,17 @@ export class Notebook {
         return;
       }
       if (e.key === 'Escape') {
-        this.menu.cancel();
-        this.autocomplete.hide();
+        // 阻止 ESC 冒泡到 window，避免触发游戏全局 ESC 暂停（Notebook 已消费此键）
+        e.stopPropagation();
+        this.hide();
       }
     });
 
     this.el.appendChild(label);
     this.el.appendChild(this.input);
     this.el.appendChild(blot);
+    // 默认隐藏，由外部 toggle() 控制显隐
+    this.el.style.display = 'none';
     document.body.appendChild(this.el);
   }
 
@@ -145,6 +174,18 @@ export class Notebook {
   private submit(): void {
     const text = this.input.value.trim();
     if (!text) return;
+    if (this.mode === 'adjective') {
+      const targetId = this.cb.selectedEntityId?.();
+      const adjs = parse(text, 'adjectives-only') as ParsedAdjective[];
+      if (targetId && adjs.length > 0) {
+        this.cb.onApplyAdjectives?.(targetId, adjs);
+        log.info('notebook apply adjectives', { target: targetId, adj: adjs.map((a) => a.adjId) });
+        this.hide();
+      } else {
+        log.warn('no adjective result', { text });
+      }
+      return;
+    }
     // 纯形容词模式：对选中实体施加形容词
     if (this.cb.onApplyAdjectives && this.cb.selectedEntityId) {
       const targetId = this.cb.selectedEntityId();
@@ -173,17 +214,41 @@ export class Notebook {
       adj: candidate.adjectives.map((a) => a.adjId),
     });
     this.cb.onSpawn(candidate, sx, sy);
-    this.input.value = '';
-    this.autocomplete.hide();
+    this.hide();
   }
 
   focus(): void {
     this.input.focus();
   }
+
+  show(mode: NotebookMode = 'spawn'): void {
+    this.mode = mode;
+    this.labelText.textContent = mode === 'adjective' ? t('notebook.labelAdj') : t('notebook.label');
+    this.input.placeholder = mode === 'adjective' ? t('notebook.placeholderAdj') : t('notebook.placeholder');
+    this.el.style.display = '';
+    this.input.focus();
+    sfx.play('ui');
+  }
+
+  hide(): void {
+    this.mode = 'spawn';
+    this.menu.cancel();
+    this.autocomplete.hide();
+    this.input.value = '';
+    this.input.blur();
+    this.el.style.display = 'none';
+    this.labelText.textContent = t('notebook.label');
+    this.input.placeholder = t('notebook.placeholder');
+  }
+
+  toggle(): void {
+    if (this.el.style.display === 'none') this.show();
+    else this.hide();
+  }
 }
 
-// 保留导入供未来扩展（手写体/纸色常量）
-void HAND_FONT;
+// 保留导入供未来扩展（无衬线字体/纸色常量）
+void UI_FONT;
 void PAPER_BG;
 void TORN_EDGE;
 void PAPER_SHADOW;

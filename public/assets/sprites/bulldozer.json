@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "bulldozer_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 144,
+        "h": 84
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "bulldozer.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 144,
+      "h": 84
+    },
+    "scale": "1"
+  }
+}

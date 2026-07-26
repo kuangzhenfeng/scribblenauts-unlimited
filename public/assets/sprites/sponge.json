@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "sponge_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 44,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 44,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 44,
+        "h": 44
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "sponge.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 44,
+      "h": 44
+    },
+    "scale": "1"
+  }
+}

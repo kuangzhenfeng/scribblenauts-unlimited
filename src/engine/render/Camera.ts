@@ -43,6 +43,19 @@ export class Camera {
     this.cam.setScroll(sx + (targetX - sx - this.cam.width / 2) * this.lerp, sy + (targetY - sy - this.cam.height / 2) * this.lerp);
   }
 
+  /** 立即跳转到目标位置，绕过 lerp（关卡切换时调用，避免玩家飞出画面） */
+  snapTo(x: number, y: number): void {
+    const halfW = this.cam.width / 2;
+    const halfH = this.cam.height / 2;
+    let tx = x;
+    let ty = y;
+    if (this.clampTo) {
+      tx = Math.max(this.clampTo.minX + halfW, Math.min(this.clampTo.maxX - halfW, tx));
+      ty = Math.max(this.clampTo.minY + halfH, Math.min(this.clampTo.maxY - halfH, ty));
+    }
+    this.cam.setScroll(tx - halfW, ty - halfH);
+  }
+
   /** 屏幕 CSS 像素 → 世界坐标（供鼠标拾取/拖拽/生成复用） */
   screenToWorld(sx: number, sy: number): { x: number; y: number } {
     return this.cam.getWorldPoint(sx, sy);

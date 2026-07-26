@@ -35,6 +35,44 @@ function indexAdj(a: AdjectiveEntry): void {
 }
 for (const a of adjectives) indexAdj(a);
 
+/** 中文前缀补全（精确名+别名文本），最多 limit 个 */
+export function completeAdjCn(prefix: string, limit = 8): Completion[] {
+  const out: Completion[] = [];
+  for (const a of adjectives) {
+    const cands = [a.zh.name, ...(a.zh.aliases ?? [])];
+    for (const text of cands) {
+      if (text.startsWith(prefix)) {
+        out.push({ text, id: a.id, zh: a.zh.name, en: a.en.name });
+        if (out.length >= limit) return out;
+      }
+    }
+  }
+  return out;
+}
+
+/** 英文前缀补全 */
+export function completeAdjEn(prefix: string, limit = 8): Completion[] {
+  const lp = prefix.toLowerCase();
+  const out: Completion[] = [];
+  for (const a of adjectives) {
+    const cands = [a.en.name, ...(a.en.aliases ?? [])];
+    for (const text of cands) {
+      if (text.toLowerCase().startsWith(lp)) {
+        out.push({ text, id: a.id, zh: a.zh.name, en: a.en.name });
+        if (out.length >= limit) return out;
+      }
+    }
+  }
+  return out;
+}
+
+export interface Completion {
+  text: string;
+  id: string;
+  zh: string;
+  en: string;
+}
+
 export function lookupAdjByCn(text: string): AdjectiveEntry | undefined {
   const id = cnExact.get(text);
   return id ? byId.get(id) : undefined;

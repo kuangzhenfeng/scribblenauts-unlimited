@@ -9,7 +9,7 @@ import { GoalSystem, type ProgressCallbacks, type LevelRef } from '@/core/game/G
 import type { Entity, EntityQuery } from '@/core/entity/Entity';
 import type { LevelData } from '@/core/types/level';
 
-function fakeEntity(id: string, typeId: string, x: number, y: number): Entity {
+function fakeEntity(id: string, typeId: string, x: number, y: number, adjectives?: string[]): Entity {
   return {
     id,
     typeId,
@@ -20,6 +20,7 @@ function fakeEntity(id: string, typeId: string, x: number, y: number): Entity {
     critical: false,
     lastTouchedAt: 0,
     tags: undefined as never,
+    appliedAdjectives: adjectives ? new Set(adjectives) : undefined,
     get bodyPositionX() { return x; },
     get bodyPositionY() { return y; },
     get bodyAngle() { return 0; },
@@ -118,6 +119,189 @@ describe('GoalSystem', () => {
       ],
     } as unknown as LevelData;
     const levelRef = makeLevelRef('npc2', level);
+
+    const events: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: (t) => events.push(`shard:${t}`),
+      onStarite: (t) => events.push(`starite:${t}`),
+      onChallengeComplete: (id) => events.push(`complete:${id}`),
+      onWin: () => events.push('win'),
+    });
+    goal.evaluate();
+    expect(events).toHaveLength(0);
+  });
+
+  it('completes adjective combo challenge when entity has required adjective', () => {
+    const npc = fakeEntity('npc3', 'human', 100, 100);
+    // 实体带 red 形容词，满足"红色的鸟"
+    const redBird = fakeEntity('e3', 'bird', 110, 105, ['red']);
+    const entities: Entity[] = [npc, redBird];
+    const em: EntityQuery = {
+      all: () => entities,
+      get: (id) => entities.find((e) => e.id === id),
+    };
+
+    const level = {
+      id: 'test3',
+      challenges: [
+        {
+          id: 'ch3',
+          giverNpcId: 'npc3',
+          kind: 'shard' as const,
+          puzzle: {
+            conditions: [
+              {
+                kind: 'object-present' as const,
+                typeId: 'bird',
+                adjectives: ['red'],
+                near: { npcId: 'npc3', radius: 120 },
+              },
+            ],
+          },
+          reward: { type: 'shard' as const, count: 1 },
+          dialog: [{ zh: '', en: '' }],
+        },
+      ],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc3', level);
+
+    const events: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: (t) => events.push(`shard:${t}`),
+      onStarite: (t) => events.push(`starite:${t}`),
+      onChallengeComplete: (id) => events.push(`complete:${id}`),
+      onWin: () => events.push('win'),
+    });
+    goal.evaluate();
+    expect(events).toContain('complete:ch3');
+  });
+
+  it('does not complete adjective challenge when adjective mismatches', () => {
+    const npc = fakeEntity('npc4', 'human', 100, 100);
+    // 实体是蓝色的鸟，题目要红色的鸟 → 不满足
+    const blueBird = fakeEntity('e4', 'bird', 110, 105, ['blue']);
+    const entities: Entity[] = [npc, blueBird];
+    const em: EntityQuery = {
+      all: () => entities,
+      get: (id) => entities.find((e) => e.id === id),
+    };
+
+    const level = {
+      id: 'test4',
+      challenges: [
+        {
+          id: 'ch4',
+          giverNpcId: 'npc4',
+          kind: 'shard' as const,
+          puzzle: {
+            conditions: [
+              {
+                kind: 'object-present' as const,
+                typeId: 'bird',
+                adjectives: ['red'],
+                near: { npcId: 'npc4', radius: 120 },
+              },
+            ],
+          },
+          reward: { type: 'shard' as const, count: 1 },
+          dialog: [{ zh: '', en: '' }],
+        },
+      ],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc4', level);
+
+    const events: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: (t) => events.push(`shard:${t}`),
+      onStarite: (t) => events.push(`starite:${t}`),
+      onChallengeComplete: (id) => events.push(`complete:${id}`),
+      onWin: () => events.push('win'),
+    });
+    goal.evaluate();
+    expect(events).toHaveLength(0);
+  });
+
+  it('completes any-of multi-answer challenge when any one answer is near npc', () => {
+    const npc = fakeEntity('npc5', 'human', 100, 100);
+    // 情境题"好冷"→ 任一暖源即过关；玩家召唤了 fire（在范围内）
+    const fire = fakeEntity('e5', 'fire', 110, 105);
+    const entities: Entity[] = [npc, fire];
+    const em: EntityQuery = {
+      all: () => entities,
+      get: (id) => entities.find((e) => e.id === id),
+    };
+
+    const level = {
+      id: 'test5',
+      challenges: [
+        {
+          id: 'ch5',
+          giverNpcId: 'npc5',
+          kind: 'shard' as const,
+          puzzle: {
+            conditions: [
+              {
+                kind: 'any-of' as const,
+                conditions: [
+                  { kind: 'object-present' as const, typeId: 'fire', near: { npcId: 'npc5', radius: 120 } },
+                  { kind: 'object-present' as const, typeId: 'candle', adjectives: ['burning'], near: { npcId: 'npc5', radius: 120 } },
+                  { kind: 'object-present' as const, typeId: 'torch', near: { npcId: 'npc5', radius: 120 } },
+                ],
+              },
+            ],
+          },
+          reward: { type: 'shard' as const, count: 1 },
+          dialog: [{ zh: '好冷啊', en: 'cold' }],
+        },
+      ],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc5', level);
+
+    const events: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: (t) => events.push(`shard:${t}`),
+      onStarite: (t) => events.push(`starite:${t}`),
+      onChallengeComplete: (id) => events.push(`complete:${id}`),
+      onWin: () => events.push('win'),
+    });
+    goal.evaluate();
+    expect(events).toContain('complete:ch5');
+  });
+
+  it('does not complete any-of multi-answer challenge when none of the answers is near', () => {
+    const npc = fakeEntity('npc6', 'human', 100, 100);
+    // 玩家召唤了 apple（不是暖源）→ 不满足任一答案
+    const apple = fakeEntity('e6', 'apple', 110, 105);
+    const entities: Entity[] = [npc, apple];
+    const em: EntityQuery = {
+      all: () => entities,
+      get: (id) => entities.find((e) => e.id === id),
+    };
+
+    const level = {
+      id: 'test6',
+      challenges: [
+        {
+          id: 'ch6',
+          giverNpcId: 'npc6',
+          kind: 'shard' as const,
+          puzzle: {
+            conditions: [
+              {
+                kind: 'any-of' as const,
+                conditions: [
+                  { kind: 'object-present' as const, typeId: 'fire', near: { npcId: 'npc6', radius: 120 } },
+                  { kind: 'object-present' as const, typeId: 'candle', adjectives: ['burning'], near: { npcId: 'npc6', radius: 120 } },
+                ],
+              },
+            ],
+          },
+          reward: { type: 'shard' as const, count: 1 },
+          dialog: [{ zh: '', en: '' }],
+        },
+      ],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc6', level);
 
     const events: string[] = [];
     const goal = new GoalSystem(em, levelRef, {

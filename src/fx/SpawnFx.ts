@@ -9,14 +9,13 @@
  * - pop-in tween 作用于 entity.state.scale（syncGraphics 已读 e.state.scale，零冲突）。
  * - 物理不禁用：实体在 spawnCandidate 时 body 已在目标世界点激活立即下落，
  *   pop-in 只是视觉缩放不影响 Matter body 尺寸，物理与视觉解耦。
+ * - Starite 飞向 HUD 用 sprite（starite atlas 已注册），废弃 vector draw 路径。
  */
 
 import type Phaser from 'phaser';
 import type { GameEntity } from '@/game/Entity';
 import type { FxParticles } from './Particles';
 import type { Camera } from '@/engine/render/Camera';
-import { getRenderer } from '@/engine/render/registry';
-import { hashStr } from '@/engine/render/VectorDraw';
 import { log } from '@/util/log';
 
 export class SpawnFx {
@@ -52,61 +51,29 @@ export class SpawnFx {
 
   /** Starite 从世界点飞向 HUD 进度面板（挑战完成时调用） */
   playStariteFly(fromWorldX: number, fromWorldY: number, onArrive?: () => void): void {
-    const targetScale = 1;
-    const g = this.scene.add.graphics();
-    g.setPosition(fromWorldX, fromWorldY);
-    g.setScale(0.2, 0.2);
-    g.setDepth(100);
-    g.setScrollFactor(1, 1);
-    // 用 starite 渲染器画
-    const renderer = getRenderer('starite');
-    const dc = {
-      g,
-      transform: { x: fromWorldX, y: fromWorldY, rotation: 0, scale: 0.2 },
-      state: {
-        animTime: 0,
-        locomotion: 'idle' as const,
-        facing: 1,
-        stateLayer: new Set<string>(),
-      },
-      camera: { zoom: 1 },
-      seed: hashStr('starite-fly'),
-    };
-    renderer?.draw(dc, {});
-    g.enableFilters();
-    g.filters?.internal.addGlow(0xffdc50, 4, 0, 1, false);
-
     // 终点：HUD 进度面板屏幕坐标（右上）→ 反算世界坐标
     const endScreenX = this.scene.scale.width - 80;
     const endScreenY = 40;
     const end = this.camera.screenToWorld(endScreenX, endScreenY);
 
+    // Starite sprite（atlas 已注册），用首帧 + Glow 滤镜，tween 飞向 HUD
+    const sprite = this.scene.add.sprite(fromWorldX, fromWorldY, 'starite', 'starite_0');
+    sprite.setScale(0.2, 0.2);
+    sprite.setDepth(100);
+    sprite.setScrollFactor(1, 1);
+    sprite.enableFilters();
+    sprite.filters?.internal.addGlow(0xffdc50, 4, 0, 1, false);
+
     this.scene.tweens.add({
-      targets: g,
+      targets: sprite,
       x: end.x,
       y: end.y,
-      scaleX: { from: 0.2, to: targetScale * 1.4 },
-      scaleY: { from: 0.2, to: targetScale * 1.4 },
+      scaleX: 1.4,
+      scaleY: 1.4,
       duration: 800,
       ease: 'Quad.in',
-      onUpdate: () => {
-        g.clear();
-        const liveDc = {
-          g,
-          transform: { x: g.x, y: g.y, rotation: 0, scale: g.scaleX },
-          state: {
-            animTime: this.scene.time.now,
-            locomotion: 'idle' as const,
-            facing: 1,
-            stateLayer: new Set<string>(),
-          },
-          camera: { zoom: 1 },
-          seed: hashStr('starite-fly'),
-        };
-        renderer?.draw(liveDc, {});
-      },
       onComplete: () => {
-        g.destroy();
+        sprite.destroy();
         onArrive?.();
       },
     });

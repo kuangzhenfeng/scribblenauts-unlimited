@@ -1,0 +1,12 @@
+{
+  "servers": [
+    {
+      "name": "stevenk",
+      "host": "stevenk.cn",
+      "user": "root",
+      "webRoot": "/var/www/stevenk.cn",
+      "urlTemplate": "https://stevenk.cn/{path}"
+    }
+  ],
+  "defaultServer": "stevenk"
+}

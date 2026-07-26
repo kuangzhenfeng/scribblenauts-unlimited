@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "wine_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 36
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "wine.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 24,
+      "h": 36
+    },
+    "scale": "1"
+  }
+}

@@ -42,6 +42,8 @@ export class GameEntity implements EntityIface {
   dead?: boolean;
   isPlayer?: boolean;
   behaviors?: BehaviorSpec[];
+  /** 被施加的形容词 id 集合（Spawner 在 applyAdjectives 后写入），供 GoalSystem 校验形容词题目 */
+  appliedAdjectives?: Set<string>;
   hidden?: boolean;
   aiMem?: Map<string, unknown>;
 
@@ -61,6 +63,7 @@ export class GameEntity implements EntityIface {
     lastTouchedAt?: number;
     health?: number;
     maxHealth?: number;
+    drawParams?: Record<string, unknown>;
     gameObject?: Phaser.GameObjects.GameObject;
   }) {
     this.id = opts.id;
@@ -73,6 +76,7 @@ export class GameEntity implements EntityIface {
     this.lastTouchedAt = opts.lastTouchedAt ?? 0;
     this.health = opts.health;
     this.maxHealth = opts.maxHealth;
+    this.drawParams = opts.drawParams ?? {};
     this.gameObject = opts.gameObject;
   }
 

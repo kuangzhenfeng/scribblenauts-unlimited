@@ -1,21 +1,27 @@
 /**
- * 矢量渲染器注册表 —— 渲染器 id → VectorRenderer 的全局映射（强类型）。
+ * 渲染器注册表 —— rendererId → SpriteRendererDef 的全局映射。
  *
- * 各 base renderer（box / quadruped / fire ...）在加载时调用 registerRenderer 注册。
- * Renderer 绘制时按实体 rendererId 查表调用。
+ * 渲染单路由：sprite atlas（Phaser Texture Atlas 帧动画），每对象一套美术 + setTint 染色。
+ * vector paper-doll 路由已废弃删除，registry 只支持 sprite kind。
  *
- * 与旧项目差异：词条 appearance.renderer 统一为渲染器 id 字符串，
- * RenderRegistry 强类型映射，数据层引用渲染器用 const 键，编译期可查。
+ * 行业做法（5th Cell Objectnaut）：每对象一套美术 + tint 染色。creature renderer===id，
+ * 每物种独立 sprite atlas。
  */
 
-import type { VectorRenderer } from './VectorDraw';
+import type { SpriteRendererDef } from './SpriteSheet';
+import { registerAtlas } from './SpriteSheet';
 
-const registry = new Map<string, VectorRenderer>();
+export type RendererEntry = { kind: 'sprite'; def: SpriteRendererDef };
 
-export function registerRenderer(id: string, renderer: VectorRenderer): void {
-  registry.set(id, renderer);
+const _registry = new Map<string, RendererEntry>();
+
+/** 注册 Sprite 渲染器，并自动将 atlasKey 加入预加载清单。 */
+export function registerSpriteRenderer(id: string, def: SpriteRendererDef): void {
+  registerAtlas(def.atlasKey);
+  _registry.set(id, { kind: 'sprite', def });
 }
 
-export function getRenderer(id: string): VectorRenderer | undefined {
-  return registry.get(id);
+/** 按 id 取渲染器条目。 */
+export function getRendererEntry(id: string): RendererEntry | undefined {
+  return _registry.get(id);
 }

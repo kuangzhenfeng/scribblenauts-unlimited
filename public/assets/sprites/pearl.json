@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "pearl_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "pearl.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 16,
+      "h": 16
+    },
+    "scale": "1"
+  }
+}

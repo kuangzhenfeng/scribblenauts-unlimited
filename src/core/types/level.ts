@@ -50,11 +50,17 @@ export interface Challenge {
   dialog: { zh: string; en: string }[];
 }
 
-/** 谜题条件 DSL（只声明并实现首期 4 种） */
+/**
+ * 谜题条件 DSL（只声明并实现首期 4 种）。
+ * object-present 的 adjectives 为可选：有值时需校验实体被施加的形容词 id 集合
+ * 是 condition.adjectives 的超集（如"红色的鸟"要求实体带 red）。
+ */
 export type PuzzleCondition =
   | {
       kind: 'object-present';
       typeId: string;
+      /** 题目要求的形容词 id 列表，可空；校验 entity.appliedAdjectives 超集 */
+      adjectives?: string[];
       near: { npcId: string; radius: number };
     }
   | { kind: 'object-destroyed'; typeId: string }
@@ -76,7 +82,13 @@ export interface LevelData {
   terrain?: { x: number; y: number; w: number; h: number }[];
   spawns: SpawnDef[];
   npcs: NpcSpawn[];
-  challenges: Challenge[];
+  /**
+   * 挑战列表。运行时由 QuestionPicker 按难度抽题装配，JSON 静态数据可留空数组。
+   * 为可选字段以兼容"题目随机化"后关卡 JSON 不再内联 challenges 的形态。
+   */
+  challenges?: Challenge[];
+  /** 每关要抽取的题目数（slot 数），由关卡 JSON 声明；缺省按全部 NPC 配题 */
+  challengeSlots?: number;
   transitions?: { toLevelId: string; at: AABB }[];
   starite?: { x: number; y: number };
   bgm?: string;

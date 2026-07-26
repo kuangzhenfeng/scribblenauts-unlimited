@@ -1,106 +1,356 @@
 {
   "id": "overworld-meadow",
   "type": "overworld",
-  "theme": "meadow",
+  "theme": "jungle",
   "bounds": {
-    "minX": -1200,
-    "minY": -200,
-    "maxX": 1600,
+    "minX": -2000,
+    "minY": -300,
+    "maxX": 2400,
     "maxY": 600
   },
   "playerStart": {
-    "x": -100,
+    "x": 0,
     "y": 300
   },
   "terrain": [
-    { "x": -700, "y": 200, "w": 200, "h": 24 },
-    { "x": 400, "y": 160, "w": 220, "h": 24 },
-    { "x": 1000, "y": 240, "w": 200, "h": 24 }
+    {
+      "x": -1400,
+      "y": 180,
+      "w": 200,
+      "h": 24
+    },
+    {
+      "x": -700,
+      "y": 200,
+      "w": 200,
+      "h": 24
+    },
+    {
+      "x": 400,
+      "y": 160,
+      "w": 220,
+      "h": 24
+    },
+    {
+      "x": 800,
+      "y": 100,
+      "w": 180,
+      "h": 24
+    },
+    {
+      "x": 1100,
+      "y": 200,
+      "w": 160,
+      "h": 24
+    },
+    {
+      "x": 1600,
+      "y": 240,
+      "w": 200,
+      "h": 24
+    },
+    {
+      "x": 2000,
+      "y": 160,
+      "w": 180,
+      "h": 24
+    }
   ],
   "spawns": [
-    { "typeId": "tree", "x": -500, "y": 320, "layer": 0 },
-    { "typeId": "tree", "x": -300, "y": 320, "layer": 0 },
-    { "typeId": "tree", "x": 280, "y": 320, "layer": 0 },
-    { "typeId": "tree", "x": 700, "y": 320, "layer": 0 },
-    { "typeId": "stone", "x": 150, "y": 330, "layer": 0 },
-    { "typeId": "stone", "x": 900, "y": 330, "layer": 0 }
+    {
+      "typeId": "tree",
+      "x": -1700,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": -1300,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": -500,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": -300,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": 280,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": 700,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": 1300,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": 1900,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "stone",
+      "x": 900,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "stone",
+      "x": -900,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "stone",
+      "x": 2100,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "dog",
+      "x": -200,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "bird",
+      "x": 500,
+      "y": 200,
+      "layer": 0
+    },
+    {
+      "typeId": "rabbit",
+      "x": -600,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "squirrel",
+      "x": 1500,
+      "y": 320,
+      "layer": 0
+    }
   ],
   "npcs": [
     {
-      "id": "npc-farmer",
+      "id": "npc-explorer",
       "typeId": "human",
-      "x": -100,
+      "x": -80,
       "y": 320,
       "gender": "male",
-      "drawParams": { "shirtColor": "#c9932b", "pantsColor": "#6b4226", "hat": "straw" }
+      "drawParams": {
+        "shirtColor": "#c9932b",
+        "pantsColor": "#6b4226",
+        "hat": "straw"
+      }
     },
     {
       "id": "npc-girl",
       "typeId": "human",
-      "x": 200,
+      "x": 260,
       "y": 320,
       "gender": "female",
-      "drawParams": { "shirtColor": "#e64980", "pantsColor": "#8b3a5c" }
-    }
-  ],
-  "challenges": [
-    {
-      "id": "ch-fruit",
-      "giverNpcId": "npc-farmer",
-      "kind": "shard",
-      "puzzle": {
-        "conditions": [
-          {
-            "kind": "object-present",
-            "typeId": "apple",
-            "near": { "npcId": "npc-farmer", "radius": 200 }
-          }
-        ]
-      },
-      "reward": { "type": "shard", "count": 1 },
-      "dialog": [
-        { "zh": "农夫：我饿了，能给我一个苹果吗？", "en": "Farmer: I'm hungry. Can you bring me an apple?" },
-        { "zh": "（输入「苹果」并放在农夫附近）", "en": "(type 'apple' and place it near the farmer)" }
-      ]
+      "drawParams": {
+        "shirtColor": "#e64980",
+        "pantsColor": "#8b3a5c"
+      }
     },
     {
-      "id": "ch-light",
-      "giverNpcId": "npc-girl",
-      "kind": "shard",
-      "puzzle": {
-        "conditions": [
-          {
-            "kind": "object-present",
-            "typeId": "fire",
-            "near": { "npcId": "npc-girl", "radius": 250 }
-          }
-        ]
-      },
-      "reward": { "type": "shard", "count": 1 },
-      "dialog": [
-        { "zh": "女孩：天黑了，我需要火。", "en": "Girl: It's getting dark. I need fire." },
-        { "zh": "（输入「火」并放在女孩附近）", "en": "(type 'fire' and place it near the girl)" }
-      ]
+      "id": "npc-fisherman",
+      "typeId": "human",
+      "x": -1000,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#2e86c1",
+        "pantsColor": "#1a5276",
+        "hat": "straw"
+      }
+    },
+    {
+      "id": "npc-child",
+      "typeId": "human",
+      "x": 650,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#27ae60",
+        "pantsColor": "#1e8449"
+      }
+    },
+    {
+      "id": "npc-carpenter",
+      "typeId": "human",
+      "x": 1400,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#8e44ad",
+        "pantsColor": "#6c3483",
+        "hat": "miner"
+      }
+    },
+    {
+      "id": "npc-witch",
+      "typeId": "human",
+      "x": 2100,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#17202a",
+        "pantsColor": "#212f3c"
+      }
     }
   ],
   "decorations": [
-    { "kind": "bush", "x": -800, "y": 560 },
-    { "kind": "bush", "x": -200, "y": 565 },
-    { "kind": "bush", "x": 350, "y": 560 },
-    { "kind": "bush", "x": 850, "y": 565 },
-    { "kind": "bush", "x": 1300, "y": 560 },
-    { "kind": "flower", "x": -50, "y": 575 },
-    { "kind": "flower", "x": 250, "y": 578 },
-    { "kind": "flower", "x": 600, "y": 575 },
-    { "kind": "flower", "x": 1100, "y": 578 },
-    { "kind": "fence", "x": -400, "y": 555 },
-    { "kind": "fence", "x": 500, "y": 555 },
-    { "kind": "fence", "x": 1200, "y": 555 }
+    {
+      "kind": "totem",
+      "x": -1600,
+      "y": 555,
+      "scale": 0.9
+    },
+    {
+      "kind": "totem",
+      "x": 1600,
+      "y": 555,
+      "scale": 0.8
+    },
+    {
+      "kind": "ruin-pillar",
+      "x": 80,
+      "y": 510,
+      "scale": 1.1
+    },
+    {
+      "kind": "ruin-pillar",
+      "x": -800,
+      "y": 510,
+      "scale": 0.9
+    },
+    {
+      "kind": "ruin-pillar",
+      "x": 1200,
+      "y": 510,
+      "scale": 1
+    },
+    {
+      "kind": "bush",
+      "x": -1800,
+      "y": 565
+    },
+    {
+      "kind": "bush",
+      "x": -1200,
+      "y": 562
+    },
+    {
+      "kind": "bush",
+      "x": -600,
+      "y": 565
+    },
+    {
+      "kind": "bush",
+      "x": -150,
+      "y": 562
+    },
+    {
+      "kind": "bush",
+      "x": 380,
+      "y": 565
+    },
+    {
+      "kind": "bush",
+      "x": 900,
+      "y": 562
+    },
+    {
+      "kind": "bush",
+      "x": 1400,
+      "y": 565
+    },
+    {
+      "kind": "bush",
+      "x": 1850,
+      "y": 562
+    },
+    {
+      "kind": "bush",
+      "x": 2250,
+      "y": 565
+    },
+    {
+      "kind": "mushroom",
+      "x": -1400,
+      "y": 570
+    },
+    {
+      "kind": "mushroom",
+      "x": 200,
+      "y": 570
+    },
+    {
+      "kind": "mushroom",
+      "x": 1000,
+      "y": 570
+    },
+    {
+      "kind": "mushroom",
+      "x": 2000,
+      "y": 570
+    },
+    {
+      "kind": "flower",
+      "x": -1600,
+      "y": 575
+    },
+    {
+      "kind": "flower",
+      "x": -450,
+      "y": 578
+    },
+    {
+      "kind": "flower",
+      "x": 550,
+      "y": 575
+    },
+    {
+      "kind": "flower",
+      "x": 1150,
+      "y": 578
+    },
+    {
+      "kind": "flower",
+      "x": 1750,
+      "y": 575
+    }
   ],
   "transitions": [
     {
       "toLevelId": "stage-cave",
-      "at": { "minX": 1500, "minY": 260, "maxX": 1600, "maxY": 360 }
+      "at": {
+        "minX": 2300,
+        "minY": 350,
+        "maxX": 2400,
+        "maxY": 620
+      }
     }
-  ]
+  ],
+  "challengeSlots": 6
 }

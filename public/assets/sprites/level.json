@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "level_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 72,
+        "h": 16
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "level.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 72,
+      "h": 16
+    },
+    "scale": "1"
+  }
+}

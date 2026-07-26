@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "spear_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 10,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 10,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 10,
+        "h": 80
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "spear.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 10,
+      "h": 80
+    },
+    "scale": "1"
+  }
+}

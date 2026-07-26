@@ -12,18 +12,31 @@ describe('SaveStore', () => {
   it('load returns default save when empty', async () => {
     const store = new SaveStore();
     const data = await store.load();
-    expect(data.schemaVersion).toBe(1);
+    expect(data.schemaVersion).toBe(3);
     expect(data.starites).toBe(0);
     expect(data.customObjects).toEqual([]);
+    expect(data.completedSlots).toEqual([]);
+    expect(data.difficultySetting.tier).toBe(1);
+    expect(data.difficultySetting.standard).toBe('cefr');
+    expect(typeof data.questionSeed).toBe('string');
+    expect(data.questionSeed.length).toBeGreaterThan(0);
   });
 
-  it('updateProgress persists starites/shards/completed', async () => {
+  it('updateProgress persists starites/shards/completedSlots', async () => {
     const store = new SaveStore();
-    await store.updateProgress(3, 5, ['ch1', 'ch2']);
+    await store.updateProgress(3, 5, ['stage-cave:2:cefr:0']);
     const data = await store.load();
     expect(data.starites).toBe(3);
     expect(data.shards).toBe(5);
-    expect(data.completedChallenges).toEqual(['ch1', 'ch2']);
+    expect(data.completedSlots).toEqual(['stage-cave:2:cefr:0']);
+  });
+
+  it('updateDifficultySetting persists tier and standard', async () => {
+    const store = new SaveStore();
+    await store.updateDifficultySetting(3, 'frequency');
+    const data = await store.load();
+    expect(data.difficultySetting.tier).toBe(3);
+    expect(data.difficultySetting.standard).toBe('frequency');
   });
 
   it('addCustomObject persists def', async () => {
@@ -40,5 +53,53 @@ describe('SaveStore', () => {
     const data = await store.load();
     expect(data.customObjects).toHaveLength(1);
     expect(data.customObjects[0].id).toBe('custom:dragon');
+  });
+
+  it('default save has first level unlocked', async () => {
+    const store = new SaveStore();
+    const data = await store.load();
+    expect(data.unlockedLevels).toEqual(['overworld-meadow']);
+    expect(await store.isUnlocked('overworld-meadow')).toBe(true);
+    expect(await store.isUnlocked('stage-cave')).toBe(false);
+  });
+
+  it('unlockLevel adds new level to unlocked list', async () => {
+    const store = new SaveStore();
+    await store.unlockLevel('stage-cave');
+    const data = await store.load();
+    expect(data.unlockedLevels).toContain('stage-cave');
+    expect(await store.isUnlocked('stage-cave')).toBe(true);
+  });
+
+  it('unlockLevel is idempotent', async () => {
+    const store = new SaveStore();
+    await store.unlockLevel('stage-snow');
+    await store.unlockLevel('stage-snow');
+    const data = await store.load();
+    const count = data.unlockedLevels.filter((id) => id === 'stage-snow').length;
+    expect(count).toBe(1);
+  });
+
+  it('updateQuestionSeed persists seed', async () => {
+    const store = new SaveStore();
+    await store.updateQuestionSeed('abc123');
+    const data = await store.load();
+    expect(data.questionSeed).toBe('abc123');
+  });
+
+  it('clearChallengeProgress clears slots and counters but keeps unlocks', async () => {
+    const store = new SaveStore();
+    // 预置：进度 + 解锁第二关
+    await store.updateProgress(2, 5, ['stage-cave:2:cefr:0', 'stage-cave:2:cefr:1']);
+    await store.unlockLevel('stage-cave');
+    // 换种子触发清进度
+    await store.clearChallengeProgress();
+    const data = await store.load();
+    expect(data.starites).toBe(0);
+    expect(data.shards).toBe(0);
+    expect(data.completedSlots).toEqual([]);
+    // 关卡解锁保留（访问权与题目内容正交）
+    expect(data.unlockedLevels).toContain('overworld-meadow');
+    expect(data.unlockedLevels).toContain('stage-cave');
   });
 });

@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "loom_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 120,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 120,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 120,
+        "h": 96
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "loom.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 120,
+      "h": 96
+    },
+    "scale": "1"
+  }
+}

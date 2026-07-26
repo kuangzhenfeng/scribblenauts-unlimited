@@ -74,11 +74,18 @@ export class EntityManager implements EntityQuery {
   clear(except?: string): void {
     if (except) {
       const keep = this.byId.get(except);
+      // 在清空前找到要保留的 body→entity 条目
+      let keepBodyId: number | undefined;
+      if (keep) {
+        for (const [bid, e] of this.byBodyId) {
+          if (e === keep) { keepBodyId = bid; break; }
+        }
+      }
       this.byId.clear();
       this.byBodyId.clear();
       if (keep) {
         this.byId.set(keep.id, keep);
-        this.byBodyId.clear();
+        if (keepBodyId !== undefined) this.byBodyId.set(keepBodyId, keep);
       }
     } else {
       this.byId.clear();

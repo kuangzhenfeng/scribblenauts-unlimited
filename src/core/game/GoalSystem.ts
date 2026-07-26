@@ -11,6 +11,7 @@
 import type { LevelData, PuzzleCondition } from '@/core/types/level';
 import type { Entity, EntityQuery } from '@/core/entity/Entity';
 import { log } from '@/util/log';
+import { L } from '@/core/i18n/I18n';
 
 /** 进度回调：当 Starite/碎片计数变化时通知 UI */
 export interface ProgressCallbacks {
@@ -48,7 +49,7 @@ export class GoalSystem {
   /** 每 tick 评估当前关卡的挑战 */
   evaluate(): void {
     const lvl = this.level.currentLevel;
-    if (!lvl) return;
+    if (!lvl?.challenges) return;
     for (const ch of lvl.challenges) {
       if (this.level.isChallengeDone(ch.id)) continue;
       if (this.allConditionsMet(ch.puzzle.conditions)) {
@@ -57,7 +58,7 @@ export class GoalSystem {
     }
   }
 
-  private completeChallenge(ch: LevelData['challenges'][number]): void {
+  private completeChallenge(ch: NonNullable<LevelData['challenges']>[number]): void {
     this.level.markChallengeDone(ch.id);
     if (ch.reward.type === 'shard') {
       this.shards += ch.reward.count;
@@ -71,7 +72,7 @@ export class GoalSystem {
       this.starites += ch.reward.count;
       this.cb.onStarite(this.starites);
     }
-    const lastDialog = ch.dialog[ch.dialog.length - 1]?.zh ?? '';
+    const lastDialog = L(ch.dialog[ch.dialog.length - 1]);
     this.cb.onChallengeComplete(ch.id, lastDialog);
     log.info('challenge complete', { id: ch.id, starites: this.starites, shards: this.shards });
     this.cb.onProgress?.(this.starites, this.shards, this.level.completedArray());
@@ -99,7 +100,7 @@ export class GoalSystem {
   private conditionMet(c: PuzzleCondition): boolean {
     switch (c.kind) {
       case 'object-present':
-        return this.hasObjectNear(c.typeId, c.near.npcId, c.near.radius);
+        return this.hasObjectNear(c.typeId, c.adjectives, c.near.npcId, c.near.radius);
       case 'object-destroyed':
         return !this.hasEntityOfType(c.typeId);
       case 'all-of':
@@ -111,7 +112,12 @@ export class GoalSystem {
     }
   }
 
-  private hasObjectNear(typeId: string, npcId: string, radius: number): boolean {
+  private hasObjectNear(
+    typeId: string,
+    adjectives: string[] | undefined,
+    npcId: string,
+    radius: number,
+  ): boolean {
     const npcEntityId = this.level.npcEntityId(npcId);
     if (!npcEntityId) return false;
     const npc = this.entities.get(npcEntityId);
@@ -121,6 +127,11 @@ export class GoalSystem {
     const r2 = radius * radius;
     for (const e of this.entities.all()) {
       if (e.typeId !== typeId) continue;
+      // 形容词校验：实体 appliedAdjectives 须为题目要求 adjectives 的超集
+      if (adjectives && adjectives.length > 0) {
+        const applied = e.appliedAdjectives;
+        if (!applied || !adjectives.every((a) => applied.has(a))) continue;
+      }
       const dx = e.bodyPositionX - nx;
       const dy = e.bodyPositionY - ny;
       if (dx * dx + dy * dy <= r2) return true;

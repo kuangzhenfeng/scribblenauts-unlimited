@@ -84,6 +84,7 @@ export interface Completion {
   text: string;
   id: string;
   zh: string;
+  en: string;
 }
 
 /** 中文前缀补全（精确名+别名文本），最多 limit 个 */
@@ -93,7 +94,7 @@ export function completeCn(prefix: string, limit = 8): Completion[] {
     const cands = [e.zh.name, ...(e.zh.aliases ?? [])];
     for (const text of cands) {
       if (text.startsWith(prefix)) {
-        out.push({ text, id: e.id, zh: e.zh.name });
+        out.push({ text, id: e.id, zh: e.zh.name, en: e.en.name });
         if (out.length >= limit) return out;
       }
     }
@@ -109,7 +110,7 @@ export function completeEn(prefix: string, limit = 8): Completion[] {
     const cands = [e.en.name, ...(e.en.aliases ?? [])];
     for (const text of cands) {
       if (text.toLowerCase().startsWith(lp)) {
-        out.push({ text, id: e.id, zh: e.zh.name });
+        out.push({ text, id: e.id, zh: e.zh.name, en: e.en.name });
         if (out.length >= limit) return out;
       }
     }

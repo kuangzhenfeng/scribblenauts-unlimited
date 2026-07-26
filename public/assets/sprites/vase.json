@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "vase_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 28,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 28,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 28,
+        "h": 48
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "vase.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 28,
+      "h": 48
+    },
+    "scale": "1"
+  }
+}

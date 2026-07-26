@@ -13,7 +13,9 @@ import type { LevelData, SpawnDef, NpcSpawn } from '@/core/types/level';
 import type { Spawner } from '@/game/Spawner';
 import type { EntityManager } from '@/game/EntityManager';
 import type { Physics } from '@/engine/physics/Physics';
+import type { DifficultyTier, DifficultyStandard } from '@/core/types/question';
 import { getEntry } from '@/core/data/dictionary/Dictionary';
+import { pickChallenges } from '@/core/data/questions/QuestionPicker';
 import { log } from '@/util/log';
 import type { GameEntity } from '@/game/Entity';
 
@@ -26,6 +28,20 @@ for (const mod of Object.values(levelModules)) {
 }
 
 export class LevelManager {
+  /** 关卡解锁顺序：首关默认解锁，后续完成上一关 starite-gate 后解锁 */
+  static readonly LEVEL_ORDER = [
+    'overworld-meadow',
+    'stage-cave',
+    'stage-snow',
+    'stage-desert',
+    'stage-volcano',
+  ];
+
+  /** 按 LEVEL_ORDER 返回所有关卡数据，供选关场景渲染卡片 */
+  static listLevels(): LevelData[] {
+    return LevelManager.LEVEL_ORDER.map((id) => REGISTRY[id]).filter(Boolean);
+  }
+
   private current: LevelData | undefined;
   /** NPC 实体 id 映射：npcSpawnId → entityId */
   private readonly npcEntities = new Map<string, string>();
@@ -38,10 +54,17 @@ export class LevelManager {
   ) {}
 
   /**
-   * 加载关卡：清场（保留玩家）→ 重建地形 → 生成静态物体/NPC → 重定位玩家。
+   * 加载关卡：清场（保留玩家）→ 重建地形 → 生成静态物体/NPC → 重定位玩家
+   * → 按难度抽题装配 challenges。
    * keepPlayerId 由 WorldScene 传入以跨关卡保留玩家。
+   * tier/standard 为难度档与标准，由选关界面传入；缺省回退基础档+CEFR。
+   * seedSalt 为题目随机种子盐（如日期），同盐+同关+同难度 → 同题序。
    */
-  load(levelId: string, keepPlayerId?: string): LevelData | undefined {
+  load(
+    levelId: string,
+    keepPlayerId?: string,
+    opts?: { tier?: DifficultyTier; standard?: DifficultyStandard; seedSalt?: string },
+  ): LevelData | undefined {
     const data = REGISTRY[levelId];
     if (!data) {
       log.warn('level not found', { levelId });
@@ -59,7 +82,13 @@ export class LevelManager {
       player.setBodyPosition(data.playerStart.x, data.playerStart.y);
       player.setBodyVelocity(0, 0);
     }
-    log.info('level loaded', { levelId, theme: data.theme });
+    // 题目随机化：按难度抽题装配运行时 challenges
+    const tier = opts?.tier ?? 1;
+    const standard = opts?.standard ?? 'cefr';
+    const seedSalt = opts?.seedSalt ?? '';
+    const { challenges } = pickChallenges(data, tier, standard, seedSalt);
+    data.challenges = challenges;
+    log.info('level loaded', { levelId, theme: data.theme, tier, standard, slots: challenges.length });
     return data;
   }
 
@@ -122,7 +151,9 @@ export class LevelManager {
       log.warn('level spawn: unknown typeId', { typeId: s.typeId });
       return;
     }
-    const r = this.spawner.spawnEntry(entry, undefined, s.x, s.y);
+    // 关卡预生成实体（树/石头等）标记为 levelSpawn：与玩家共享负过滤，不阻挡玩家移动，
+    // 但仍与玩家生成的物体（火/武器等）正常碰撞以驱动规则引擎
+    const r = this.spawner.spawnEntry(entry, undefined, s.x, s.y, undefined, 'levelSpawn');
     if (r.entity && s.layer !== undefined) r.entity.layer = s.layer;
   }
 
@@ -132,7 +163,8 @@ export class LevelManager {
       log.warn('level npc: unknown typeId', { typeId: n.typeId });
       return;
     }
-    const r = this.spawner.spawnEntry(entry, undefined, n.x, n.y);
+    // NPC 同为关卡预生成实体，不阻挡玩家
+    const r = this.spawner.spawnEntry(entry, undefined, n.x, n.y, undefined, 'levelSpawn');
     if (r.entity) {
       r.entity.critical = true;
       r.entity.drawParams.gender = n.gender;

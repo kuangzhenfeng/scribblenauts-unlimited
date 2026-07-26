@@ -19,7 +19,12 @@
 | 候选菜单 | Candidate Menu | 输入歧义时的多候选选择 UI |
 | 附着/组合 | Attach / Composite | 多个实体用刚性 Constraint 粘合为一个组合体 |
 | 关卡 | Level | overworld 区域或自包含关卡 |
-| 挑战 | Challenge | NPC 给出的谜题任务 |
+| 挑战 | Challenge | NPC 给出的谜题任务（运行时由题库抽题装配） |
+| 题目 | Question | 题库中一道召唤题的静态定义（目标词条 + 形容词 + 双难度标注） |
+| 题库 | Question Bank | 800+ 题目集合，按难度档分3档 |
+| 难度档 | Difficulty Tier | 基础/进阶/大师（1/2/3），决定题目词汇难度 |
+| 难度标准 | Difficulty Standard | CEFR 等级 / 词频排名，两种分档标准可切换 |
+| 题目槽位 | Challenge Slot | 关卡内一道题的位置，存档以 slot id 去重 |
 | Starite | Starite | 完整星之碎块（解除石化诅咒） |
 | Starite 碎片 | Starite Shard | 10 个换 1 Starite |
 | 矢量渲染器 | Vector Renderer | 程序绘制一个物体类别的函数 |

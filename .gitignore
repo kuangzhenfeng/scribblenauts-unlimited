@@ -1,7 +1,10 @@
 .playwright-mcp
+.omo
+.impeccable
 node_modules
 dist
 .DS_Store
 *.local
 .vite
 logs
+tmp/

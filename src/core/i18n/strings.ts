@@ -1,0 +1,251 @@
+/**
+ * UI 字符串字典 —— 中英双语，按场景/模块分组 key。
+ *
+ * 设计原则：
+ * - 纯数据，零依赖，可被 I18n.ts 与单测直接引用
+ * - key 命名：{场景}.{语义}，如 'settings.title' / 'common.confirm'
+ * - 两语言必须对齐 key 集合；缺失 key 在 t() 中回退到 key 本身（开发期可见）
+ */
+
+import type { Lang } from '@/core/data/settings/SettingsStore';
+
+/** UI 字符串字典：每个 key 对应 zh/en 两语言文案 */
+export const STRINGS: Record<Lang, Record<string, string>> = {
+  zh: {
+    // 通用
+    'common.back': '返回',
+    'common.cancel': '取消',
+    'common.confirm': '确认',
+    'common.reset': '重置',
+    'common.close': '关闭',
+
+    // 标题页
+    'title.start': '开始探索',
+    'title.select': '选择关卡',
+    'title.settings': '设置',
+
+    // 设置页
+    'settings.title': '设置',
+    'settings.subtitle': '调整你的冒险体验',
+    'settings.language': '语言',
+    'settings.langZh': '中文',
+    'settings.langEn': 'English',
+    'settings.audio': '音频',
+    'settings.audioDesc': '音乐与音效音量，实时可听',
+    'settings.musicVolume': '音乐音量',
+    'settings.sfxVolume': '音效音量',
+    'settings.try': '试听',
+    'settings.muted': '静音',
+    'settings.control': '控制',
+    'settings.controlDesc': '屏幕方向与触屏虚拟控制',
+    'settings.orientation': '屏幕方向',
+    'settings.landscape': '锁定横屏',
+    'settings.auto': '跟随设备',
+    'settings.touch': '触屏控制',
+    'settings.touchAuto': '自动',
+    'settings.touchOn': '开启',
+    'settings.touchOff': '关闭',
+    'settings.difficulty': '难度',
+    'settings.difficultyDesc': '题目词汇难度与分档标准',
+    'settings.stdMethod': '难度定义方式',
+    'settings.tier': '难度档位',
+    'settings.questionSeed': '题目种子',
+    'settings.questionSeedHint': '换种子会重置所有关卡题目进度（保留关卡解锁与自制物体）',
+    'settings.refreshSeed': '刷新',
+    'settings.seedPh': '输入种子…',
+    'settings.data': '数据',
+    'settings.dataDesc': '存档与进度管理',
+    'settings.clearSave': '清除存档',
+    'settings.clear': '清除',
+    'settings.clearConfirmTitle': '清除存档',
+    'settings.clearConfirmMsg': '将清空全部关卡进度（挑战、Starite、碎片、解锁状态、自制物体）。此操作不可撤销。',
+
+    // 选关页
+    'levelSelect.title': '选择关卡',
+    'levelSelect.hint': '题目由种子随机抽取，换种子换一轮题目',
+    'levelSelect.resetAll': '重置所有',
+    'levelSelect.resetAllConfirmTitle': '重置所有进度',
+    'levelSelect.resetAllConfirmMsg': '将清空全部关卡进度（挑战、Starite、碎片），关卡解锁回退到仅首关。自制物体保留。此操作不可撤销。',
+    'levelSelect.resetConfirmTitle': `重置「{name}」`,
+    'levelSelect.resetConfirmMsg': '将清空本关所有挑战进度，对应 Starite/碎片一并扣减。此操作不可撤销。',
+    'levelSelect.resetBtn': '重置',
+    'levelSelect.resetBtnAria': '重置本关进度',
+    'levelSelect.levelN': '第 {n} 关',
+    'levelSelect.completed': '已完成',
+    'levelSelect.go': '前往 ▸',
+    'levelSelect.difficulty': '选择难度',
+    'levelSelect.stdCefr': 'CEFR 等级',
+    'levelSelect.stdFrequency': '词频排名',
+    'levelSelect.tier1': '基础',
+    'levelSelect.tier2': '进阶',
+    'levelSelect.tier3': '大师',
+    'levelSelect.tier1Desc': 'A1/A2',
+    'levelSelect.tier2Desc': 'B1/B2',
+    'levelSelect.tier3Desc': 'C1/C2',
+    'levelSelect.difficultyHint': '难度决定题目词汇难度；题目由种子随机抽取，换种子换一轮题目。',
+    'levelSelect.enter': '进入关卡',
+
+    // 暂停遮罩
+    'pause.title': '已暂停',
+    'pause.hint': '按 ESC 或点击下方按钮继续',
+    'pause.resume': '继续游戏',
+
+    // 笔记本
+    'notebook.label': '笔记本',
+    'notebook.labelAdj': '添加形容词',
+    'notebook.placeholder': '输入一个词（中/英），回车生成…',
+    'notebook.placeholderAdj': '输入形容词（中/英），回车应用…',
+
+    // 对象操作面板
+    'actionPanel.aria': '对象操作',
+    'actionPanel.hint': '选择一个动作继续',
+    'actionPanel.use': '使用笔记本',
+    'actionPanel.useHint': 'Enter',
+    'actionPanel.create': '创建物体',
+    'actionPanel.createHint': '生成新实体',
+    'actionPanel.addAdj': '添加形容词',
+    'actionPanel.addAdjHint': '改变当前实体',
+    'actionPanel.edit': '编辑物体',
+    'actionPanel.editHint': '保存为自定义物体',
+    'actionPanel.detail': '实体',
+    'actionPanel.closeAria': '关闭对象操作',
+
+    // 物体编辑器
+    'editor.title': '物体编辑器',
+    'editor.closeAria': '关闭物体编辑器',
+    'editor.hint': '基础词条（中/英） | 形容词（空格分隔） | 新名称',
+    'editor.basePh': '例: dog',
+    'editor.adjPh': '例: flying purple',
+    'editor.namePh': '例: 飞天龙',
+    'editor.save': '保存',
+    'editor.broughtCustom': '已带入自定义物体配置，可修改后另存',
+    'editor.broughtBase': '已带入当前实体词条，请填写新名称保存',
+    'editor.requireFields': '基础词条与新名称必填',
+    'editor.notFoundBase': '未找到基础词条：{name}',
+    'editor.nameExists': '名称「{name}」已存在',
+    'editor.saved': '已保存：{name}（输入该名即可生成）',
+
+    // 触屏控制
+    'touch.jump': '跳',
+    'touch.interact': '用',
+  },
+
+  en: {
+    // Common
+    'common.back': 'Back',
+    'common.cancel': 'Cancel',
+    'common.confirm': 'Confirm',
+    'common.reset': 'Reset',
+    'common.close': 'Close',
+
+    // Title
+    'title.start': 'Start Exploring',
+    'title.select': 'Select Level',
+    'title.settings': 'Settings',
+
+    // Settings
+    'settings.title': 'Settings',
+    'settings.subtitle': 'Tune your adventure',
+    'settings.language': 'Language',
+    'settings.langZh': '中文',
+    'settings.langEn': 'English',
+    'settings.audio': 'Audio',
+    'settings.audioDesc': 'Music and SFX volume, live preview',
+    'settings.musicVolume': 'Music Volume',
+    'settings.sfxVolume': 'SFX Volume',
+    'settings.try': 'Preview',
+    'settings.muted': 'Mute',
+    'settings.control': 'Controls',
+    'settings.controlDesc': 'Screen orientation and touch controls',
+    'settings.orientation': 'Orientation',
+    'settings.landscape': 'Lock Landscape',
+    'settings.auto': 'Follow Device',
+    'settings.touch': 'Touch Controls',
+    'settings.touchAuto': 'Auto',
+    'settings.touchOn': 'On',
+    'settings.touchOff': 'Off',
+    'settings.difficulty': 'Difficulty',
+    'settings.difficultyDesc': 'Question vocabulary level and grading',
+    'settings.stdMethod': 'Grading Method',
+    'settings.tier': 'Difficulty Tier',
+    'settings.questionSeed': 'Question Seed',
+    'settings.questionSeedHint': 'Changing the seed resets all level question progress (unlocks and custom objects are kept)',
+    'settings.refreshSeed': 'Refresh',
+    'settings.seedPh': 'Enter seed…',
+    'settings.data': 'Data',
+    'settings.dataDesc': 'Save and progress management',
+    'settings.clearSave': 'Clear Save',
+    'settings.clear': 'Clear',
+    'settings.clearConfirmTitle': 'Clear Save',
+    'settings.clearConfirmMsg': 'This will erase all level progress (challenges, Starites, shards, unlocks, custom objects). This cannot be undone.',
+
+    // Level Select
+    'levelSelect.title': 'Select Level',
+    'levelSelect.hint': 'Questions are seeded; a new seed gives a fresh round',
+    'levelSelect.resetAll': 'Reset All',
+    'levelSelect.resetAllConfirmTitle': 'Reset All Progress',
+    'levelSelect.resetAllConfirmMsg': 'This will erase all level progress (challenges, Starites, shards); level unlocks revert to the first level only. Custom objects are kept. This cannot be undone.',
+    'levelSelect.resetConfirmTitle': 'Reset "{name}"',
+    'levelSelect.resetConfirmMsg': 'This will clear all challenge progress for this level; corresponding Starites/shards are deducted. This cannot be undone.',
+    'levelSelect.resetBtn': 'Reset',
+    'levelSelect.resetBtnAria': 'Reset this level progress',
+    'levelSelect.levelN': 'Level {n}',
+    'levelSelect.completed': 'Completed',
+    'levelSelect.go': 'Go ▸',
+    'levelSelect.difficulty': 'Select Difficulty',
+    'levelSelect.stdCefr': 'CEFR Level',
+    'levelSelect.stdFrequency': 'Word Frequency',
+    'levelSelect.tier1': 'Basic',
+    'levelSelect.tier2': 'Intermediate',
+    'levelSelect.tier3': 'Master',
+    'levelSelect.tier1Desc': 'A1/A2',
+    'levelSelect.tier2Desc': 'B1/B2',
+    'levelSelect.tier3Desc': 'C1/C2',
+    'levelSelect.difficultyHint': 'Difficulty sets the vocabulary level; questions are seeded — a new seed gives a fresh round.',
+    'levelSelect.enter': 'Enter Level',
+
+    // Pause overlay
+    'pause.title': 'Paused',
+    'pause.hint': 'Press ESC or click below to resume',
+    'pause.resume': 'Resume',
+
+    // Notebook
+    'notebook.label': 'Notebook',
+    'notebook.labelAdj': 'Add Adjective',
+    'notebook.placeholder': 'Type a word (CN/EN), Enter to spawn…',
+    'notebook.placeholderAdj': 'Type adjectives (CN/EN), Enter to apply…',
+
+    // Object action panel
+    'actionPanel.aria': 'Object Actions',
+    'actionPanel.hint': 'Choose an action to continue',
+    'actionPanel.use': 'Use Notebook',
+    'actionPanel.useHint': 'Enter',
+    'actionPanel.create': 'Create Object',
+    'actionPanel.createHint': 'Spawn a new entity',
+    'actionPanel.addAdj': 'Add Adjective',
+    'actionPanel.addAdjHint': 'Modify current entity',
+    'actionPanel.edit': 'Edit Object',
+    'actionPanel.editHint': 'Save as custom object',
+    'actionPanel.detail': 'Entity',
+    'actionPanel.closeAria': 'Close object actions',
+
+    // Object editor
+    'editor.title': 'Object Editor',
+    'editor.closeAria': 'Close object editor',
+    'editor.hint': 'Base word (CN/EN) | Adjectives (space-separated) | New name',
+    'editor.basePh': 'e.g. dog',
+    'editor.adjPh': 'e.g. flying purple',
+    'editor.namePh': 'e.g. Dragon',
+    'editor.save': 'Save',
+    'editor.broughtCustom': 'Loaded custom object config; tweak and save as new',
+    'editor.broughtBase': 'Loaded current entity; enter a new name to save',
+    'editor.requireFields': 'Base word and new name are required',
+    'editor.notFoundBase': 'Base word not found: {name}',
+    'editor.nameExists': 'Name "{name}" already exists',
+    'editor.saved': 'Saved: {name} (type it to spawn)',
+
+    // Touch controls
+    'touch.jump': 'Jump',
+    'touch.interact': 'Use',
+  },
+};

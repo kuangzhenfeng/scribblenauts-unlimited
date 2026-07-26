@@ -106,4 +106,22 @@ describe('BehaviorSystem AI', () => {
     // wander 50% 停止或移动，locomotion 应为 walk 或 idle（不抛错即可）
     expect(['walk', 'idle']).toContain(dog.state.locomotion);
   });
+
+  it('dialog-paused NPC stands still (no AI, idle, zero horizontal velocity)', () => {
+    const dog = mkEntity('d1', -300, [{ kind: 'follow' }]) as Entity & { _vx: number };
+    const player = mkPlayer(0);
+    const { em } = setup([dog, player]);
+    const deps: EffectDeps = {
+      entities: em,
+      tagIndex: { attach() {}, detach() {}, byStateSet: () => new Set(), byFlagSet: () => new Set() } as never,
+      spawn: () => undefined,
+      destroyEntity: () => {},
+      applyImpulse: () => {},
+    };
+    // 对话系统锁定 dog：BehaviorSystem 应跳过其 AI，清零水平速度并进入 idle
+    const bs = new BehaviorSystem(em, () => 1000, deps, () => 'd1');
+    bs.update();
+    expect(dog._vx).toBe(0);
+    expect(dog.state.locomotion).toBe('idle');
+  });
 });

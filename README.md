@@ -6,15 +6,21 @@
 
 2D 涂鸦风文字解谜游戏。玩家在魔法笔记本输入任意词（中/英），对应物体即出现在游戏世界；可叠加形容词修改物体；物体间基于属性标签与规则引擎进行深度交互。
 
-- 全部美术为程序化矢量绘制（Phaser Graphics），零位图素材
+- 基础美术为 sprite atlas（统一 sprite + 运行期 `setTint` 染色，对齐行业做法：每对象一套美术 + tint，非每颜色变体画新图）；角色/动物/载具/特效及基础物品、装饰已完成背景去除、透明边缘颜色扩展和 atlas JSON 生成的 `public/assets/sprites/` 素材，`scripts/sprite-specs.js` 共 500 个规格。sprite 注册从 `SPRITE_SPECS` 派生：多帧对象（maxwell/bird/fish/tentacled/car/fire/water/steam/starite）显式注册帧序列，单帧静态物件由 `spriteRenderers.ts` 遍历 `SPRITE_SPECS` 自动注册，spec 新增条目即自动入册，无手工清单漂移。renderer===id 原则：creature 词条 renderer 直接等于自身 id（dog/cat/dragon/human/ghost...），每物种独立 sprite atlas，形态区分度由独立美术解决；vector paper-doll 路由已废弃删除。缺图对象由 `EntityGraphics` 按纹理存在性回退兜底绘制（占位矩形 + 粗黑描边 + 白色问号）。词库≫独立美术资源：近义词条可共享同一 atlas（如 amulet 复用 gem、totem-mini 复用 totem），并经 aliases 扩充可识别词汇
+- 游戏内远景背景已接入 GPT 生图双板：远板固定屏天空盒（`scrollFactor 0,0`）+ 近板水平无缝视差中景（`scrollFactor 0.5`），缺图自动回退程序化分层绘制；提示词见 `docs/background-prompts.md`
 - 双语闭集分词（中/英输入解析，零通用 NLP 依赖）
 - 声明式规则引擎 + 三重限流对抗反应链
 - 程序化粒子（火/蒸汽/墨迹飞溅）+ Filter 后处理（Glow/Vignette/ColorMatrix）
-- 涂鸦手绘纸片质感：手绘抖动笔触 + 纸片落地软影 + Camera 级纸纹颗粒，全手写字体 UI
-- 分层视差环境：天空/远山/云/中景/地面/前景草丛，`setScrollFactor` 驱动，零 per-frame 重绘
+- 涂鸦手绘纸片质感：手绘抖动笔触 + 纸片落地软影 + Camera 级纸纹颗粒，自托管无衬线字体 UI
+- 分层视差环境：天空/远山/云/中景/地面/前景草丛，`setScrollFactor` 驱动，零 per-frame 重绘；主题色板覆盖丛林/洞穴/雪原/沙漠/火山
 - 生成动效：物体从笔记本飞出 + 墨迹飞溅 + pop-in 缩放（复用 `FxParticles.burst`）
 - Maxwell 专属渲染器（罗纹帽/背包带/表情眼/走路 bounce/跳跃 squash/stretch）
 - Starite 可见化：挑战完成时 5 角星从世界点飞向 HUD 进度面板
+- 标题页：生成式手绘全屏 key art 直接承载 Logo、背景、Maxwell 与场景道具，采用浅色低对比度处理，DOM 仅叠加按钮
+- 音乐：跨场景 Web Audio 合成 5 声部循环旋律（主旋律 + 和声 + 低音 + 琶音 + 打击），模拟钟琴/马林巴/拨弦/木管/低音拨弦音色（OfflineAudioContext 预渲染 AudioBuffer 缓存复用），支持标题/草地/洞穴/丛林/雪原/沙漠/火山 7 主题切换与静音
+- 音效：生成、跳跃、着地、拾取、挑战完成、Starite 收集、UI 点击、错误提示等全程合成音效，复用音乐 AudioContext 与音色库
+- 设置页：独立设置场景，提供界面语言（中文/English，切换即时生效并持久化，覆盖 UI 文案与游戏内 NPC 对话/物体名/题面）、音乐/音效音量滑块（实时生效）、主静音开关（同时控制音乐与音效）、屏幕方向（跟随设备/锁定横屏）、触屏控制（自动/开启/关闭）、难度档位（基础/进阶/大师）与难度定义方式（CEFR 等级/词频排名）切换、题目种子查看/输入/刷新、清除存档，偏好 localStorage 持久化跨会话记忆
+- 多设备适配：电脑/手机/平板多尺寸自适应（`Scale.RESIZE` + DOM overlay 响应式 + `env(safe-area-inset-*)`），触屏设备自动显示虚拟摇杆（左下）与跳跃/交互按钮（右下），桌面端键盘体验不受影响；横竖屏切换时固定屏背景层与 UI 浮层自动重布局
 
 ## 技术栈
 
@@ -44,11 +50,15 @@ npm test           # 运行纯逻辑单测
 ## 玩法
 
 - **笔记本**：屏幕底部输入框，输入词回车生成物体（中/英均可）。例：`狗` / `dog` / `飞行的紫色的章鱼`。
-- **形容词**：输入"基础词 + 形容词"组合，如`大的狗`、`飞行的紫色的章鱼`；选中实体后输入纯形容词（如`燃烧`）回车即对该实体施加。
+- **形容词**：输入"基础词 + 形容词"组合，如`大的狗`、`飞行的紫色的章鱼`；选中实体后输入纯形容词（如`燃烧`）回车即对该实体施加。词典现覆盖动物/元素/物品/食物/武器/植物/载具/工具多类基础词（500+ 独立词条，含同义词别名可识别词汇 2000+），以及体型/颜色/材质/状态/行为五类形容词（80+），可组合出大量变体。
 - **规则交互**：火点燃可燃物（连锁燃烧）、水灭火、锋利武器切断绳子、冷源冻水成冰、武器伤害生物、带电物体电击肉体。
-- **关卡**：overworld 草地区域 + 自包含关卡，经区域衔接传送。挑战由 NPC 发起，满足条件得 Starite/碎片。
-- **物体编辑器**：按 `E` 打开，组合"基础词条 + 形容词 + 新名称"保存为自定义物体，之后输入该名即可生成。
-- **玩家控制**：WASD/方向键移动，空格/W/↑跳跃，F 拾取面前物体，G 投掷/下坐骑，鼠标拖拽物体投掷。
+- **关卡**：5 关 5 主题（丛林草地 / 洞穴 / 雪原 / 沙漠 / 火山），经区域衔接传送。挑战由 NPC 发起，满足条件得 Starite/碎片。有未完成挑战的 NPC 头顶浮动金色 "!" 徽章提示；玩家靠近触发对话气泡时该 NPC 暂停移动，气泡稳定可读。
+- **难度**：在设置页统一配置难度档（基础/进阶/大师）与分档标准（CEFR 等级 / 词频排名），进入关卡时直接生效，无需逐关选择。题库 800+ 题，三层结构：情境多答案题（NPC 第一人称陈述困境如"好冷""天黑""饿""渴""怪物挡路"，不点名目标，2~6 个语义关联答案任一即过关）/ 词条覆盖单答案题（538 词条每个至少一道故事化题面）/ 形容词组合题（如"红色的鸟""凶猛的狗"，严格校验输错颜色/行为不算过关），按所选难度过滤后由存档种子随机抽取分配给本关 NPC。难度设置持久化到存档。题目种子可在设置页查看/输入/一键刷新，换种子重置所有关卡题目进度（保留关卡解锁与自制物体）。
+- **选关**：标题页"选择关卡"进入关卡选择界面，卡片网格展示全部关卡，任意关卡可直接进入（无解锁限制）。每张卡片右下角提供「重置」按钮清空本关进度重玩，右上角「重置所有」按钮一键清空全部进度（挑战/Starite/碎片），自制物体保留。进度状态持久化到存档。
+- **对象操作面板**：点击实体后展开，可直接使用笔记本、创建物体、给当前实体添加形容词，或打开物体编辑器；点击空白处关闭。
+- **物体编辑器**：按 `E` 打开，或从对象操作面板进入；组合"基础词条 + 形容词 + 新名称"保存为自定义物体，之后输入该名即可生成。
+- **玩家控制**：WASD/方向键移动，空格/W/↑跳跃，F 拾取面前物体，G 投掷/下坐骑，鼠标拖拽物体投掷。触屏设备自动显示虚拟摇杆（左下）与跳跃/交互按钮（右下），可在设置中关闭。地图预生成的 NPC、树、石头等实体不阻挡玩家（穿行无阻），玩家生成的物体与之正常碰撞以驱动规则。
+- **暂停**：窗口失去焦点或按 `ESC` 自动暂停游戏（物理、规则引擎、行为系统、音乐全部停转，纸片风全屏遮罩提示），点击遮罩或再按 `ESC` 恢复。
 
 ## 架构分层
 
@@ -57,20 +67,20 @@ src/
 ├── core/            领域核心层（纯 TS，零 Phaser 依赖，可单测）
 │   ├── lex/         双语闭集分词
 │   ├── rules/       声明式规则引擎 + TagSet + TagIndex + effects
-│   ├── data/        词典/形容词/规则/关卡 JSON + 存档
+│   ├── data/        词典/形容词/规则/关卡 JSON/题库 + 存档
 │   ├── entity/     Entity 抽象接口
 │   ├── game/        GoalSystem（挑战评估）
 │   └── types/       纯类型
 ├── engine/          Phaser 集成层
 │   ├── scenes/      WorldScene（调度链）
 │   ├── physics/     Matter 适配（碰撞/Constraint/Query）
-│   └── render/      矢量渲染器（Graphics）+ Camera + EntityGraphics + Environment（分层视差）+ renderers（含 maxwell/starite/decor）
+│   └── render/      sprite atlas 渲染器（registry/EntityGraphics/spriteRenderers）+ Camera + Environment（分层视差，背景程序化绘制）+ VectorDraw（纯工具函数）
 ├── game/            游戏逻辑层（桥接 core 与 engine）
 │   ├── Entity.ts    GameEntity（持 GameObject + Matter body）
 │   ├── Spawner.ts PlayerController.ts MousePicker.ts
-│   ├── BehaviorSystem.ts LevelManager.ts DialogSystem.ts
+│   ├── BehaviorSystem.ts LevelManager.ts DialogSystem.ts QuestMarker.ts
 │   ├── AdjectiveSystem.ts ObjectEditor.ts
-├── ui/              DOM 浮层（Notebook/Hud/ProgressPanel/SpeechBubble/...，涂鸦纸片风 + 手写字体 + 内联 Lucide 图标）
+├── ui/              DOM 浮层（Notebook/Hud/ProgressPanel/SpeechBubble/...，涂鸦纸片风 + 自托管无衬线字体 + 内联 Lucide 图标）
 ├── fx/              视觉增强（Filter/粒子/SpawnFx 生成动效/自定义 shader）
 └── util/            日志（console，英文）
 tests/               纯逻辑单测

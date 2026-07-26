@@ -1,0 +1,135 @@
+{
+  "frames": {
+    "quadruped_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 64
+      }
+    },
+    "quadruped_walk_0": {
+      "frame": {
+        "x": 80,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 64
+      }
+    },
+    "quadruped_walk_1": {
+      "frame": {
+        "x": 160,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 64
+      }
+    },
+    "quadruped_walk_2": {
+      "frame": {
+        "x": 240,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 64
+      }
+    },
+    "quadruped_walk_3": {
+      "frame": {
+        "x": 320,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 64
+      }
+    },
+    "quadruped_jump": {
+      "frame": {
+        "x": 400,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 80,
+        "h": 64
+      },
+      "sourceSize": {
+        "w": 80,
+        "h": 64
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "quadruped.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 480,
+      "h": 64
+    },
+    "scale": "1"
+  }
+}

@@ -1,4 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <rect width="32" height="32" rx="7" fill="#1b2233"/>
-  <text x="16" y="22" font-family="system-ui,sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#ffd25a">涂</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none">
+  <rect x="0.75" y="0.75" width="30.5" height="30.5" rx="8" fill="#151B2A" stroke="#34405C" stroke-width="1.5"/>
+
+  <!-- 生成轨迹：从输入动作延伸到 Starite -->
+  <path d="M4.5 23.5c3.2-1.1 5.5-3.3 6.8-6.4 1.6-3.7 3.8-6.4 6.8-7.8 2.3-1.1 4.9-1.2 7.8-.3" stroke="#58D5CC" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="25.7" cy="9" r="1.4" fill="#58D5CC"/>
+
+  <!-- Starite：项目内的核心收集物 -->
+  <path d="m16 4.1 2.9 6.7 7.2.7-5.4 4.7 1.7 7-6.4-3.7-6.4 3.7 1.7-7-5.4-4.7 7.2-.7L16 4.1Z" fill="#FFD25A" stroke="#0B1020" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="m16 7 1.5 4.1 4.3.5-3.2 2.7.9 3.9-3.5-2-3.5 2 .9-3.9-3.2-2.7 4.3-.5L16 7Z" fill="#FFF1A5" opacity=".72"/>
+
+  <!-- 小型灵感闪光，保持 16px 下仍可辨识 -->
+  <path d="m7.1 6.1.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z" fill="#FF8F70"/>
 </svg>

@@ -53,6 +53,8 @@ export interface PhysicsSpec {
   isStatic?: boolean;
   /** 飞行/飘浮用空气阻力 */
   frictionAir?: number;
+  /** 锁定旋转（双足/四足生物防止倒地） */
+  fixedRotation?: boolean;
   /** shape='compound' 时的部件列表 */
   parts?: CompoundPart[];
 }

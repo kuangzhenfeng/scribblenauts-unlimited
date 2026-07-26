@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "cupboard_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 60,
+        "h": 68
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 60,
+        "h": 68
+      },
+      "sourceSize": {
+        "w": 60,
+        "h": 68
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "cupboard.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 60,
+      "h": 68
+    },
+    "scale": "1"
+  }
+}

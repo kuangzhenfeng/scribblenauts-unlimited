@@ -7,9 +7,11 @@
 
 import type { ParseCandidate } from '@/core/lex/InputParser';
 import type { DictEntry } from '@/core/types/dictionary';
+import type { AdjectiveEntry } from '@/core/types/adjective';
 import { getEntry } from '@/core/data/dictionary/Dictionary';
 import { getAdjective } from '@/core/data/dictionary/adjectives';
-import { HAND_FONT, PAPER_BG, INK, INK_HIGHLIGHT, TORN_EDGE, PAPER_SHADOW } from './paperStyle';
+import { entryName, getLang } from '@/core/i18n/I18n';
+import { UI_FONT, PAPER_BG, INK, INK_HIGHLIGHT, TORN_EDGE, PAPER_SHADOW } from './paperStyle';
 
 export interface CandidateMenuCallbacks {
   onSelect: (candidate: ParseCandidate) => void;
@@ -48,8 +50,12 @@ export class CandidateMenu {
       const div = document.createElement('div');
       div.textContent = this.labelFor(c);
       div.style.cssText = itemStyle(i === this.selected);
-      div.addEventListener('mouseenter', () => this.select(i));
-      div.addEventListener('click', () => this.confirm());
+      // pointerdown 统一鼠标与触摸，消除移动端 hover 死区
+      div.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        this.select(i);
+        this.confirm();
+      });
       this.el.appendChild(div);
       return div;
     });
@@ -90,11 +96,15 @@ export class CandidateMenu {
 
   private labelFor(c: ParseCandidate): string {
     const noun = getEntry(c.noun.entryId) as DictEntry | undefined;
-    const nounLabel = noun ? `${noun.zh.name}（${noun.en.name}）` : c.noun.text;
+    // 当前语言名为主，副语言名为注
+    const lang = getLang();
+    const nounPrimary = noun ? entryName(noun) : c.noun.text;
+    const nounSecondary = noun ? (lang === 'zh' ? noun.en.name : noun.zh.name) : '';
+    const nounLabel = nounSecondary ? `${nounPrimary}（${nounSecondary}）` : nounPrimary;
     const adjLabels = c.adjectives
       .map((a) => {
-        const adj = getAdjective(a.adjId);
-        return adj ? adj.zh.name : a.text;
+        const adj = getAdjective(a.adjId) as AdjectiveEntry | undefined;
+        return adj ? entryName(adj) : a.text;
       })
       .join('·');
     return adjLabels ? `${adjLabels} ${nounLabel}` : nounLabel;
@@ -105,13 +115,13 @@ function menuStyle(): string {
   return [
     'position:fixed',
     'left:50%',
-    'bottom:96px',
+    'bottom:max(96px,env(safe-area-inset-bottom))',
     'transform:translateX(-50%)',
-    'width:min(560px,92vw)',
+    'width:min(560px,calc(92vw - 16px))',
     `background:${PAPER_BG}`,
     `box-shadow:${PAPER_SHADOW}`,
     `color:${INK}`,
-    `font-family:${HAND_FONT}`,
+    `font-family:${UI_FONT}`,
     'font-size:15px',
     'padding:6px',
     TORN_EDGE,

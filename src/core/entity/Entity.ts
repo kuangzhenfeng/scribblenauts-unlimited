@@ -18,8 +18,19 @@ import type { BehaviorSpec } from '@/core/types/dictionary';
 export interface EntityState {
   /** 动画累计时间（毫秒），用于周期性绘制（行走摆动等） */
   animTime: number;
-  /** 当前移动模式，驱动渲染器状态机分支 */
-  locomotion: 'idle' | 'walk' | 'fly' | 'swim' | 'attack' | 'jump';
+  /**
+   * 当前移动模式，驱动渲染器状态机分支。
+   * 对齐原版 Scribblenauts Unlimited：
+   *  idle  — 站立呼吸
+   *  walk  — 行走周期
+   *  jump  — 跳跃上升阶段（vy < 0）
+   *  fall  — 空中下落阶段（vy ≥ 0）
+   *  fly   — 飞行（鸟类/有翼生物）
+   *  swim  — 游泳
+   *  attack — 攻击挥击
+   *  dead  — 死亡/击败
+   */
+  locomotion: 'idle' | 'walk' | 'jump' | 'fall' | 'fly' | 'swim' | 'attack' | 'dead';
   /** 朝向：-1 朝左 / 1 朝右 */
   facing: number;
   /** 颜色覆盖（来自形容词），undefined 则用词条默认 */
@@ -80,6 +91,12 @@ export interface Entity {
   isPlayer?: boolean;
   /** 运行时行为列表（从词条复制，供 BehaviorSystem AI 分发） */
   behaviors?: BehaviorSpec[];
+  /**
+   * 被施加的形容词 id 集合（Spawner 在 applyAdjectives 后写入）。
+   * 供 GoalSystem 校验"红色鸟"等形容词题目：实体 appliedAdjectives 须为
+   * 题目要求 adjectives 的超集才算过关。
+   */
+  appliedAdjectives?: Set<string>;
   /** 渲染隐藏（骑乘时玩家本体隐藏） */
   hidden?: boolean;
   /** AI 临时记忆（wander 方向与计时等），按需创建 */

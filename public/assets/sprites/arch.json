@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "arch_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 120
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 120
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 120
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "arch.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 96,
+      "h": 120
+    },
+    "scale": "1"
+  }
+}

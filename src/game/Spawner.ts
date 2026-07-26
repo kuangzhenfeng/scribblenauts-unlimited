@@ -10,11 +10,12 @@ import { getEntry, getCustomDef } from '@/core/data/dictionary/Dictionary';
 import type { ParseCandidate, ParsedAdjective } from '@/core/lex/InputParser';
 import type { EntityManager } from './EntityManager';
 import { GameEntity } from './Entity';
-import type { Physics } from '@/engine/physics/Physics';
+import type { Physics, CollisionRole } from '@/engine/physics/Physics';
 import { TagSet } from '@/core/rules/TagSet';
 import type { TagIndex } from '@/core/rules/TagIndex';
 import { applyAdjectives } from './AdjectiveSystem';
 import { log } from '@/util/log';
+import { sfx } from '@/audio/SoundEffects';
 import type Phaser from 'phaser';
 
 
@@ -47,8 +48,8 @@ export class Spawner {
     private readonly entities: EntityManager,
     private readonly physics: Physics,
     private readonly tagIndex: TagIndex,
-    /** 渲染器工厂：(scene, entity) → GameObject（Phase 3 注入占位） */
-    private readonly createGameObject: (scene: Phaser.Scene, e: GameEntity) => Phaser.GameObjects.GameObject | undefined,
+    /** 渲染器工厂：(scene, entity) → GameObject（未注册渲染器时返回兜底 Graphics） */
+    private readonly createGameObject: (scene: Phaser.Scene, e: GameEntity) => Phaser.GameObjects.GameObject,
     private readonly now: () => number = () => 0,
   ) {}
 
@@ -79,12 +80,13 @@ export class Spawner {
     return n < Spawner.MAX_OBJECTS;
   }
 
-  spawnEntry(entry: DictEntry, candidate?: ParseCandidate, x = 0, y = 0): SpawnResult {
+  spawnEntry(entry: DictEntry, candidate?: ParseCandidate, x = 0, y = 0, rendererIdOverride?: string, collisionRole?: CollisionRole): SpawnResult {
     if (!this.canSpawn()) {
       log.warn('spawn rejected: object limit reached');
+      sfx.play('error');
       return { reason: '物体已达上限' };
     }
-    const body = this.physics.createBody(entry.physics, entry.size, x, y);
+    const body = this.physics.createBody(entry.physics, entry.size, x, y, collisionRole);
     const tags = TagSet.fromRaw({
       material: entry.tags.material,
       temperature: entry.tags.temperature,
@@ -100,26 +102,32 @@ export class Spawner {
       typeId: entry.id,
       body,
       tags,
-      rendererId: entry.appearance.renderer,
+      rendererId: rendererIdOverride ?? entry.appearance.renderer,
       layer: 1,
       critical: false,
       lastTouchedAt: this.now(),
       health: hp,
       maxHealth: hp,
+      drawParams: { ...entry.appearance.params },
     });
-    if (candidate) applyAdjectives(entity, candidate, entry);
-
-    // 创建 GameObject（占位或矢量渲染器）并挂 body
-    const go = this.createGameObject(this.scene, entity);
-    if (go) {
-      entity.gameObject = go;
-      this.physics.attachBody(go, body);
-    } else {
-      this.physics.addBody(body);
+    if (candidate) {
+      applyAdjectives(entity, candidate, entry);
+      // 记录被施加的形容词 id 集合，供 GoalSystem 校验"红色鸟"等形容词题目
+      entity.appliedAdjectives = new Set(candidate.adjectives.map((a) => a.adjId));
     }
+    // 词条声明的 AI 行为传给实体，供 BehaviorSystem 驱动
+    if (entry.behaviors && entry.behaviors.length > 0) {
+      entity.behaviors = entry.behaviors;
+    }
+
+    // 创建 GameObject（sprite/vector/兜底 Graphics）并挂 body
+    const go = this.createGameObject(this.scene, entity);
+    entity.gameObject = go;
+    this.physics.attachBody(go, body);
     this.physics.bindEntity(body, entity);
     this.tagIndex.attach(entity, tags);
     this.entities.add(entity, body.id);
+    sfx.play('spawn');
     log.info('spawned', {
       typeId: entry.id,
       adj: candidate?.adjectives.map((a) => a.adjId) ?? [],
@@ -137,11 +145,11 @@ export class Spawner {
   spawnPlayer(x: number, y: number): GameEntity {
     const entry = getEntry('human');
     if (!entry) throw new Error('human entry missing');
-    const r = this.spawnEntry(entry, undefined, x, y);
+    // 用 rendererIdOverride='maxwell' 确保 createEntityGraphics 在正确 rendererId 下创建 Sprite
+    const r = this.spawnEntry(entry, undefined, x, y, 'maxwell', 'player');
     const e = r.entity!;
     e.isPlayer = true;
     e.critical = true;
-    e.rendererId = 'maxwell';
     e.drawParams = { shirtColor: '#E74C3C', pantsColor: '#3A3A3A', skinColor: '#F2C9A0' };
     this.entities.setPlayer(e.id);
     log.info('player spawned', { id: e.id, x, y });

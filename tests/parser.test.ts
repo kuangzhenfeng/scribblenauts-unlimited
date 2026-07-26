@@ -39,8 +39,8 @@ describe('parseInput bilingual nouns', () => {
     expect(cs[0].noun.entryId).toBe('dog');
   });
 
-  it('parses alias puppy (en)', () => {
-    const cs = parseInput('puppy');
+  it('parses alias hound (en)', () => {
+    const cs = parseInput('hound');
     expect(cs[0].noun.entryId).toBe('dog');
   });
 });

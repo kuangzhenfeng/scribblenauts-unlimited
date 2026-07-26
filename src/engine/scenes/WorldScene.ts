@@ -18,10 +18,12 @@ import { Camera } from '@/engine/render/Camera';
 import { createEntityGraphics, syncGraphics, drawHighlight } from '@/engine/render/EntityGraphics';
 import { Environment } from '@/engine/render/Environment';
 import { LevelManager } from '@/game/LevelManager';
+import type { DifficultyTier, DifficultyStandard } from '@/core/types/question';
 import { PlayerController } from '@/game/PlayerController';
 import { MousePicker } from '@/game/MousePicker';
 import { BehaviorSystem } from '@/game/BehaviorSystem';
 import { DialogSystem } from '@/game/DialogSystem';
+import { QuestMarker } from '@/game/QuestMarker';
 import { GoalSystem, type ProgressCallbacks, type LevelRef } from '@/core/game/GoalSystem';
 import { ObjectEditor } from '@/game/ObjectEditor';
 import { Notebook } from '@/ui/Notebook';
@@ -29,6 +31,9 @@ import { Hud } from '@/ui/Hud';
 import { ProgressPanel } from '@/ui/ProgressPanel';
 import { SpeechBubble } from '@/ui/SpeechBubble';
 import { ObjectEditorUi } from '@/ui/ObjectEditorUi';
+import { ObjectActionPanel } from '@/ui/ObjectActionPanel';
+import { PauseOverlay } from '@/ui/PauseOverlay';
+import { TouchControls } from '@/ui/TouchControls';
 import { SaveStore } from '@/core/data/save/SaveStore';
 import { registerCustomObject, getCustomDef, getEntry } from '@/core/data/dictionary/Dictionary';
 import { applyAdjectives } from '@/game/AdjectiveSystem';
@@ -37,10 +42,27 @@ import { FxFilters } from '@/fx/Filters';
 import { SpawnFx } from '@/fx/SpawnFx';
 import { ensureParticleTextures } from '@/fx/particleTexture';
 import { log } from '@/util/log';
+import { music, type MusicMood } from '@/audio/MusicDirector';
+import { sfx } from '@/audio/SoundEffects';
+import { loadSettings } from '@/core/data/settings/SettingsStore';
+import { ICON_ROTATE } from '@/ui/icons';
+import { UI_FONT } from '@/ui/paperStyle';
 import type { GameEntity } from '@/game/Entity';
 import type { ParseCandidate, ParsedAdjective } from '@/core/lex/InputParser';
 
 const START_LEVEL = 'overworld-meadow';
+
+/** 关卡主题 → 音乐情绪映射（替换旧硬编码 cave/meadow 二分） */
+function themeToMood(theme: string): MusicMood {
+  switch (theme) {
+    case 'cave': return 'cave';
+    case 'snow': return 'snow';
+    case 'desert': return 'desert';
+    case 'volcano': return 'volcano';
+    case 'jungle': return 'jungle';
+    default: return 'meadow';
+  }
+}
 
 export class WorldScene extends Phaser.Scene {
   private phys!: Physics;
@@ -55,23 +77,40 @@ export class WorldScene extends Phaser.Scene {
   private picker!: MousePicker;
   private behavior!: BehaviorSystem;
   private dialog!: DialogSystem;
+  private questMarker!: QuestMarker;
   private goal!: GoalSystem;
   private hud!: Hud;
   private progress!: ProgressPanel;
   private bubble!: SpeechBubble;
   private objectEditorUi!: ObjectEditorUi;
+  private objectActionPanel!: ObjectActionPanel;
+  private pauseOverlay!: PauseOverlay;
+  /** 游戏是否处于暂停态（窗口失焦或 ESC 触发） */
+  private paused = false;
   private save!: SaveStore;
+  /** 当前会话的难度设置（create 时从场景数据捕获，跨关 load 复用） */
+  private diffTier: DifficultyTier = 1;
+  private diffStandard: DifficultyStandard = 'cefr';
+  /** 题目随机种子（从存档读取，跨关 load 复用；换种子 = 换一轮题目） */
+  private questionSeed = '';
   private highlightG!: Phaser.GameObjects.Graphics | undefined;
   private ready = false;
   private fxFx!: FxFilters;
   private fxParticles!: FxParticles;
   private spawnFx!: SpawnFx;
+  private touchControls!: TouchControls;
+  /** 旋转提示遮罩（landscape 模式且当前为竖屏时显示） */
+  private rotateHint: HTMLDivElement | undefined;
+  /** orientation.change 监听器引用，shutdown 时移除 */
+  private orientationListener: (() => void) | undefined;
+  /** resize 节流计时器 */
+  private resizeTimer: number | undefined;
 
   constructor() {
     super({ key: 'WorldScene' });
   }
 
-  async create(): Promise<void> {
+  async create(data: { levelId?: string } = {}): Promise<void> {
     const { width, height } = this.scale;
     void width;
     void height;
@@ -119,7 +158,9 @@ export class WorldScene extends Phaser.Scene {
     );
 
     this.level = new LevelManager(this.entities, this.spawner, this.phys);
-    this.behavior = new BehaviorSystem(this.entities, () => this.time.now, deps);
+    // BehaviorSystem 延迟读取 dialog.dialogActiveEntityId：构造期 this.dialog 尚未赋值，
+    // getter 在 update 时才求值，届时 DialogSystem 已创建
+    this.behavior = new BehaviorSystem(this.entities, () => this.time.now, deps, () => this.dialog.dialogActiveEntityId);
 
     // UI 浮层
     this.hud = new Hud();
@@ -129,22 +170,23 @@ export class WorldScene extends Phaser.Scene {
 
     // 进度回调
     const cb: ProgressCallbacks = {
-      onShard: (t) => this.progress.render(this.goal.stariteCount, t),
-      onStarite: (t) => this.progress.render(t, this.goal.shardCount),
+      onShard: (t) => this.progress.render(this.goal.stariteCount, t, this.level.completedArray()),
+      onStarite: (t) => this.progress.render(t, this.goal.shardCount, this.level.completedArray()),
       onChallengeComplete: (challengeId, dialogZh) => {
         // Starite 从关卡 starite 位置或 giver NPC 头顶飞向 HUD
         const lvl = this.level.currentLevel;
-        if (lvl) {
+        if (lvl?.challenges) {
           const ch = lvl.challenges.find((c) => c.id === challengeId);
           const staritePos = lvl.starite;
           const giverNpcEid = ch ? this.level.npcEntityId(ch.giverNpcId) : undefined;
           const giverNpc = giverNpcEid ? (this.entities.get(giverNpcEid) as GameEntity | undefined) : undefined;
           const fromX = staritePos?.x ?? giverNpc?.bodyPositionX ?? 0;
           const fromY = staritePos?.y ?? (giverNpc ? giverNpc.bodyPositionY - 60 : 0);
-          this.spawnFx.playStariteFly(fromX, fromY);
+          sfx.play('questComplete');
+          this.spawnFx.playStariteFly(fromX, fromY, () => sfx.play('starite'));
         }
         this.progress.toast(`完成！${dialogZh}`);
-        setTimeout(() => this.progress.render(this.goal.stariteCount, this.goal.shardCount), 2400);
+        setTimeout(() => this.progress.render(this.goal.stariteCount, this.goal.shardCount, this.level.completedArray()), 2400);
       },
       onWin: () => this.progress.toast('通关！Lily 解除石化'),
       onProgress: async (starites, shards, completed) => {
@@ -154,14 +196,28 @@ export class WorldScene extends Phaser.Scene {
 
     this.goal = new GoalSystem(this.entities, this.level as LevelRef, cb);
     this.dialog = new DialogSystem(this.entities, this.level, this.bubble, this.camera);
+    this.questMarker = new QuestMarker(this, this.entities, this.level, this.dialog);
 
     // 恢复存档：自定义物体 + 进度
     await this.restoreSave();
+    // 难度设置 + 题目种子均来自存档（设置页统一配置），跨关 load 复用
+    const saveData = await this.save.load();
+    this.diffTier = saveData.difficultySetting.tier;
+    this.diffStandard = saveData.difficultySetting.standard;
+    this.questionSeed = saveData.questionSeed;
 
-    // 加载首关
-    this.level.load(START_LEVEL);
+    // 加载首关（支持选关场景传入 levelId）
+    const startLevelId = data.levelId ?? START_LEVEL;
+    this.level.load(startLevelId, undefined, {
+      tier: this.diffTier,
+      standard: this.diffStandard,
+      seedSalt: this.questionSeed,
+    });
     this.camera.clampTo = this.level.currentLevel?.bounds;
     this.environment.build(this.level.currentLevel!);
+    music.start(themeToMood(this.level.currentLevel?.theme ?? 'meadow'));
+    // 初始化顶栏挑战节点
+    this.progress.setLevel(this.level.currentLevel!.challenges ?? []);
 
     // 玩家（首关生成后 spawnPlayer）
     const lvl = this.level.currentLevel!;
@@ -171,6 +227,8 @@ export class WorldScene extends Phaser.Scene {
     // 输入
     this.player = new PlayerController(this.entities, this.phys);
     this.player.attach(this);
+    // 兜底重生点：选关进入无 keepPlayer，lastGroundedPos 初始 {0,0}，用 playerStart 兜底
+    this.player.setRespawnPoint(lvl.playerStart.x, lvl.playerStart.y);
     this.picker = new MousePicker(this, this.entities, this.phys, this.camera);
     this.picker.attach();
 
@@ -185,12 +243,89 @@ export class WorldScene extends Phaser.Scene {
       });
     }
 
-    // 笔记本（DOM 元素挂在 document.body，事件闭包持有引用，无需存字段）
-    new Notebook({
+    // 笔记本（默认隐藏；Enter 键 / 右上角按钮切换，ESC 关闭）
+    const notebook = new Notebook({
       onSpawn: (c, sx, sy) => this.onSpawn(c, sx, sy),
       onApplyAdjectives: (entityId, adjs) => this.onApplyAdjectives(entityId, adjs),
       selectedEntityId: () => this.picker.selectedId,
     });
+    this.objectActionPanel = new ObjectActionPanel({
+      onUseNotebook: () => notebook.show('spawn'),
+      onCreateObject: () => notebook.show('spawn'),
+      onAddAdjective: () => notebook.show('adjective'),
+      onEditObject: (entity) => this.objectEditorUi.openForEntity(entity),
+    });
+    this.picker.onSelectionChanged = (entityId) => {
+      const entity = entityId ? (this.entities.get(entityId) as GameEntity | undefined) : undefined;
+      if (entity) this.objectActionPanel.show(entity);
+      else this.objectActionPanel.hide();
+    };
+
+    // 右上角笔记本图标按钮
+    const nbBtn = document.createElement('div');
+    nbBtn.id = 'notebook-btn';
+    nbBtn.title = '打开笔记本（Enter）';
+    nbBtn.style.cssText = [
+      'position:fixed',
+      `top:max(14px,env(safe-area-inset-top))`,
+      `right:max(14px,env(safe-area-inset-right))`,
+      'z-index:51',
+      'width:46px',
+      'height:46px',
+      'background:linear-gradient(145deg,#f0d060 0%,#c88010 100%)',
+      'border:3px solid #3d2200',
+      'border-radius:12px',
+      'display:flex',
+      'align-items:center',
+      'justify-content:center',
+      'cursor:pointer',
+      'box-shadow:0 4px 14px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,240,160,0.5)',
+      'transition:transform 0.12s ease,box-shadow 0.12s ease',
+      'user-select:none',
+    ].join(';');
+    nbBtn.innerHTML =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"` +
+      ` fill="none" stroke="#3d2200" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">` +
+      `<line x1="18" y1="2" x2="22" y2="6"/>` +
+      `<path d="M7.5 20.5 19 9l-4-4L3.5 16.5 2 22z"/>` +
+      `</svg>`;
+    nbBtn.addEventListener('mouseenter', () => {
+      nbBtn.style.transform = 'scale(1.1)';
+      nbBtn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.65),inset 0 1px 0 rgba(255,240,160,0.5)';
+    });
+    nbBtn.addEventListener('mouseleave', () => {
+      nbBtn.style.transform = 'scale(1.0)';
+      nbBtn.style.boxShadow = '0 4px 14px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,240,160,0.5)';
+    });
+    nbBtn.addEventListener('click', () => notebook.toggle());
+    document.body.appendChild(nbBtn);
+
+    if (kb) {
+      kb.on('keydown-ENTER', (e: KeyboardEvent) => {
+        const ae = document.activeElement;
+        if (ae instanceof HTMLInputElement || ae instanceof HTMLTextAreaElement) return;
+        e.preventDefault();
+        notebook.show();
+      });
+    }
+
+    // 暂停遮罩 + 失焦/ESC 暂停
+    this.pauseOverlay = new PauseOverlay(() => this.resumeGame());
+
+    // 窗口失焦：Phaser 全局 blur 事件（PlayerController 已用其清空按键集合，
+    // 此处复用同一事件暂停游戏循环与音乐）
+    this.sys.game.events.on('blur', () => this.pauseGame());
+
+    // ESC 暂停：避开输入框聚焦与 Notebook/ConfirmDialog 的 ESC 语义
+    if (kb) {
+      kb.on('keydown-ESC', (e: KeyboardEvent) => {
+        const ae = document.activeElement;
+        if (ae instanceof HTMLInputElement || ae instanceof HTMLTextAreaElement) return;
+        e.preventDefault();
+        if (this.paused) this.resumeGame();
+        else this.pauseGame();
+      });
+    }
 
     // 碰撞事件 → 规则引擎
     this.phys.onCollision((pair) => this.ruleEngine.enqueueCollision(pair));
@@ -204,8 +339,98 @@ export class WorldScene extends Phaser.Scene {
     this.spawnFx = new SpawnFx(this, this.fxParticles, this.camera);
     this.refreshFireParticles();
 
+    // 触屏虚拟控制：按设置显隐，触屏设备开箱可玩
+    this.touchControls = new TouchControls(this.player);
+    if (TouchControls.shouldShow()) this.touchControls.show();
+    else this.touchControls.hide();
+
+    // 订阅 Phaser ScaleManager 的 RESIZE 事件，重建固定屏背景层 + 通知触屏控制重定位
+    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      // 节流：高频拖窗/旋转时合并到 16ms 后执行，避免背景层反复重建卡顿
+      if (this.resizeTimer !== undefined) window.clearTimeout(this.resizeTimer);
+      this.resizeTimer = window.setTimeout(() => {
+        this.resize(gameSize.width, gameSize.height);
+        this.resizeTimer = undefined;
+      }, 80);
+    });
+
+    // landscape 偏好：竖屏时显示旋转提示遮罩（best-effort，iOS 非 PWA 无法 lock 的兜底）
+    const orientationPref = loadSettings().orientation;
+    if (orientationPref === 'landscape') this._setupRotateHint();
+
     this.ready = true;
-    log.info('WorldScene.create done', { width, height, level: START_LEVEL });
+    log.info('WorldScene.create done', { width, height, level: startLevelId });
+  }
+
+  /**
+   * 窗口尺寸变化重布局：重建固定屏背景层 + 触屏控制重定位。
+   * 由 ScaleManager RESIZE 事件触发（节流后调用），地面/平台/装饰等世界坐标层不动。
+   */
+  resize(width: number, height: number): void {
+    if (!this.ready) return;
+    this.environment.resize(width, height);
+    this.touchControls?.onResize();
+    log.info('WorldScene resize', { width, height });
+  }
+
+  /**
+   * landscape 偏好下，监听方向变化：竖屏时显示旋转提示，横屏时移除。
+   * iOS Safari 非 PWA 不支持 screen.orientation.lock，此遮罩为兜底提示。
+   */
+  private _setupRotateHint(): void {
+    const mq = window.matchMedia('(orientation: portrait)');
+    const update = () => this._updateRotateHint(mq.matches);
+    update();
+    // addEventListener 兼容 Safari < 14 的 addListener
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', update);
+      this.orientationListener = () => mq.removeEventListener('change', update);
+    }
+  }
+
+  private _updateRotateHint(portrait: boolean): void {
+    if (portrait && !this.rotateHint) {
+      const el = document.createElement('div');
+      el.id = 'rotate-hint';
+      el.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'z-index:200',
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'justify-content:center',
+        'gap:18px',
+        'background:rgba(10,18,8,0.86)',
+        'pointer-events:none',
+        'color:#fff8dd',
+        `font-family:${UI_FONT}`,
+        'font-size:22px',
+        'font-weight:900',
+        'letter-spacing:0.1em',
+        'text-align:center',
+        'padding:32px',
+      ].join(';');
+      const icon = document.createElement('div');
+      icon.innerHTML = ICON_ROTATE;
+      icon.style.cssText = 'animation:rotateHint 1.8s ease-in-out infinite';
+      const tip = document.createElement('div');
+      tip.textContent = '旋转设备至横屏以获得最佳体验';
+      el.appendChild(icon);
+      el.appendChild(tip);
+      // 注入旋转动画（命名空间隔离）
+      if (!document.getElementById('rotate-hint-anim')) {
+        const style = document.createElement('style');
+        style.id = 'rotate-hint-anim';
+        style.textContent = '@keyframes rotateHint{0%,100%{transform:rotate(0deg)}50%{transform:rotate(90deg)}}';
+        document.head.appendChild(style);
+      }
+      document.body.appendChild(el);
+      this.rotateHint = el;
+    } else if (!portrait && this.rotateHint) {
+      this.rotateHint.remove();
+      this.rotateHint = undefined;
+    }
   }
 
   /** 同步火焰粒子：为 burning 实体挂粒子，为灭火实体摘粒子 */
@@ -227,16 +452,22 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  /** 生成物体（笔记本回车） */
-  private onSpawn(candidate: ParseCandidate, sx: number, sy: number): void {
-    const w = this.camera.screenToWorld(sx, sy);
-    const r = this.spawner.spawnCandidate(candidate, w.x, w.y - 40);
+  /** 生成物体（笔记本回车）：出现在主角前方约 80px 处 */
+  private onSpawn(candidate: ParseCandidate, _sx: number, _sy: number): void {
+    const p = this.entities.getPlayer() as GameEntity | undefined;
+    const spawnX = p ? p.bodyPositionX + p.state.facing * 80 : 0;
+    const spawnY = p ? p.bodyPositionY - 30 : 0;
+    const r = this.spawner.spawnCandidate(candidate, spawnX, spawnY);
     if (r.reason) {
       this.progress.toast(r.reason);
       return;
     }
     if (r.entity?.gameObject) this.phys.attachBody(r.entity.gameObject, r.entity.body);
-    if (r.entity) this.spawnFx.playSpawn(r.entity, sx, sy);
+    // 特效坐标从世界转屏幕
+    const cam = this.camera.cam;
+    const fxSx = (spawnX - cam.scrollX) * cam.zoom + cam.x;
+    const fxSy = (spawnY - cam.scrollY) * cam.zoom + cam.y;
+    if (r.entity) this.spawnFx.playSpawn(r.entity, fxSx, fxSy);
   }
 
   /** 对选中实体施加形容词 */
@@ -246,6 +477,9 @@ export class WorldScene extends Phaser.Scene {
     const entry = getEntry(e.typeId);
     if (!entry) return;
     applyAdjectives(e, { noun: { entryId: e.typeId, text: '' }, adjectives: adjs, score: 0, raw: '' }, entry);
+    // 合并记录被施加的形容词 id，供 GoalSystem 校验"红色鸟"等形容词题目
+    if (!e.appliedAdjectives) e.appliedAdjectives = new Set<string>();
+    for (const a of adjs) e.appliedAdjectives.add(a.adjId);
   }
 
   /** 恢复存档：自定义物体注入词典 + 进度恢复到 LevelManager/GoalSystem */
@@ -257,15 +491,44 @@ export class WorldScene extends Phaser.Scene {
       registerCustomObject(full);
       void getCustomDef(def.id);
     }
-    if (data.completedChallenges.length) {
-      this.level.restoreCompleted(data.completedChallenges);
+    if (data.completedSlots.length) {
+      this.level.restoreCompleted(data.completedSlots);
     }
-    this.goal.restore(data.starites, data.shards, data.completedChallenges);
-    this.progress.render(data.starites, data.shards);
+    this.goal.restore(data.starites, data.shards, data.completedSlots);
+    this.progress.render(data.starites, data.shards, data.completedSlots);
+  }
+
+  /**
+   * 暂停游戏：物理世界、规则引擎、行为系统、音乐全部停转。
+   * 触发时机：窗口失焦（Phaser blur 事件）/ 按 ESC。
+   * 幂等：已暂停时再调不会重复暂停。
+   */
+  pauseGame(): void {
+    if (this.paused) return;
+    this.paused = true;
+    // Matter World.pause 置 enabled=false，Scene UPDATE 事件驱动的 world.update 会提前返回
+    this.matter.world.pause();
+    music.pause();
+    this.pauseOverlay.show();
+    log.info('game paused');
+  }
+
+  /**
+   * 恢复游戏：物理世界重置步进计时、音乐淡入、遮罩关闭。
+   * 幂等：未暂停时调用为 no-op。
+   */
+  resumeGame(): void {
+    if (!this.paused) return;
+    this.paused = false;
+    this.matter.world.resume();
+    music.resume();
+    this.pauseOverlay.hide();
+    log.info('game resumed');
   }
 
   update(_time: number, deltaMs: number): void {
     if (!this.ready) return;
+    if (this.paused) return;
     const dt = Math.min(deltaMs, 50);
     // 1) 输入 → 玩家运动学
     this.player.update();
@@ -290,14 +553,34 @@ export class WorldScene extends Phaser.Scene {
     this.goal.evaluate();
     // 7) 对话更新
     this.dialog.update();
+    this.questMarker.update(_time);
     // 8) 关卡切换检查
     if (p && this.level.currentLevel) {
       const next = this.level.checkTransition(p.bodyPositionX, p.bodyPositionY);
       if (next) {
         const keepId = p.id;
-        this.level.load(next, keepId);
+        // 先销毁旧实体的 GameObjects，避免精灵图残留场景
+        for (const e of this.entities.all()) {
+          if (e.id === keepId) continue;
+          const ge = e as GameEntity;
+          if (ge.gameObject) ge.gameObject.destroy();
+        }
+        this.level.load(next, keepId, {
+          tier: this.diffTier,
+          standard: this.diffStandard,
+          seedSalt: this.questionSeed,
+        });
         this.camera.clampTo = this.level.currentLevel?.bounds;
         if (this.level.currentLevel) this.environment.build(this.level.currentLevel);
+        music.setMood(themeToMood(this.level.currentLevel?.theme ?? 'meadow'));
+        // 切关后重生点兜底为新关卡 playerStart
+        if (this.level.currentLevel) {
+          this.player.setRespawnPoint(this.level.currentLevel.playerStart.x, this.level.currentLevel.playerStart.y);
+        }
+        // 切关后刷新顶栏挑战节点为新关卡题目
+        this.progress.setLevel(this.level.currentLevel?.challenges ?? []);
+        // 立即 snap 相机到玩家新位置，避免 lerp 造成玩家飞出画面
+        this.camera.snapTo(p.bodyPositionX, p.bodyPositionY);
       }
     }
     // 8b) 环境层每帧更新（云漂移、门户脉动）+ 纸纹漂移
@@ -318,12 +601,27 @@ export class WorldScene extends Phaser.Scene {
     const selEnt = sel ? (this.entities.get(sel) as GameEntity | undefined) : undefined;
     if (selEnt) {
       this.highlightG = drawHighlight(this, selEnt, this.highlightG);
+      if (selEnt.dead) this.objectActionPanel.hide();
     } else if (this.highlightG) {
       this.highlightG.clear();
+      this.objectActionPanel.hide();
     }
     // 10) 相机跟随
     if (p) this.camera.followUpdate(p.bodyPositionX, p.bodyPositionY);
     // HUD
-    this.hud.render(this.entities.count);
+    this.hud.render(this.entities.count, this.goal.stariteCount, this.goal.shardCount);
+  }
+
+  /** 场景关闭时清理 DOM 浮层与监听器，避免切场景后残留 */
+  shutdown(): void {
+    this.pauseOverlay?.hide();
+    this.touchControls?.hide();
+    if (this.resizeTimer !== undefined) window.clearTimeout(this.resizeTimer);
+    if (this.orientationListener) {
+      this.orientationListener();
+      this.orientationListener = undefined;
+    }
+    this.rotateHint?.remove();
+    this.rotateHint = undefined;
   }
 }

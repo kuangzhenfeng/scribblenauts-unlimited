@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "cheese_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 28
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "cheese.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 36,
+      "h": 28
+    },
+    "scale": "1"
+  }
+}

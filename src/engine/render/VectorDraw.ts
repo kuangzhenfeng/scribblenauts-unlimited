@@ -1,9 +1,8 @@
 /**
- * 矢量渲染器接口 —— 用 Phaser Graphics 程序绘制一个物体类别的函数契约。
+ * 渲染工具函数集 —— 颜色/手绘纸片质感工具，供 sprite 路径与兜底绘制共用。
  *
- * 与旧项目差异：DrawContext 的 ctx 改为 Phaser.GameObjects.Graphics（命令式绘制缓冲），
- * 每帧 clear + 重绘；渲染器在本地坐标 (0,0) 为中心绘制。
- * 渲染器不持有状态，纯函数式绘制；所有状态经 DrawContext 传入。
+ * vector paper-doll 路由已废弃删除，本文件降级为纯工具函数库，
+ * 不再导出 VectorRenderer/DrawContext/DrawFn 等渲染器接口。
  */
 
 import type Phaser from 'phaser';
@@ -16,44 +15,9 @@ export interface AABB {
   maxY: number;
 }
 
-/** 实体的绘制变换 */
-export interface DrawTransform {
-  x: number;
-  y: number;
-  rotation: number;
-  scale: number;
-}
+// ── 颜色工具 ────────────────────────────────────────────────────────────────
 
-/** 渲染状态（与 Entity.state 部分对应，渲染层只读所需子集） */
-export interface DrawState {
-  animTime: number;
-  locomotion: 'idle' | 'walk' | 'fly' | 'swim' | 'attack' | 'jump';
-  facing: number;
-  colorOverride?: string;
-  stateLayer: Set<string>;
-}
-
-/** 绘制上下文 */
-export interface DrawContext {
-  /** Phaser Graphics 对象（已应用 transform，在本地坐标 (0,0) 为中心绘制） */
-  g: Phaser.GameObjects.Graphics;
-  transform: DrawTransform;
-  state: DrawState;
-  camera: { zoom: number };
-  /** 实体稳定种子（由 entity id 哈希），供手绘抖动每帧稳定不闪烁 */
-  seed: number;
-}
-
-export type DrawFn = (dc: DrawContext, params: Record<string, unknown>) => void;
-
-export interface VectorRenderer {
-  /** 绘制：g 已应用 transform，渲染器在本地坐标 (0,0) 为中心绘制 */
-  draw: DrawFn;
-  /** 本地坐标包围盒，供点击拾取与排序 */
-  bounds: (params: Record<string, unknown>) => AABB;
-}
-
-/** 颜色工具：hex 字符串 (#RRGGBB) → number（Phaser Graphics 用 number 色） */
+/** 颜色工具：hex 字符串 (#RRGGBB) → number（Phaser Graphics/Sprite.setTint 用 number 色） */
 export function hexToNum(hex: string): number {
   const c = hex.replace('#', '');
   if (c.length === 6) return parseInt(c, 16);
@@ -77,27 +41,7 @@ function clamp(v: number): number {
   return Math.max(0, Math.min(255, v));
 }
 
-/**
- * 二次贝塞尔曲线辅助：在当前 Graphics 路径上追加一段二次贝塞尔。
- *
- * Phaser 4 Graphics 无 quadraticCurveTo（它属于 Curves.Path），用多段折线离散化近似：
- * 取 P0=当前路径点，按 (1-t)²P0 + 2(1-t)t·C + t²·P1 计算点并 lineTo 连接。
- * 注：调用前需已 beginPath + moveTo 到起点。
- */
-export function bezierQuadratic(
-  g: Phaser.GameObjects.Graphics,
-  controlX: number,
-  controlY: number,
-  endX: number,
-  endY: number,
-  segments = 12,
-): void {
-  // 起点取当前路径末点（Graphics 不暴露，调用方须先 moveTo）
-  // 这里无法读取当前点，故要求 endX/endY 作为绝对终点，用 P0 未知 → 改为接受起点
-  // 实际：调用方 moveTo 后，我们用相对参数不可行。改为离散从 (0,0) 起点（本地坐标）。
-  // —— 见下方 bezierQuadraticFrom 实现，渲染器统一改用它。
-  void g; void controlX; void controlY; void endX; void endY; void segments;
-}
+// ── 手绘纸片质感工具（供 Environment 程序化背景与兜底绘制使用） ────────────
 
 /**
  * 从给定起点画二次贝塞尔到终点（离散化折线，lineTo 连接）。
@@ -121,10 +65,6 @@ export function bezierQuadraticFrom(
     g.lineTo(x, y);
   }
 }
-
-// ---- 涂鸦手绘纸片质感工具 ----
-// 设计：抖动量是种子函数（非 animTime）→ 每帧稳定不闪烁；纸片软影/折角高光
-// 下沉到渲染器原语，纸纹颗粒上提到 Camera 级 Noise 层（见 fx/Filters）。
 
 /** 字符串 → 稳定 32 位哈希（供实体 id → 种子） */
 export function hashStr(s: string): number {

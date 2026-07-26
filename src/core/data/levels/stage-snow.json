@@ -1,0 +1,186 @@
+{
+  "id": "stage-snow",
+  "type": "self-contained",
+  "theme": "snow",
+  "bounds": {
+    "minX": -800,
+    "minY": -200,
+    "maxX": 800,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": -600,
+    "y": 320
+  },
+  "transitions": [
+    {
+      "toLevelId": "stage-cave",
+      "at": {
+        "minX": -800,
+        "minY": 350,
+        "maxX": -700,
+        "maxY": 620
+      }
+    },
+    {
+      "toLevelId": "stage-desert",
+      "at": {
+        "minX": 700,
+        "minY": 350,
+        "maxX": 800,
+        "maxY": 620
+      }
+    }
+  ],
+  "terrain": [
+    {
+      "x": -400,
+      "y": 200,
+      "w": 180,
+      "h": 24
+    },
+    {
+      "x": -50,
+      "y": 120,
+      "w": 160,
+      "h": 24
+    },
+    {
+      "x": 300,
+      "y": 200,
+      "w": 200,
+      "h": 24
+    }
+  ],
+  "spawns": [
+    {
+      "typeId": "ice",
+      "x": -250,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "ice",
+      "x": 250,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": -500,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "tree",
+      "x": 500,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "penguin",
+      "x": -350,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "penguin",
+      "x": 350,
+      "y": 330,
+      "layer": 0
+    }
+  ],
+  "npcs": [
+    {
+      "id": "npc-frostborn",
+      "typeId": "human",
+      "x": -200,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#2e86c1",
+        "pantsColor": "#1a5276",
+        "hat": "straw"
+      }
+    },
+    {
+      "id": "npc-traveler",
+      "typeId": "human",
+      "x": 100,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#8e44ad",
+        "pantsColor": "#5b2c6f"
+      }
+    },
+    {
+      "id": "npc-icesage",
+      "typeId": "human",
+      "x": 350,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#e8f0f5",
+        "pantsColor": "#b0d4e8"
+      }
+    }
+  ],
+  "decorations": [
+    {
+      "kind": "snowflake",
+      "x": -600,
+      "y": 80
+    },
+    {
+      "kind": "snowflake",
+      "x": -300,
+      "y": 140
+    },
+    {
+      "kind": "snowflake",
+      "x": 0,
+      "y": 60
+    },
+    {
+      "kind": "snowflake",
+      "x": 300,
+      "y": 120
+    },
+    {
+      "kind": "snowflake",
+      "x": 600,
+      "y": 90
+    },
+    {
+      "kind": "lantern",
+      "x": -350,
+      "y": 540
+    },
+    {
+      "kind": "lantern",
+      "x": 50,
+      "y": 540
+    },
+    {
+      "kind": "lantern",
+      "x": 450,
+      "y": 540
+    },
+    {
+      "kind": "fence",
+      "x": -500,
+      "y": 560
+    },
+    {
+      "kind": "fence",
+      "x": 500,
+      "y": 560
+    }
+  ],
+  "starite": {
+    "x": 600,
+    "y": 300
+  },
+  "challengeSlots": 3
+}

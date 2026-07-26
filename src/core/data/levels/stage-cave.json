@@ -2,20 +2,93 @@
   "id": "stage-cave",
   "type": "self-contained",
   "theme": "cave",
-  "bounds": { "minX": -800, "minY": -200, "maxX": 800, "maxY": 600 },
-  "playerStart": { "x": -600, "y": 320 },
+  "bounds": {
+    "minX": -800,
+    "minY": -200,
+    "maxX": 800,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": -600,
+    "y": 320
+  },
   "transitions": [
-    { "toLevelId": "overworld-meadow", "at": { "minX": -800, "minY": 260, "maxX": -700, "maxY": 360 } }
+    {
+      "toLevelId": "overworld-meadow",
+      "at": {
+        "minX": -800,
+        "minY": 350,
+        "maxX": -700,
+        "maxY": 620
+      }
+    },
+    {
+      "toLevelId": "stage-snow",
+      "at": {
+        "minX": 700,
+        "minY": 350,
+        "maxX": 800,
+        "maxY": 620
+      }
+    }
   ],
   "terrain": [
-    { "x": -400, "y": 200, "w": 180, "h": 24 },
-    { "x": -50, "y": 120, "w": 160, "h": 24 },
-    { "x": 300, "y": 200, "w": 200, "h": 24 }
+    {
+      "x": -400,
+      "y": 200,
+      "w": 180,
+      "h": 24
+    },
+    {
+      "x": -50,
+      "y": 120,
+      "w": 160,
+      "h": 24
+    },
+    {
+      "x": 300,
+      "y": 200,
+      "w": 200,
+      "h": 24
+    }
   ],
   "spawns": [
-    { "typeId": "stone", "x": -200, "y": 330, "layer": 0 },
-    { "typeId": "stone", "x": 200, "y": 330, "layer": 0 },
-    { "typeId": "rope", "x": 0, "y": 200, "layer": 0 }
+    {
+      "typeId": "stone",
+      "x": -200,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "stone",
+      "x": 200,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "rope",
+      "x": 0,
+      "y": 200,
+      "layer": 0
+    },
+    {
+      "typeId": "snake",
+      "x": -300,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "frog",
+      "x": 300,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "mushroom",
+      "x": -100,
+      "y": 570,
+      "layer": 0
+    }
   ],
   "npcs": [
     {
@@ -24,36 +97,81 @@
       "x": 0,
       "y": 320,
       "gender": "male",
-      "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b2b2b", "hat": "miner" }
-    }
-  ],
-  "challenges": [
+      "drawParams": {
+        "shirtColor": "#3b6ea5",
+        "pantsColor": "#2b2b2b",
+        "hat": "miner"
+      }
+    },
     {
-      "id": "ch-cut-rope",
-      "giverNpcId": "npc-miner",
-      "kind": "starite-gate",
-      "puzzle": {
-        "conditions": [
-          { "kind": "object-destroyed", "typeId": "rope" }
-        ]
-      },
-      "reward": { "type": "starite", "count": 1 },
-      "dialog": [
-        { "zh": "矿工：这条绳子挡住了通路，帮我切断它。", "en": "Miner: This rope blocks the path. Help me cut it." },
-        { "zh": "（输入「剑」或「刀」靠近绳子）", "en": "(type 'sword' or 'knife' near the rope)" }
-      ]
+      "id": "npc-cartographer",
+      "typeId": "human",
+      "x": -250,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#8e44ad",
+        "pantsColor": "#5b2c6f"
+      }
+    },
+    {
+      "id": "npc-treasurer",
+      "typeId": "human",
+      "x": 300,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#c9932b",
+        "pantsColor": "#6b4226",
+        "hat": "straw"
+      }
     }
   ],
   "decorations": [
-    { "kind": "stalactite", "x": -500, "y": 0 },
-    { "kind": "stalactite", "x": -200, "y": 0 },
-    { "kind": "stalactite", "x": 250, "y": 0 },
-    { "kind": "stalactite", "x": 550, "y": 0 },
-    { "kind": "lantern", "x": -350, "y": 540 },
-    { "kind": "lantern", "x": 50, "y": 540 },
-    { "kind": "lantern", "x": 450, "y": 540 },
-    { "kind": "mushroom", "x": -100, "y": 570 },
-    { "kind": "mushroom", "x": 380, "y": 570 }
+    {
+      "kind": "stalactite",
+      "x": -500,
+      "y": 0
+    },
+    {
+      "kind": "stalactite",
+      "x": -200,
+      "y": 0
+    },
+    {
+      "kind": "stalactite",
+      "x": 250,
+      "y": 0
+    },
+    {
+      "kind": "stalactite",
+      "x": 550,
+      "y": 0
+    },
+    {
+      "kind": "lantern",
+      "x": -350,
+      "y": 540
+    },
+    {
+      "kind": "lantern",
+      "x": 50,
+      "y": 540
+    },
+    {
+      "kind": "lantern",
+      "x": 450,
+      "y": 540
+    },
+    {
+      "kind": "mushroom",
+      "x": 380,
+      "y": 570
+    }
   ],
-  "starite": { "x": 600, "y": 300 }
+  "starite": {
+    "x": 600,
+    "y": 300
+  },
+  "challengeSlots": 3
 }

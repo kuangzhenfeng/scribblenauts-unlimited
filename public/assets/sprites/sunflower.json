@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "sunflower_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 120
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 72,
+        "h": 120
+      },
+      "sourceSize": {
+        "w": 72,
+        "h": 120
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "sunflower.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 72,
+      "h": 120
+    },
+    "scale": "1"
+  }
+}

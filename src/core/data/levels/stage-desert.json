@@ -1,0 +1,179 @@
+{
+  "id": "stage-desert",
+  "type": "self-contained",
+  "theme": "desert",
+  "bounds": {
+    "minX": -900,
+    "minY": -200,
+    "maxX": 900,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": -700,
+    "y": 320
+  },
+  "transitions": [
+    {
+      "toLevelId": "stage-snow",
+      "at": {
+        "minX": -900,
+        "minY": 350,
+        "maxX": -800,
+        "maxY": 620
+      }
+    },
+    {
+      "toLevelId": "stage-volcano",
+      "at": {
+        "minX": 800,
+        "minY": 350,
+        "maxX": 900,
+        "maxY": 620
+      }
+    }
+  ],
+  "terrain": [
+    {
+      "x": -400,
+      "y": 200,
+      "w": 180,
+      "h": 24
+    },
+    {
+      "x": 0,
+      "y": 120,
+      "w": 160,
+      "h": 24
+    },
+    {
+      "x": 350,
+      "y": 200,
+      "w": 200,
+      "h": 24
+    }
+  ],
+  "spawns": [
+    {
+      "typeId": "stone",
+      "x": -250,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "stone",
+      "x": 250,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "cactus",
+      "x": -500,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "cactus",
+      "x": 500,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "horse",
+      "x": -150,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "fox",
+      "x": 300,
+      "y": 330,
+      "layer": 0
+    }
+  ],
+  "npcs": [
+    {
+      "id": "npc-merchant",
+      "typeId": "human",
+      "x": -200,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#6c3483",
+        "pantsColor": "#4a235a",
+        "hat": "straw"
+      }
+    },
+    {
+      "id": "npc-nomad",
+      "typeId": "human",
+      "x": 100,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#c8a050",
+        "pantsColor": "#8b6b3a"
+      }
+    },
+    {
+      "id": "npc-sphinx",
+      "typeId": "human",
+      "x": 400,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#d4a017",
+        "pantsColor": "#8b6914",
+        "hat": "straw"
+      }
+    }
+  ],
+  "decorations": [
+    {
+      "kind": "cactus",
+      "x": -650,
+      "y": 560
+    },
+    {
+      "kind": "cactus",
+      "x": -300,
+      "y": 560
+    },
+    {
+      "kind": "cactus",
+      "x": 200,
+      "y": 560
+    },
+    {
+      "kind": "cactus",
+      "x": 600,
+      "y": 560
+    },
+    {
+      "kind": "ruin-pillar",
+      "x": -500,
+      "y": 510,
+      "scale": 0.9
+    },
+    {
+      "kind": "ruin-pillar",
+      "x": 450,
+      "y": 510,
+      "scale": 1
+    },
+    {
+      "kind": "lantern",
+      "x": -100,
+      "y": 540
+    },
+    {
+      "kind": "lantern",
+      "x": 300,
+      "y": 540
+    }
+  ],
+  "starite": {
+    "x": 700,
+    "y": 300
+  },
+  "challengeSlots": 3
+}

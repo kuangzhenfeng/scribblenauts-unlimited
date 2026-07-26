@@ -16,6 +16,8 @@ import { log } from '@/util/log';
 export class MousePicker {
   /** 当前选中的实体 id（供 Notebook 取目标施加形容词） */
   selectedId: string | undefined;
+  /** 选中状态变化时通知 UI 浮层 */
+  onSelectionChanged?: (entityId: string | undefined) => void;
   private dragging = false;
   private dragOffset = { x: 0, y: 0 };
   /** 上一帧拖拽位移（估算投掷速度用） */
@@ -42,6 +44,7 @@ export class MousePicker {
       const e = this.entities.getByBody(b.id) as GameEntity | undefined;
       if (e) {
         this.selectedId = e.id;
+        this.onSelectionChanged?.(e.id);
         this.dragging = true;
         this.dragOffset = { x: e.bodyPositionX - w.x, y: e.bodyPositionY - w.y };
         this.lastT = this.scene.time.now;
@@ -51,6 +54,7 @@ export class MousePicker {
       }
     }
     this.selectedId = undefined;
+    this.onSelectionChanged?.(undefined);
   }
 
   private onMove(p: Phaser.Input.Pointer): void {

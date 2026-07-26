@@ -31,13 +31,50 @@ export interface CollisionPair {
 /** 物理 body 与逻辑实体的反查挂载点 */
 const ENTITY_KEY = '__scribblenautsEntity';
 
+/**
+ * 碰撞类别位掩码（matter.js collisionFilter.category 用，每位一类，须为 2 的幂）。
+ * 默认类别为 DEFAULT_CATEGORY（0x0001），未显式设置类别的 body 归属于此（地形/玩家生成物）。
+ */
+export const COLLISION_CATEGORY = {
+  /** 默认类别：地面、平台、玩家生成的物体 */
+  DEFAULT: 0x0001,
+  /** 玩家（Maxwell）专属类别 */
+  PLAYER: 0x0002,
+  /** 关卡预生成实体（NPC / 树 / 石头等）类别 */
+  LEVEL_SPAWN: 0x0004,
+} as const;
+
+/**
+ * 碰撞过滤预设：把 body 归入某类别并配置 mask。
+ *
+ * matter.js 规则：两 body A/B 碰撞当且仅当 (categoryA & maskB) && (categoryB & maskA) 均非零。
+ * - player：与除 LEVEL_SPAWN 外的一切碰撞（地面/平台/生成物），但不阻挡于预生成实体；
+ * - levelSpawn：与除 PLAYER 外的一切碰撞（地面/生成物/彼此），但不与玩家碰撞。
+ * 这样玩家在预生成 NPC/树/石头间穿行无阻，规则引擎的火→树、武器→NPC 等碰撞回调因
+ * 对端是 DEFAULT 类别而照常触发。
+ */
+export type CollisionRole = 'player' | 'levelSpawn';
+
+const ROLE_FILTER: Record<CollisionRole, MatterJS.ICollisionFilter> = {
+  player: {
+    category: COLLISION_CATEGORY.PLAYER,
+    mask: 0xffffffff & ~COLLISION_CATEGORY.LEVEL_SPAWN,
+    group: 0,
+  },
+  levelSpawn: {
+    category: COLLISION_CATEGORY.LEVEL_SPAWN,
+    mask: 0xffffffff & ~COLLISION_CATEGORY.PLAYER,
+    group: 0,
+  },
+};
+
 export type MatterBodyEntity = MatterBody & { [ENTITY_KEY]?: Entity };
 
 export class Physics {
   constructor(private readonly scene: Phaser.Scene) {}
 
   /** 由词条物理配置创建裸 Matter 刚体（不挂 GameObject） */
-  createBody(spec: PhysicsSpec, size: SizeSpec, x: number, y: number): MatterBody {
+  createBody(spec: PhysicsSpec, size: SizeSpec, x: number, y: number, role?: CollisionRole): MatterBody {
     const matter = this.scene.matter;
     const options: MatterJS.IBodyDefinition = {
       density: spec.density,
@@ -46,6 +83,9 @@ export class Physics {
       isStatic: spec.isStatic,
       frictionAir: spec.frictionAir ?? 0,
     };
+    if (role) {
+      options.collisionFilter = { ...ROLE_FILTER[role] };
+    }
     let body: MatterBody;
     if (spec.shape === 'circle') {
       body = matter.bodies.circle(x, y, size.width / 2, options);
@@ -61,6 +101,8 @@ export class Physics {
     } else {
       body = matter.bodies.rectangle(x, y, size.width, size.height, options);
     }
+    // inertia=Infinity 禁止刚体绕质心旋转，防止双足/四足生物碰撞后倒地
+    if (spec.fixedRotation) Matter.Body.setInertia(body, Infinity);
     return body;
   }
 
