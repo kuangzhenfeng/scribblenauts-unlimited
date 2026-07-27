@@ -1,0 +1,42 @@
+{
+  "id": "quiz-arena",
+  "type": "self-contained",
+  "theme": "meadow",
+  "bounds": {
+    "minX": -360,
+    "minY": -300,
+    "maxX": 360,
+    "maxY": 400
+  },
+  "playerStart": {
+    "x": 0,
+    "y": 320
+  },
+  "terrain": [
+    { "x": -240, "y": 200, "w": 180, "h": 24 },
+    { "x": 240, "y": 200, "w": 180, "h": 24 }
+  ],
+  "spawns": [
+    { "typeId": "tree", "x": -280, "y": 320, "layer": 0 },
+    { "typeId": "tree", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "stone", "x": -160, "y": 330, "layer": 0 },
+    { "typeId": "stone", "x": 160, "y": 330, "layer": 0 },
+    { "typeId": "bush", "x": -90, "y": 345, "layer": 0 },
+    { "typeId": "bush", "x": 90, "y": 345, "layer": 0 },
+    { "typeId": "flower", "x": -40, "y": 348, "layer": 0 },
+    { "typeId": "flower", "x": 40, "y": 348, "layer": 0 },
+    { "typeId": "mushroom", "x": -200, "y": 348, "layer": 0 },
+    { "typeId": "mushroom", "x": 200, "y": 348, "layer": 0 }
+  ],
+  "npcs": [],
+  "decorations": [
+    { "kind": "totem", "x": -320, "y": 555, "scale": 0.7 },
+    { "kind": "totem", "x": 320, "y": 555, "scale": 0.7 },
+    { "kind": "bush", "x": -260, "y": 565 },
+    { "kind": "bush", "x": 260, "y": 565 },
+    { "kind": "flower", "x": -120, "y": 575 },
+    { "kind": "flower", "x": 120, "y": 575 },
+    { "kind": "mushroom", "x": 0, "y": 570 }
+  ],
+  "challengeSlots": 0
+}

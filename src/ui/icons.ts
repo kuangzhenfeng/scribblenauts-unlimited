@@ -175,3 +175,33 @@ export const ICON_LANGUAGES = svg(
   '<path d="m5 8 6 6"></path><path d="m4 14 6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="m22 22-3-10-3 10"></path><path d="M17 18h4"></path>',
   18,
 );
+
+/** 退格（Delete / Backspace）—— 定制键盘退格键 */
+export const ICON_BACKSPACE = svg(
+  '<path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line>',
+  20,
+);
+
+/** 清空（Eraser）—— 定制键盘清空键 */
+export const ICON_CLEAR = svg(
+  '<path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l5.6-5.6 8 8z"></path><path d="M22 21H7"></path><path d="m5 11 9 9"></path>',
+  18,
+);
+
+/** 勾选（Check）—— 答对/确认 */
+export const ICON_CHECK = svg(
+  '<polyline points="20 6 9 17 4 12"></polyline>',
+  20,
+);
+
+/** 键盘（Keyboard）—— 简易问答入口 */
+export const ICON_KEYBOARD = svg(
+  '<rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><path d="M6 8h.01"></path><path d="M10 8h.01"></path><path d="M14 8h.01"></path><path d="M18 8h.01"></path><path d="M8 12h.01"></path><path d="M12 12h.01"></path><path d="M16 12h.01"></path><path d="M7 16h10"></path>',
+  18,
+);
+
+/** 奖杯（Trophy）—— 积分 */
+export const ICON_TROPHY = svg(
+  '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22h10c0-2-0.85-3.25-2.03-3.79-.5-.23-.97-.66-.97-1.21v-2.34"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>',
+  18,
+);

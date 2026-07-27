@@ -6,6 +6,7 @@ import { TitleScene } from './scenes/TitleScene';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { SettingsScene } from './scenes/SettingsScene';
 import { WorldScene } from './scenes/WorldScene';
+import { QuizScene } from './scenes/QuizScene';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -37,5 +38,5 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     activePointers: 2,
   },
   disableContextMenu: true,
-  scene: [PreloadScene, TitleScene, LevelSelectScene, SettingsScene, WorldScene],
+  scene: [PreloadScene, TitleScene, LevelSelectScene, SettingsScene, WorldScene, QuizScene],
 };

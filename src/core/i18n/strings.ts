@@ -132,6 +132,24 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     // 触屏控制
     'touch.jump': '跳',
     'touch.interact': '用',
+
+    // 简易问答模式
+    'quiz.start': '简易问答',
+    'quiz.title': '简易问答',
+    'quiz.subtitle': '随机生物出题，召唤答案过关',
+    'quiz.score': '得分',
+    'quiz.best': '最高',
+    'quiz.round': '第 {n} 题',
+    'quiz.correct': '答对了！',
+    'quiz.wrong': '再试试看',
+    'quiz.back': '返回标题',
+    'quiz.inputPh': '点按键盘输入…',
+    'quiz.clear': '清空',
+    'quiz.submit': '生成',
+    'quiz.noCandidate': '无匹配词条',
+    'quiz.hint': '（想想什么能帮到TA）',
+    'quiz.space': '空格',
+    'quiz.reshuffle': '换题',
   },
 
   en: {
@@ -255,5 +273,23 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     // Touch controls
     'touch.jump': 'Jump',
     'touch.interact': 'Use',
+
+    // Quick Quiz mode
+    'quiz.start': 'Quick Quiz',
+    'quiz.title': 'Quick Quiz',
+    'quiz.subtitle': 'Random creatures quiz you, summon answers',
+    'quiz.score': 'Score',
+    'quiz.best': 'Best',
+    'quiz.round': 'Q {n}',
+    'quiz.correct': 'Correct!',
+    'quiz.wrong': 'Try again',
+    'quiz.back': 'Back to Title',
+    'quiz.inputPh': 'Tap keys to type…',
+    'quiz.clear': 'Clear',
+    'quiz.submit': 'Spawn',
+    'quiz.noCandidate': 'No matching word',
+    'quiz.hint': '(think of what can help)',
+    'quiz.space': 'space',
+    'quiz.reshuffle': 'New',
   },
 };

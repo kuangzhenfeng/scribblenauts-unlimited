@@ -51,6 +51,14 @@ export class FxFilters {
     off[1] += delta * 0.00007;
   }
 
+  /** 相机视口尺寸变化时重建纸纹层（按新 cam.width/height 重铺，QuizScene 分屏用） */
+  resize(): void {
+    if (!this.noiseObj) return;
+    this.noiseObj.destroy();
+    this.noiseObj = undefined;
+    this.applyPaperGrain();
+  }
+
   /** 给发光体挂 Glow filter（火/Starite/门户等） */
   attachGlow(e: GameEntity, color = 0xff8c00, strength = 3): void {
     const go = e.gameObject as Phaser.GameObjects.Graphics | undefined;

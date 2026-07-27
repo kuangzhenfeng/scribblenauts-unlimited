@@ -59,6 +59,10 @@ export class LevelSelectScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#f7f1e3');
 
+    // Phaser 4 不自动调用 scene.shutdown()，须显式绑到 SHUTDOWN 事件，
+    // 否则切场景时 DOM 浮层残留不清理（对齐 Phaser 生命周期标准用法）
+    this.events.once('shutdown', this.shutdown, this);
+
     this.overlay = document.createElement('div');
     this.overlay.style.cssText = [
       'position:fixed',

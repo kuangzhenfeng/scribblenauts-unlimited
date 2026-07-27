@@ -26,6 +26,7 @@ export class PreloadScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image('title-key-art', 'assets/title/title-key-art.png');
+    this.load.image('title-key-art-portrait', 'assets/title/title-key-art-portrait.png');
     // 预先注册所有渲染器（vector paper-doll + sprite atlas），以便 SPRITE_ATLASES 清单完整
     registerAllRenderers();
     // Phaser 4 的预加载场景不会可靠地回填超过并行上限的待加载文件；确保所有 atlas 子文件首轮入队。

@@ -28,6 +28,8 @@ export interface SettingsData {
   orientation: OrientationPref;
   /** 触屏虚拟控制显隐 */
   touchControls: TouchControlsPref;
+  /** 简易问答模式历史最高分（累计答对题数） */
+  quizHighScore: number;
 }
 
 const KEY = 'scribblenauts.settings';
@@ -39,6 +41,7 @@ const DEFAULTS: SettingsData = {
   muted: false,
   orientation: 'auto',
   touchControls: 'auto',
+  quizHighScore: 0,
 };
 
 /** 读取设置，缺失/解析失败/环境不可用回退 DEFAULTS */
@@ -54,6 +57,7 @@ export function loadSettings(): SettingsData {
       muted: Boolean(parsed.muted ?? DEFAULTS.muted),
       orientation: normalizeOrientation(parsed.orientation),
       touchControls: normalizeTouchControls(parsed.touchControls),
+      quizHighScore: normalizeHighScore(parsed.quizHighScore),
     };
   } catch {
     // localStorage 不可用（隐私模式等）或 JSON 解析失败
@@ -89,4 +93,9 @@ function normalizeOrientation(v: unknown): OrientationPref {
 /** 规范化触屏控制偏好，非法值回退默认 */
 function normalizeTouchControls(v: unknown): TouchControlsPref {
   return v === 'on' || v === 'off' ? v : 'auto';
+}
+
+/** 规范化最高分，非负整数，非法值回退 0 */
+function normalizeHighScore(v: unknown): number {
+  return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0;
 }

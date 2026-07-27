@@ -46,6 +46,8 @@ export class GameEntity implements EntityIface {
   appliedAdjectives?: Set<string>;
   hidden?: boolean;
   aiMem?: Map<string, unknown>;
+  /** 简易问答模式：物品剩余存活回合数（初始 3，每切一题 -1，归零销毁） */
+  ttl?: number;
 
   /** Phaser GameObject（可选，纯逻辑实体/隐藏时可能无） */
   gameObject?: Phaser.GameObjects.GameObject;

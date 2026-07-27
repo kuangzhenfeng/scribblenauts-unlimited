@@ -61,6 +61,9 @@ export class SettingsScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#f7f1e3');
+    // Phaser 4 不自动调用 scene.shutdown()，须显式绑到 SHUTDOWN 事件，
+    // 否则切场景时 DOM 浮层与注入样式表残留不清理（对齐 Phaser 生命周期标准用法）
+    this.events.once('shutdown', this.shutdown, this);
     this._injectStyles();
     this._buildOverlay();
   }
@@ -304,7 +307,7 @@ export class SettingsScene extends Phaser.Scene {
     const back = document.createElement('button');
     back.type = 'button';
     back.className = 'set-btn-ghost';
-    back.style.cssText = ['position:fixed', 'top:22px', 'left:24px', 'z-index:101'].join(';');
+    back.style.cssText = ['position:fixed', 'top:22px', 'left:24px', 'z-index:101', 'pointer-events:auto'].join(';');
     back.innerHTML = `${ICON_ARROW_LEFT}<span>${t('common.back')}</span>`;
     back.addEventListener('click', (ev) => {
       ev.stopPropagation();
