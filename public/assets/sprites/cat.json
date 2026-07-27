@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "cat_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 52,
+        "h": 40
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 52,
+        "h": 40
+      },
+      "sourceSize": {
+        "w": 52,
+        "h": 40
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "cat.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 52,
+      "h": 40
+    },
+    "scale": "1"
+  }
+}

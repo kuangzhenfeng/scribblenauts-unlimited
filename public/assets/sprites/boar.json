@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "boar_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 76,
+        "h": 52
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 76,
+        "h": 52
+      },
+      "sourceSize": {
+        "w": 76,
+        "h": 52
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "boar.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 76,
+      "h": 52
+    },
+    "scale": "1"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "nymph_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 60
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 40,
+        "h": 60
+      },
+      "sourceSize": {
+        "w": 40,
+        "h": 60
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "nymph.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 40,
+      "h": 60
+    },
+    "scale": "1"
+  }
+}

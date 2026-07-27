@@ -42,6 +42,8 @@ import { confirmDialog } from '@/ui/ConfirmDialog';
 import { SaveStore } from '@/core/data/save/SaveStore';
 import { t, setLang } from '@/core/i18n/I18n';
 import type { DifficultyTier, DifficultyStandard } from '@/core/types/question';
+import { CEFR_WORD_COUNTS, FREQ_WORD_COUNTS } from '@/core/data/questions/word-metadata';
+import { CEFR_QUESTION_COUNTS, FREQ_QUESTION_COUNTS } from '@/core/data/questions/bank';
 import { generateSeed } from '@/util/rng';
 
 /** 撕纸 clip-path 值（与 paperStyle.TORN_EDGE 同步，CSS 无法引用 JS 常量） */
@@ -150,6 +152,14 @@ export class SettingsScene extends Phaser.Scene {
       }
       .set-tier-name{font-size:15px;font-weight:900}
       .set-tier-desc{font-size:11px;opacity:0.75;margin-top:2px}
+      /* —— 词库分布表 —— */
+      .set-worddist{margin-top:14px;padding:12px 14px;background:#efe6cf;border:2px dashed rgba(43,43,43,0.22);border-radius:10px}
+      .set-worddist-title{font-size:13px;font-weight:900;color:rgba(43,43,43,0.7);letter-spacing:0.04em;margin-bottom:8px}
+      .set-worddist-grid{display:grid;grid-template-columns:auto repeat(3,1fr);gap:6px 10px;align-items:center}
+      .set-wd-h{font-size:12px;font-weight:900;color:rgba(43,43,43,0.6);text-align:center}
+      .set-wd-rl{font-size:13px;font-weight:900;color:#2b2b2b}
+      .set-wd-c{font-size:18px;font-weight:900;color:#2b2b2b;text-align:center;font-variant-numeric:tabular-nums}
+      .set-qdist{margin-top:10px}
       /* —— 危险行 —— */
       .set-danger-row{display:flex;align-items:center;gap:14px;pointer-events:auto}
       .set-danger-mid{flex:1;display:flex;flex-direction:column;gap:3px}
@@ -637,6 +647,11 @@ export class SettingsScene extends Phaser.Scene {
     });
     wrap.appendChild(tierGroup);
 
+    // 词库分布：CEFR / 词频两种标准下各档位的单词数
+    wrap.appendChild(this._wordDistribution());
+    // 题目分布：CEFR / 词频两种标准下各档位的题目数
+    wrap.appendChild(this._questionDistribution());
+
     const hint = document.createElement('div');
     hint.className = 'set-hint';
     hint.textContent = t('levelSelect.difficultyHint');
@@ -717,6 +732,96 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     return this._card(-0.4, this._head(ICON_SPARKLES, t('settings.difficulty'), t('settings.difficultyDesc')), wrap);
+  }
+
+  /** 词库分布表：CEFR / 词频两种标准下各档位（基础/进阶/大师）的单词数 */
+  private _wordDistribution(): HTMLDivElement {
+    const wrap = document.createElement('div');
+    wrap.className = 'set-worddist';
+    const title = document.createElement('div');
+    title.className = 'set-worddist-title';
+    title.textContent = t('settings.wordDist');
+    wrap.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'set-worddist-grid';
+    // 表头行：左上角占位 + 三档标签
+    grid.appendChild(document.createElement('div'));
+    for (const label of [t('levelSelect.tier1'), t('levelSelect.tier2'), t('levelSelect.tier3')]) {
+      const h = document.createElement('div');
+      h.className = 'set-wd-h';
+      h.textContent = label;
+      grid.appendChild(h);
+    }
+    // CEFR 行
+    const cefrLabel = document.createElement('div');
+    cefrLabel.className = 'set-wd-rl';
+    cefrLabel.textContent = t('settings.stdCefrShort');
+    grid.appendChild(cefrLabel);
+    for (const n of CEFR_WORD_COUNTS) {
+      const c = document.createElement('div');
+      c.className = 'set-wd-c';
+      c.textContent = String(n);
+      grid.appendChild(c);
+    }
+    // 词频行
+    const freqLabel = document.createElement('div');
+    freqLabel.className = 'set-wd-rl';
+    freqLabel.textContent = t('settings.stdFreqShort');
+    grid.appendChild(freqLabel);
+    for (const n of FREQ_WORD_COUNTS) {
+      const c = document.createElement('div');
+      c.className = 'set-wd-c';
+      c.textContent = String(n);
+      grid.appendChild(c);
+    }
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  /** 题目分布表：CEFR / 词频两种标准下各档位（基础/进阶/大师）的题目数 */
+  private _questionDistribution(): HTMLDivElement {
+    const wrap = document.createElement('div');
+    wrap.className = 'set-worddist set-qdist';
+    const title = document.createElement('div');
+    title.className = 'set-worddist-title';
+    title.textContent = t('settings.questionDist');
+    wrap.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'set-worddist-grid';
+    // 表头行：左上角占位 + 三档标签
+    grid.appendChild(document.createElement('div'));
+    for (const label of [t('levelSelect.tier1'), t('levelSelect.tier2'), t('levelSelect.tier3')]) {
+      const h = document.createElement('div');
+      h.className = 'set-wd-h';
+      h.textContent = label;
+      grid.appendChild(h);
+    }
+    // CEFR 行
+    const cefrLabel = document.createElement('div');
+    cefrLabel.className = 'set-wd-rl';
+    cefrLabel.textContent = t('settings.stdCefrShort');
+    grid.appendChild(cefrLabel);
+    for (const n of CEFR_QUESTION_COUNTS) {
+      const c = document.createElement('div');
+      c.className = 'set-wd-c';
+      c.textContent = String(n);
+      grid.appendChild(c);
+    }
+    // 词频行
+    const freqLabel = document.createElement('div');
+    freqLabel.className = 'set-wd-rl';
+    freqLabel.textContent = t('settings.stdFreqShort');
+    grid.appendChild(freqLabel);
+    for (const n of FREQ_QUESTION_COUNTS) {
+      const c = document.createElement('div');
+      c.className = 'set-wd-c';
+      c.textContent = String(n);
+      grid.appendChild(c);
+    }
+    wrap.appendChild(grid);
+    return wrap;
   }
 
   /** 难度区运行时态：加载完成前用默认值占位，加载后同步 */

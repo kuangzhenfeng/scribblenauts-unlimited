@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "golem_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 76,
+        "h": 84
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 76,
+        "h": 84
+      },
+      "sourceSize": {
+        "w": 76,
+        "h": 84
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "golem.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 76,
+      "h": 84
+    },
+    "scale": "1"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "dragon_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 176,
+        "h": 116
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 176,
+        "h": 116
+      },
+      "sourceSize": {
+        "w": 176,
+        "h": 116
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "dragon.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 176,
+      "h": 116
+    },
+    "scale": "1"
+  }
+}

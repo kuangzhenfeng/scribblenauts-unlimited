@@ -702,3 +702,17 @@ export const WORD_METADATA: Record<string, WordMeta> = {
 export function getWordMeta(id: string): WordMeta {
   return WORD_METADATA[id] ?? { cefr: 3, freq: 3 };
 }
+
+/** 按 CEFR 标准各档位（基础/进阶/大师）的单词数，从 WORD_METADATA 派生 */
+export const CEFR_WORD_COUNTS: readonly [number, number, number] = (() => {
+  const c: [number, number, number] = [0, 0, 0];
+  for (const m of Object.values(WORD_METADATA)) c[m.cefr - 1]++;
+  return c;
+})();
+
+/** 按词频标准各档位（基础/进阶/大师）的单词数，从 WORD_METADATA 派生 */
+export const FREQ_WORD_COUNTS: readonly [number, number, number] = (() => {
+  const c: [number, number, number] = [0, 0, 0];
+  for (const m of Object.values(WORD_METADATA)) c[m.freq - 1]++;
+  return c;
+})();

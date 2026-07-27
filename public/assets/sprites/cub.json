@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "cub_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 52,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 52,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 52,
+        "h": 44
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "cub.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 52,
+      "h": 44
+    },
+    "scale": "1"
+  }
+}

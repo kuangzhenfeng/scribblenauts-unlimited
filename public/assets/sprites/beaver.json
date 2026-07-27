@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "beaver_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 60,
+        "h": 40
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 60,
+        "h": 40
+      },
+      "sourceSize": {
+        "w": 60,
+        "h": 40
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "beaver.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 60,
+      "h": 40
+    },
+    "scale": "1"
+  }
+}

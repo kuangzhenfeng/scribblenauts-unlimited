@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "camel_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 104,
+        "h": 80
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 104,
+        "h": 80
+      },
+      "sourceSize": {
+        "w": 104,
+        "h": 80
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "camel.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 104,
+      "h": 80
+    },
+    "scale": "1"
+  }
+}

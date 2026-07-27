@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "zebra_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 68
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 68
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 68
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "zebra.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 92,
+      "h": 68
+    },
+    "scale": "1"
+  }
+}

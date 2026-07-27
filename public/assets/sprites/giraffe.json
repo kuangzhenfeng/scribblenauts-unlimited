@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "giraffe_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 144
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 144
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 144
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "giraffe.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 96,
+      "h": 144
+    },
+    "scale": "1"
+  }
+}

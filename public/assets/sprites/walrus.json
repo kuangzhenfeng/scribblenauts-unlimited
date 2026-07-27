@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "walrus_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 60
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 60
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 60
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "walrus.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 96,
+      "h": 60
+    },
+    "scale": "1"
+  }
+}

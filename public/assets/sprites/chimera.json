@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "chimera_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 132,
+        "h": 104
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 132,
+        "h": 104
+      },
+      "sourceSize": {
+        "w": 132,
+        "h": 104
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "chimera.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 132,
+      "h": 104
+    },
+    "scale": "1"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "unicorn_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 88
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 116,
+        "h": 88
+      },
+      "sourceSize": {
+        "w": 116,
+        "h": 88
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "unicorn.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 116,
+      "h": 88
+    },
+    "scale": "1"
+  }
+}

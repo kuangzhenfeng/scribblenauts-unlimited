@@ -43,7 +43,7 @@ export interface Answer {
  * - 多答案：用 answers（如情境题"好冷"→ 火/燃烧的蜡烛/火把/灯），任一即过关。
  *
  * adjectives/answers 缺省即为纯名词单答案题。运行时 QuestionPicker 按是否有
- * answers 装配为 object-present 或 any-of；难度取所有相关词 id 的最高档。
+ * answers 装配为 object-present 或 any-of；难度取所有相关词 id 的中位档（主体答案难度）。
  * cefr/freq 为该题在两种标准下的档位，运行时按玩家所选 standard 取对应字段。
  */
 export interface Question {

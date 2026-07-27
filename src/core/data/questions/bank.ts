@@ -6,7 +6,7 @@
  * A. 情境多答案题（situationalQuestions）：核心创新。NPC 陈述一个生活困境
  *    （"好冷""天黑""饿""渴""怪物挡路"…），不点名目标物体；answers 声明
  *    2~6 个语义关联的合格答案（同功能/同场景/同类），玩家召唤任一即过关。
- *    难度取所有 answer 词 id 的最高档。
+ *    难度取所有 answer 词 id 的中位档（主体答案难度，非最高档）。
  *
  * B. 词条覆盖单答案题（nounQuestions）：由 allEntries() 全量派生，保证 538
  *    词条每个至少有一道题。题面套用 category 的故事化模板（第一人称情境
@@ -23,29 +23,27 @@ import type { Question, DifficultyTier, DifficultyStandard } from '@/core/types/
 import { allEntries } from '@/core/data/dictionary/Dictionary';
 import { getWordMeta } from './word-metadata';
 
-/** 取多个词 id 中 CEFR 难度最高的那一档（取大值） */
-function maxTier(ids: string[]): DifficultyTier {
-  let max: DifficultyTier = 1;
-  for (const id of ids) {
-    const m = getWordMeta(id);
-    if (m.cefr > max) max = m.cefr;
-  }
-  return max;
+/** 取多个词 id 的 CEFR 中位档（主体答案难度）；偶数个取中间两档平均后四舍五入 */
+function medianTier(ids: string[]): DifficultyTier {
+  const tiers = ids.map(id => getWordMeta(id).cefr).sort((a, b) => a - b);
+  const n = tiers.length;
+  if (n === 0) return 1;
+  const mid = n % 2 === 1 ? tiers[(n - 1) / 2] : (tiers[n / 2 - 1] + tiers[n / 2]) / 2;
+  return Math.round(mid) as DifficultyTier;
 }
-/** 取多个词 id 中词频难度最高的那一档（取大值） */
-function maxFreq(ids: string[]): DifficultyTier {
-  let max: DifficultyTier = 1;
-  for (const id of ids) {
-    const m = getWordMeta(id);
-    if (m.freq > max) max = m.freq;
-  }
-  return max;
+/** 取多个词 id 的词频中位档（主体答案难度）；偶数个取中间两档平均后四舍五入 */
+function medianFreq(ids: string[]): DifficultyTier {
+  const tiers = ids.map(id => getWordMeta(id).freq).sort((a, b) => a - b);
+  const n = tiers.length;
+  if (n === 0) return 1;
+  const mid = n % 2 === 1 ? tiers[(n - 1) / 2] : (tiers[n / 2 - 1] + tiers[n / 2]) / 2;
+  return Math.round(mid) as DifficultyTier;
 }
 
 // ---- A. 情境多答案题 ----
 //
 // 每条为一个生活困境场景：NPC 第一人称陈述需求，不点名目标；answers 为
-// 2~6 个语义关联合格答案，任一即过关。难度取所有 answer 词 id 最高档。
+// 2~6 个语义关联合格答案，任一即过关。难度取所有 answer 词 id 的中位档（主体答案难度）。
 // 覆盖食物/武器/工具/动物/元素/载具/光源/防具/容器/自然物等多类情境。
 
 interface Scenario {
@@ -948,8 +946,8 @@ const situationalQuestions: Question[] = scenarios.map((s) => {
   return {
     id: `q-sit-${s.suffix}`,
     answers,
-    cefr: maxTier(ids),
-    freq: maxFreq(ids),
+    cefr: medianTier(ids),
+    freq: medianFreq(ids),
     prompt: s.prompt,
     hint: s.hint,
   };
@@ -1262,8 +1260,8 @@ const comboQuestions: Question[] = allCombos.map((c) => {
     id: `q-${c.adj}-${c.noun}`,
     typeId: c.noun,
     adjectives: [c.adj],
-    cefr: maxTier(ids),
-    freq: maxFreq(ids),
+    cefr: medianTier(ids),
+    freq: medianFreq(ids),
     prompt: {
       zh: tpl.zh.replace('{adj}', adjZh).replace('{name}', nounZh),
       en: tpl.en.replace('{adj}', c.adj).replace('{name}', nounEn),
@@ -1292,3 +1290,17 @@ export function questionsByDifficulty(
 export function questionCount(): number {
   return QUESTION_BANK.length;
 }
+
+/** 按 CEFR 标准各档位（基础/进阶/大师）的题目数，从 QUESTION_BANK 派生 */
+export const CEFR_QUESTION_COUNTS: readonly [number, number, number] = (() => {
+  const c: [number, number, number] = [0, 0, 0];
+  for (const q of QUESTION_BANK) c[q.cefr - 1]++;
+  return c;
+})();
+
+/** 按词频标准各档位（基础/进阶/大师）的题目数，从 QUESTION_BANK 派生 */
+export const FREQ_QUESTION_COUNTS: readonly [number, number, number] = (() => {
+  const c: [number, number, number] = [0, 0, 0];
+  for (const q of QUESTION_BANK) c[q.freq - 1]++;
+  return c;
+})();

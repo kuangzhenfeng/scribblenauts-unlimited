@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "sparrow_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 28
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "sparrow.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 32,
+      "h": 28
+    },
+    "scale": "1"
+  }
+}
