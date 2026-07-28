@@ -1,24 +1,41 @@
 /**
- * 定制化问答键盘 —— 简易问答模式的下屏输入界面。
+ * 定制化问答键盘 —— 漫画召唤台的下屏输入界面。
  *
- * 涂鸦纸片质感（复用 paperStyle 体系，圆角卡片替代撕边锯齿）：
- *  - 顶部墨水纸条显示当前输入缓冲 + 光标（缓冲即完整输入文本，含已确认形容词）
+ * 浅青/米白纸面背景 + 米白实体键帽 + 亮黄生成键。
+ * 逻辑全部保留：自维护 buffer 字符串 + 复用 completionQuery 候选补全 +
+ * 桌面端物理键盘支持 + 形容词回填/名词提交。
+ *
+ * 结构：
+ *  - 顶部输入行（白底+细底边框+光标）
  *  - 中部实时候选词区（复用 completionQuery 的形容词+名词合并补全）
- *  - 下部 QWERTY 字母键 + 空格键 + 功能键（清空 / 退格 / 生成）
- *
- * 仅英文输入：自绘 QWERTY 字母键 + 空格键，自维护 buffer 字符串。
- * 桌面端额外支持物理键盘（keydown 拼接字母 / 空格 / 退格 / 回车提交）。
- *
- * 候选词复用 completionQuery.computeCompletions —— 同时支持名词与形容词补全，
- * 与主游戏 Notebook→Autocomplete 同一补全路径（DRY，不独立实现）。
- * 点形容词候选回填 buffer（继续输入名词），点名词候选上抛完整文本由外部
- * 复用 parse() 统一解析出形容词+名词构造 candidate（与 Notebook 同构）。
+ *  - 下部 QWERTY 字母键 + 空格键 + 功能键（清空 / 退格 / 提交）
  *
  * 职责边界：只管输入与候选展示，不含解析与判定（点名词候选/生成经 onPick 上抬文本）。
  */
 
 import { computeCompletions, type TaggedCompletion } from './completionQuery';
-import { UI_FONT, PAPER_BG, PAPER_BG_ALT, INK, INK_HIGHLIGHT, PAPER_SHADOW, SAFE_BOTTOM, SAFE_LEFT, SAFE_RIGHT } from './paperStyle';
+import {
+  UI_FONT,
+  SAFE_BOTTOM,
+  SAFE_LEFT,
+  SAFE_RIGHT,
+  QUIZ_CARD,
+  QUIZ_INK,
+  QUIZ_INK_SOFT,
+  QUIZ_BORDER,
+  QUIZ_RADIUS_SM,
+  QUIZ_RADIUS_MD,
+  QUIZ_ACCENT,
+  QUIZ_ACCENT_SOFT,
+  QUIZ_YELLOW,
+  QUIZ_KB_BG,
+  QUIZ_KB_KEY,
+  QUIZ_KB_KEY_SPECIAL,
+  QUIZ_KB_KEY_TEXT,
+  QUIZ_KB_RADIUS,
+  QUIZ_KB_GAP,
+  QUIZ_KB_KEY_HEIGHT,
+} from './quizStyle';
 import { ICON_BACKSPACE, ICON_CLEAR, ICON_CHECK } from './icons';
 import { t } from '@/core/i18n/I18n';
 import { sfx } from '@/audio/SoundEffects';
@@ -40,6 +57,8 @@ const MAX_BUFFER = 40;
 
 export class QuizKeyboard {
   private readonly el: HTMLDivElement;
+  private readonly appZoneEl: HTMLDivElement;
+  private readonly kbZoneEl: HTMLDivElement;
   private readonly displayEl: HTMLDivElement;
   private readonly candidateEl: HTMLDivElement;
   private readonly keysEl: HTMLDivElement;
@@ -51,44 +70,66 @@ export class QuizKeyboard {
   private readonly cb: QuizKeyboardCallbacks;
   /** 物理键盘 keydown 监听器引用，destroy 时移除 */
   private keydownListener: ((e: KeyboardEvent) => void) | undefined;
+  /** 退格长按连删 timer（delay 首字延迟 + repeat 连删间隔），destroy/松手时清理 */
+  private backspaceDelay: number | undefined;
+  private backspaceRepeat: number | undefined;
 
   constructor(cb: QuizKeyboardCallbacks) {
     this.cb = cb;
 
+    // 定位壳同时承载独立下屏背景；键帽保持实色以确保文字对比度。
     this.el = document.createElement('div');
     this.el.id = 'quiz-keyboard';
     this.el.style.cssText = [
       'position:fixed',
-      `left:${SAFE_LEFT}`,
-      `right:${SAFE_RIGHT}`,
-      `bottom:${SAFE_BOTTOM}`,
+      'left:0',
+      'right:0',
+      'bottom:0',
       'z-index:60',
       'pointer-events:auto',
-      `background:${PAPER_BG}`,
-      `box-shadow:${PAPER_SHADOW}`,
-      `color:${INK}`,
+      `color:${QUIZ_INK}`,
       `font-family:${UI_FONT}`,
-      'border-radius:18px',
-      'padding:10px 12px 14px',
+      'box-sizing:border-box',
+      'display:flex',
+      'flex-direction:column',
+      'gap:6px',
+      // 默认宽度：竖屏占满，横屏/桌面居中限宽
+      'width:100vw',
+      'max-width:none',
+      'margin:0',
+      'align-items:center',
+      `padding:8px ${SAFE_RIGHT} ${SAFE_BOTTOM} ${SAFE_LEFT}`,
+      `background:${QUIZ_KB_BG} url("assets/quiz/quiz-lower-bg.png") center/cover no-repeat`,
+      `border:2px solid ${QUIZ_BORDER}`,
+      `border-radius:${QUIZ_RADIUS_MD} ${QUIZ_RADIUS_MD} 0 0`,
+    ].join(';');
+
+    // 上区：输入显示 + 候选词，以纸面分区承载，不叠加悬浮卡片。
+    this.appZoneEl = document.createElement('div');
+    this.appZoneEl.style.cssText = [
+      'background:rgba(247,237,207,0.82)',
+      `border:1px solid ${QUIZ_BORDER}`,
+      `border-radius:${QUIZ_RADIUS_SM}`,
+      'padding:8px 10px',
       'box-sizing:border-box',
       'display:flex',
       'flex-direction:column',
       'gap:8px',
-      // 默认宽度：竖屏占满，横屏/桌面居中限宽
-      'width:calc(100vw - 28px)',
-      'max-width:720px',
-      'margin:0 auto',
+      'width:min(720px,100%)',
     ].join(';');
+    this.el.appendChild(this.appZoneEl);
 
-    // 顶部：输入显示区（墨水纸条）
+    // 顶部：输入显示区（iOS 文本框：灰底圆角无边框）
     this.displayEl = document.createElement('div');
     this.displayEl.style.cssText = [
-      'min-height:34px',
-      'padding:6px 12px',
-      `border-bottom:2px solid ${INK}`,
-      'font-size:18px',
-      'font-weight:700',
-      'letter-spacing:0.04em',
+      'min-height:36px',
+      'padding:8px 12px',
+      `background:${QUIZ_CARD}`,
+      `border:1px solid ${QUIZ_BORDER}`,
+      `border-radius:${QUIZ_RADIUS_SM}`,
+      'font-size:17px',
+      'font-weight:600',
+      'letter-spacing:0.02em',
       'white-space:nowrap',
       'overflow:hidden',
       'text-overflow:ellipsis',
@@ -96,7 +137,7 @@ export class QuizKeyboard {
       'align-items:center',
       'gap:2px',
     ].join(';');
-    this.el.appendChild(this.displayEl);
+    this.appZoneEl.appendChild(this.displayEl);
 
     // 中部：候选词区
     this.candidateEl = document.createElement('div');
@@ -108,24 +149,35 @@ export class QuizKeyboard {
       'overflow-x:auto',
       'overflow-y:hidden',
       'padding:4px 2px',
-      `background:${PAPER_BG_ALT}`,
-      'border-radius:8px',
       'scrollbar-width:thin',
     ].join(';');
-    this.el.appendChild(this.candidateEl);
+    this.appZoneEl.appendChild(this.candidateEl);
 
-    // 下部：键盘按键区
+    // 下区：透明键盘区，让浅青纸纹贯穿输入台。
+    this.kbZoneEl = document.createElement('div');
+    this.kbZoneEl.style.cssText = [
+      'background:transparent',
+      'padding:2px 0 0',
+      'box-sizing:border-box',
+      'display:flex',
+      'flex-direction:column',
+      `gap:${QUIZ_KB_GAP}`,
+      'width:min(720px,100%)',
+    ].join(';');
+    this.el.appendChild(this.kbZoneEl);
+
+    // 按键区
     this.keysEl = document.createElement('div');
     this.keysEl.style.cssText = [
       'display:flex',
       'flex-direction:column',
-      'gap:6px',
+      `gap:${QUIZ_KB_GAP}`,
     ].join(';');
     this._buildKeys();
-    this.el.appendChild(this.keysEl);
+    this.kbZoneEl.appendChild(this.keysEl);
 
     document.body.appendChild(this.el);
-    this._injectCaretStyle();
+    this._injectKeyStyle();
     this._refreshDisplay();
     this._refreshCandidates();
 
@@ -133,15 +185,34 @@ export class QuizKeyboard {
     this._attachPhysicalKeyboard();
   }
 
-  /** 注入光标闪烁 keyframes（仅注一次） */
-  private _injectCaretStyle(): void {
+  /** 注入光标闪烁与按键反馈 keyframes（仅注一次） */
+  private _injectKeyStyle(): void {
     if (document.getElementById('quiz-keyboard-style')) return;
     const style = document.createElement('style');
     style.id = 'quiz-keyboard-style';
     style.textContent = `
       @keyframes quizCaret { 0%,50% { opacity:1 } 51%,100% { opacity:0 } }
-      #quiz-keyboard button:active { transform:scale(0.94); filter:brightness(1.1) }
-      #quiz-keyboard button:hover { filter:brightness(1.06) }
+      #quiz-keyboard button:hover { filter:brightness(.97); }
+      #quiz-keyboard button:focus-visible { outline:3px solid ${QUIZ_YELLOW}; outline-offset:1px; }
+      #quiz-keyboard button:active { transform:translateY(2px); box-shadow:none !important; }
+      @media (max-height:720px) {
+        #quiz-keyboard { padding-top:6px !important; }
+        #quiz-keyboard button { height:40px !important; }
+        #quiz-keyboard > div:first-child { padding-top:6px !important; padding-bottom:6px !important; gap:4px !important; }
+        #quiz-keyboard > div:first-child > div:nth-child(2) { min-height:34px !important; }
+      }
+      @media (max-width:390px) {
+        #quiz-keyboard .quiz-clear-label { display:none; }
+      }
+      @media (orientation:landscape) and (max-height:520px) {
+        #quiz-keyboard { border-radius:0 !important; }
+      }
+      @media (orientation:portrait) {
+        #quiz-keyboard { top:auto !important; height:auto !important; max-height:none !important; min-height:0 !important; overflow-y:visible !important; }
+      }
+      @media (prefers-reduced-motion:reduce) {
+        #quiz-keyboard *, #quiz-keyboard *::before, #quiz-keyboard *::after { animation:none !important; transition:none !important; }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -162,6 +233,7 @@ export class QuizKeyboard {
       window.removeEventListener('keydown', this.keydownListener);
       this.keydownListener = undefined;
     }
+    this._stopBackspaceRepeat();
     this.el.remove();
   }
 
@@ -184,30 +256,50 @@ export class QuizKeyboard {
     return Math.max(0, window.innerHeight - rect.top);
   }
 
+  /** 横屏高度不足时，输入台从委托条下方开始并在自身内部滚动。 */
+  setLandscapeTop(top: number | undefined): void {
+    if (top === undefined) {
+      this.el.style.top = '';
+      this.el.style.height = '';
+      this.el.style.maxHeight = '';
+      this.el.style.minHeight = '';
+      this.el.style.overflowY = 'visible';
+      return;
+    }
+    this.el.style.top = `${top}px`;
+    this.el.style.height = `calc(100vh - ${top}px)`;
+    this.el.style.maxHeight = `calc(100vh - ${top}px)`;
+    this.el.style.minHeight = '0';
+    this.el.style.overflowY = 'auto';
+  }
+
   // ---- 内部：按键构建 ----
 
+  /** 按键行容器（flex + gap + 居中） */
+  private _makeRow(): HTMLDivElement {
+    const rowEl = document.createElement('div');
+    rowEl.style.cssText = ['display:flex', `gap:${QUIZ_KB_GAP}`, 'justify-content:center'].join(';');
+    return rowEl;
+  }
+
   private _buildKeys(): void {
-    // 字母三行
-    for (const row of ROWS) {
-      const rowEl = document.createElement('div');
-      rowEl.style.cssText = ['display:flex', 'gap:6px', 'justify-content:center'].join(';');
-      for (const ch of row) {
-        rowEl.appendChild(this._makeLetterKey(ch));
-      }
+    // 行1-2：字母
+    for (const row of ROWS.slice(0, 2)) {
+      const rowEl = this._makeRow();
+      for (const ch of row) rowEl.appendChild(this._makeLetterKey(ch));
       this.keysEl.appendChild(rowEl);
     }
-    // 空格行
-    const spaceRow = document.createElement('div');
-    spaceRow.style.cssText = ['display:flex', 'gap:6px', 'justify-content:center'].join(';');
-    spaceRow.appendChild(this._makeSpaceKey());
-    this.keysEl.appendChild(spaceRow);
-    // 功能行：清空 / 退格 / 生成
-    const fnRow = document.createElement('div');
-    fnRow.style.cssText = ['display:flex', 'gap:8px', 'justify-content:center', 'margin-top:4px'].join(';');
-    fnRow.appendChild(this._makeClearKey());
-    fnRow.appendChild(this._makeBackspaceKey());
-    fnRow.appendChild(this._makeSubmitKey());
-    this.keysEl.appendChild(fnRow);
+    // 行3：清空 + Z X C V B N M + 退格（清空占 iOS shift 左槽，退格占右槽）
+    const row3 = this._makeRow();
+    row3.appendChild(this._makeClearKey());
+    for (const ch of ROWS[2]!) row3.appendChild(this._makeLetterKey(ch));
+    row3.appendChild(this._makeBackspaceKey());
+    this.keysEl.appendChild(row3);
+    // 行4：空格 + 生成（生成占 iOS return 位，用品牌绿）
+    const row4 = this._makeRow();
+    row4.appendChild(this._makeSpaceKey());
+    row4.appendChild(this._makeSubmitKey());
+    this.keysEl.appendChild(row4);
   }
 
   private _makeLetterKey(ch: string): HTMLButtonElement {
@@ -219,8 +311,39 @@ export class QuizKeyboard {
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this._typeChar(ch);
+      this._showKeyPopup(btn, ch);
     });
     return btn;
+  }
+
+  /** iOS 风按键弹起预览：pointerdown 时在键上方显示大字母气泡，pointerup/leave 移除 */
+  private _showKeyPopup(btn: HTMLButtonElement, ch: string): void {
+    const popup = document.createElement('div');
+    popup.textContent = ch;
+    popup.style.cssText = [
+      'position:absolute',
+      'bottom:calc(100% + 6px)',
+      'left:50%',
+      'transform:translateX(-50%)',
+      `background:${QUIZ_KB_KEY}`,
+      `color:${QUIZ_KB_KEY_TEXT}`,
+      `border-radius:${QUIZ_KB_RADIUS}`,
+      'padding:6px 14px',
+      'font-size:30px',
+      'font-weight:600',
+      `font-family:${UI_FONT}`,
+      'box-shadow:0 2px 10px rgba(0,0,0,0.2)',
+      'pointer-events:none',
+      'z-index:100',
+    ].join(';');
+    btn.appendChild(popup);
+    const remove = (): void => {
+      popup.remove();
+      btn.removeEventListener('pointerup', remove);
+      btn.removeEventListener('pointerleave', remove);
+    };
+    btn.addEventListener('pointerup', remove);
+    btn.addEventListener('pointerleave', remove);
   }
 
   private _makeSpaceKey(): HTMLButtonElement {
@@ -239,9 +362,9 @@ export class QuizKeyboard {
   private _makeClearKey(): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.innerHTML = `${ICON_CLEAR}<span style="margin-left:4px;font-weight:900;font-size:13px">${t('quiz.clear')}</span>`;
+    btn.innerHTML = `${ICON_CLEAR}<span class="quiz-clear-label" style="margin-left:4px;font-weight:700;font-size:12px">${t('quiz.clear')}</span>`;
     btn.setAttribute('aria-label', t('quiz.clear'));
-    btn.style.cssText = this._fnKeyStyle('#e74c3c', '#5a1a04', 'flex:1.2');
+    btn.style.cssText = this._fnKeyStyle(QUIZ_KB_KEY_SPECIAL, QUIZ_KB_KEY_TEXT, 'flex:1.35');
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this.clear();
@@ -255,20 +378,39 @@ export class QuizKeyboard {
     btn.type = 'button';
     btn.innerHTML = ICON_BACKSPACE;
     btn.setAttribute('aria-label', 'backspace');
-    btn.style.cssText = this._fnKeyStyle('#f7f1e3', '#2b2b2b', 'flex:1.2');
+    btn.style.cssText = this._fnKeyStyle(QUIZ_KB_KEY_SPECIAL, QUIZ_KB_KEY_TEXT, 'flex:1.35');
+    // iOS 长按连删：pointerdown 立即删 1 字 → 400ms 后每 80ms 重复
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this._backspace();
+      this._stopBackspaceRepeat();
+      this.backspaceDelay = window.setTimeout(() => {
+        this.backspaceRepeat = window.setInterval(() => this._backspace(), 80);
+      }, 400);
     });
+    btn.addEventListener('pointerup', () => this._stopBackspaceRepeat());
+    btn.addEventListener('pointerleave', () => this._stopBackspaceRepeat());
     return btn;
+  }
+
+  /** 停止退格长按连删 timer（松手/离开/销毁时调用） */
+  private _stopBackspaceRepeat(): void {
+    if (this.backspaceDelay !== undefined) {
+      window.clearTimeout(this.backspaceDelay);
+      this.backspaceDelay = undefined;
+    }
+    if (this.backspaceRepeat !== undefined) {
+      window.clearInterval(this.backspaceRepeat);
+      this.backspaceRepeat = undefined;
+    }
   }
 
   private _makeSubmitKey(): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.innerHTML = `${ICON_CHECK}<span style="margin-left:4px;font-weight:900;font-size:13px">${t('quiz.submit')}</span>`;
+    btn.innerHTML = `${ICON_CHECK}<span style="margin-left:4px;font-weight:600;font-size:13px">${t('quiz.submit')}</span>`;
     btn.setAttribute('aria-label', t('quiz.submit'));
-    btn.style.cssText = this._fnKeyStyle('#efad19', '#3d2200', 'flex:1.6');
+    btn.style.cssText = this._fnKeyStyle(QUIZ_YELLOW, QUIZ_KB_KEY_TEXT, 'flex:2');
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this._submit();
@@ -339,9 +481,9 @@ export class QuizKeyboard {
 
   private _refreshDisplay(): void {
     const text = this.buffer || t('quiz.inputPh');
-    const color = this.buffer ? INK : 'rgba(43,43,43,0.4)';
-    // 光标用闪烁竖线模拟
-    const cursor = this.buffer ? '<span style="display:inline-block;width:2px;height:1.1em;background:#2b2b2b;margin-left:2px;animation:quizCaret 1s steps(1) infinite"></span>' : '';
+    const color = this.buffer ? QUIZ_INK : QUIZ_INK_SOFT;
+    // 光标用闪烁竖线模拟（靛蓝光标，替代原深灰）
+    const cursor = this.buffer ? `<span style="display:inline-block;width:2px;height:1.1em;background:${QUIZ_ACCENT};margin-left:2px;animation:quizCaret 1s steps(1) infinite"></span>` : '';
     this.displayEl.innerHTML = `<span style="color:${color}">${this._escape(text)}</span>${cursor}`;
   }
 
@@ -355,7 +497,7 @@ export class QuizKeyboard {
 
   private _renderCandidates(): void {
     if (this.candidates.length === 0) {
-      this.candidateEl.innerHTML = `<span style="color:rgba(43,43,43,0.4);padding:8px 12px;font-size:14px">${t('quiz.noCandidate')}</span>`;
+      this.candidateEl.innerHTML = `<span style="color:${QUIZ_INK_SOFT};padding:8px 12px;font-size:14px">${t('quiz.noCandidate')}</span>`;
       return;
     }
     this.candidateEl.innerHTML = '';
@@ -365,19 +507,23 @@ export class QuizKeyboard {
       const secondary = c.zh;
       const chip = document.createElement('button');
       chip.type = 'button';
-      chip.innerHTML = `<span style="font-weight:900">${this._escape(primary)}</span><span style="margin-left:4px;font-size:12px;opacity:0.6">${this._escape(secondary)}</span>`;
+      chip.innerHTML = `<span style="font-weight:800">${this._escape(primary)}</span><span style="margin-left:4px;font-size:12px;opacity:0.55">${this._escape(secondary)}</span>`;
+      const selected = i === this.selectedCandidate;
       chip.style.cssText = [
         'flex:none',
+        'min-height:44px',
         'padding:6px 12px',
-        `background:${i === this.selectedCandidate ? INK_HIGHLIGHT : 'transparent'}`,
-        `border:2px solid ${i === this.selectedCandidate ? INK : 'rgba(43,43,43,0.2)'}`,
-        'border-radius:8px',
-        `color:${INK}`,
+        `background:${selected ? QUIZ_ACCENT_SOFT : QUIZ_CARD}`,
+        `border:1px solid ${selected ? QUIZ_ACCENT : QUIZ_BORDER}`,
+        `border-radius:${QUIZ_KB_RADIUS}`,
+        `color:${QUIZ_INK}`,
         `font-family:${UI_FONT}`,
         'font-size:14px',
         'cursor:pointer',
         'white-space:nowrap',
         'pointer-events:auto',
+        'transition:filter 160ms ease-out, transform 120ms ease-out',
+        'touch-action:manipulation',
       ].join(';');
       chip.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -392,59 +538,63 @@ export class QuizKeyboard {
   private _letterKeyStyle(): string {
     return [
       'flex:1',
-      'min-width:32px',
-      'height:42px',
-      `background:${PAPER_BG_ALT}`,
-      `border:2px solid rgba(43,43,43,0.3)`,
-      'border-radius:8px',
-      `color:${INK}`,
+      'min-width:0',
+      `height:${QUIZ_KB_KEY_HEIGHT}`,
+      `background:${QUIZ_KB_KEY}`,
+      `border:1px solid ${QUIZ_BORDER}`,
+      `border-radius:${QUIZ_KB_RADIUS}`,
+      `color:${QUIZ_KB_KEY_TEXT}`,
       `font-family:${UI_FONT}`,
-      'font-size:18px',
-      'font-weight:900',
+      'font-size:19px',
+      'font-weight:700',
       'cursor:pointer',
       'pointer-events:auto',
-      'transition:transform 0.08s ease,filter 0.08s ease',
+      'transition:transform 120ms ease-out,filter 160ms ease-out',
       'touch-action:manipulation',
+      'box-shadow:0 3px 0 rgba(23,37,53,0.2)',
+      'position:relative',
     ].join(';');
   }
 
   private _spaceKeyStyle(): string {
     return [
-      'flex:6',
-      'min-width:120px',
-      'height:42px',
-      `background:${PAPER_BG_ALT}`,
-      `border:2px solid rgba(43,43,43,0.3)`,
-      'border-radius:8px',
-      `color:${INK}`,
+      'flex:5',
+      'min-width:0',
+      `height:${QUIZ_KB_KEY_HEIGHT}`,
+      `background:${QUIZ_KB_KEY}`,
+      `border:1px solid ${QUIZ_BORDER}`,
+      `border-radius:${QUIZ_KB_RADIUS}`,
+      `color:${QUIZ_KB_KEY_TEXT}`,
       `font-family:${UI_FONT}`,
-      'font-size:14px',
+      'font-size:15px',
       'font-weight:700',
       'cursor:pointer',
       'pointer-events:auto',
-      'transition:transform 0.08s ease,filter 0.08s ease',
+      'transition:transform 120ms ease-out,filter 160ms ease-out',
       'touch-action:manipulation',
+      'box-shadow:0 3px 0 rgba(23,37,53,0.2)',
     ].join(';');
   }
 
-  private _fnKeyStyle(glow: string, border: string, flex = 'flex:1'): string {
+  private _fnKeyStyle(bg: string, fg: string, flex = 'flex:1'): string {
     return [
       flex,
-      'min-width:48px',
-      'height:42px',
-      `background:${glow}`,
-      `border:2px solid ${border}`,
-      'border-radius:8px',
-      `color:${border === '#2b2b2b' ? INK : '#fff8dd'}`,
+      'min-width:38px',
+      `height:${QUIZ_KB_KEY_HEIGHT}`,
+      `background:${bg}`,
+      `border:1px solid ${QUIZ_BORDER}`,
+      `border-radius:${QUIZ_KB_RADIUS}`,
+      `color:${fg}`,
       `font-family:${UI_FONT}`,
-      'font-size:14px',
+      'font-size:15px',
       'display:flex',
       'align-items:center',
       'justify-content:center',
       'cursor:pointer',
       'pointer-events:auto',
-      'transition:transform 0.08s ease,filter 0.08s ease',
+      'transition:transform 120ms ease-out,filter 160ms ease-out',
       'touch-action:manipulation',
+      'box-shadow:0 3px 0 rgba(23,37,53,0.2)',
     ].join(';');
   }
 

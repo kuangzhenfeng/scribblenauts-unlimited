@@ -3219,8 +3219,8 @@ const comboTemplates: Record<string, { zh: string; en: string; hintZh: string; h
       hintEn: '(summon a {adj} {name} near)',
     },
     {
-      zh: '相士说我命中忌黑宜{adj}色，须见一只{adj}的{name}方能化解……能帮我弄一只来吗？',
-      en: 'The seer says my stars shun black and favor {adj} — a {adj} {name} would break the curse. Can you get me one?',
+      zh: '相士说我命中犯忌，须见一只{adj}的{name}方能化解……能帮我弄一只来吗？',
+      en: 'The seer says my stars are cursed — a {adj} {name} would break the curse. Can you get me one?',
       hintZh: '（召唤一只{adj}的{name}到TA身边）',
       hintEn: '(summon a {adj} {name} near)',
     },

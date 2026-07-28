@@ -45,6 +45,7 @@ export class QuizRoundPicker {
   private creatures: DictEntry[] = [];
   private round = 0;
   private score = 0;
+  private streak = 0;
   private rng: () => number;
   /** 难度档位（reshuffle 派生种子用） */
   private readonly tier: DifficultyTier;
@@ -86,6 +87,10 @@ export class QuizRoundPicker {
     return this.score;
   }
 
+  get currentStreak(): number {
+    return this.streak;
+  }
+
   /** 当前是否还有题可出（题池为空时返回 false） */
   get hasQuestion(): boolean {
     return this.pool.length > 0;
@@ -104,9 +109,15 @@ export class QuizRoundPicker {
     return { round: this.round, question, creature, score: this.score };
   }
 
-  /** 记录一次答对，积分+1 */
-  scoreUp(): void {
+  /** 记录一次答对，积分与连胜同时 +1 */
+  recordCorrect(): void {
     this.score++;
+    this.streak++;
+  }
+
+  /** 记录一次答错，仅清空当前连胜 */
+  recordWrong(): void {
+    this.streak = 0;
   }
 
   /** 登记一个新生成物品，初始 ttl=3 */
@@ -147,6 +158,7 @@ export class QuizRoundPicker {
     this.cursor = 0;
     this.round = 0;
     this.score = 0;
+    this.streak = 0;
     this.clearItems();
     log.info('quiz reshuffled', { nonce: this.nonce });
   }
