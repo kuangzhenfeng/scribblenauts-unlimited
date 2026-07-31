@@ -26,8 +26,6 @@ export class Autocomplete {
   private input?: HTMLInputElement;
   /** 已确认前缀（多词组合时保留，回填时拼接在选中名前） */
   private prefix = '';
-  /** 补全前缀是否为 CJK（决定回填与显示用哪个语言名） */
-  private queryIsCjk = false;
 
   constructor(private readonly cb: AutocompleteCallbacks) {
     this.el = document.createElement('div');
@@ -57,7 +55,6 @@ export class Autocomplete {
     }
     this.completions = completions;
     this.prefix = prefix;
-    this.queryIsCjk = queryIsCjk;
     this.active = true;
     this.selected = 0;
     this.el.innerHTML = '';
@@ -67,8 +64,8 @@ export class Autocomplete {
       button.id = `${this.el.id}-option-${i}`;
       button.setAttribute('role', 'option');
       button.tabIndex = -1;
-      // 输入英文时优先显示英文名，输入中文时优先显示中文名
-      const primary = queryIsCjk ? c.zh : c.en;
+      // 保留用户命中的名/别名作为主显示文本，另一语言显示规范名
+      const primary = c.text;
       const secondary = queryIsCjk ? c.en : c.zh;
       button.textContent = `${primary}（${secondary}）`;
       button.setAttribute('aria-label', button.textContent);
@@ -118,8 +115,8 @@ export class Autocomplete {
   confirm(): Completion | undefined {
     if (!this.active) return undefined;
     const c = this.completions[this.selected];
-    // 按补全前缀的脚本选择回填语言名（非 UI 语言）
-    const name = this.queryIsCjk ? c.zh : c.en;
+    // 回填用户命中的名/别名，确保别名补全不会被规范名替换
+    const name = c.text;
     this.hide();
     this.cb.onPick(this.prefix + name);
     return c;

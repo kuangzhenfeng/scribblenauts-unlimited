@@ -1,13 +1,13 @@
 ---
 name: gen-content
-description: 当需要新增游戏内容时使用 —— 生成词汇(含docs)、生成题库、生成sprite图。默认生成词汇；通过参数选择模式：word/question/sprite。
+description: 当需要新增游戏内容时使用 —— 生成词汇(含docs)、生成题库、生成sprite图、生成关卡。默认生成词汇；通过参数选择模式：word/question/sprite/level。
 ---
 
 # gen-content
 
 ## 概述
 
-新增游戏内容的三合一流程。按参数选择模式，默认 `word`（生成词汇）。每个模式独立可执行；一个完整新词条通常依次走完三个模式（先词汇、再题库、最后 sprite）。
+新增游戏内容的四合一流程。按参数选择模式，默认 `word`（生成词汇）。每个模式独立可执行；一个完整新词条通常依次走完前三个模式（先词汇、再题库、最后 sprite）；新关卡则用 `level` 模式。
 
 ## 参数约定
 
@@ -18,6 +18,7 @@ description: 当需要新增游戏内容时使用 —— 生成词汇(含docs)�
 | 空 / `word` | 模式一：生成词汇（默认） | 新增 DictEntry + word-metadata + docs 提示词 |
 | `question` | 模式二：生成题库 | 在 bank.ts 中新增题目 |
 | `sprite` | 模式三：生成 sprite 图 | 走帧规格 + GPT 生图 + 三步流水线 |
+| `level` | 模式四：生成关卡 | 新建关卡 JSON + 注册到 LEVEL_ORDER + 选关场景适配 |
 
 ## 执行流程
 
@@ -36,10 +37,11 @@ description: 当需要新增游戏内容时使用 —— 生成词汇(含docs)�
 ### 执行步骤
 
 1. **确定分类与 id** → 按 `category` 选 entries 文件（见下表）
-2. **编写 DictEntry** → 追加到对应数组，参考同类词条的 `tags`/`physics`/`behaviors`
-3. **补 word-metadata 难度** → 在 `WORD_METADATA` 中加 `{ cefr, freq }`（1-3 档）
-4. **写 docs/sprite-prompts 提示词** → 仅当需要新 atlas 时（见复用判断）
-5. **复用判断** → renderer 复用 / aliases 扩充 / setTint 染色（见下表）
+2. **编写独立词条 DictEntry** → 追加到对应数组，参考同类词条的 `tags`/`physics`/`behaviors`
+3. **补全可识别词 aliases** → 中英双语各补自然别名（见下文推荐数量与原则）
+4. **补 word-metadata 难度** → 在 `WORD_METADATA` 中加 `{ cefr, freq }`（1-3 档）
+5. **写 docs/sprite-prompts 提示词** → 仅当需要新 atlas 时（见复用判断）
+6. **复用判断** → renderer 复用 / aliases 扩充 / setTint 染色（见下表）
 
 ### entries 文件选择
 
@@ -49,6 +51,24 @@ description: 当需要新增游戏内容时使用 —— 生成词汇(含docs)�
 | `object` / `tool` / `structure` / `magic` | `src/core/data/dictionary/entries/objects.ts` | box/fridge/tower/wand |
 | `element` | `src/core/data/dictionary/entries/elements.ts` | fire/water/ice |
 | `food` / `weapon` / `vehicle` / `plant` | `src/core/data/dictionary/entries/misc.ts` | apple/sword/car/tree |
+
+### 独立词条与可识别词
+
+一个"词汇"由**独立词条**和**可识别词（aliases）**两部分组成，二者必须同时生成：
+
+- **独立词条**：`id`/`zh.name`/`en.name` + 物理/渲染/标签等，是可被召唤的主体
+- **可识别词**：`zh.aliases`/`en.aliases`，是玩家输入时除 `name` 外也能命中的自然别称（如 狗→`['犬','狗狗']`、dog→`['hound']`）
+
+### 别名推荐数量
+
+基于 538 条词条的统计分布，别名数量遵循"自然、够用即可"原则，**禁止为了凑数硬造**：
+
+| 语言 | 推荐数量 | 分布依据 | 取值原则 |
+|---|---|---|---|
+| `zh.aliases` | 2~3 个 | 97% 词条 2~4 个，中位 2~3 | 口语俗称、简称、繁体/异写、儿童用语 |
+| `en.aliases` | 2~3 个 | 83% 词条 2~4 个，中位 2~3 | 同义词、复数/单数变体、学名/俗称 |
+
+**不凑数原则**：只有自然存在的别称才写，没有就少写甚至留空（96 条 zh.aliases 为空、13 条 en.aliases 为空都是正常的）。宁缺毋滥，不为到达数量而硬造词。
 
 ### DictEntry 字段速查
 
@@ -155,7 +175,75 @@ node scripts/gen-atlas.js {atlasKey}
 
 ---
 
-## 常见误区
+## 模式四：生成关卡（level）
+
+### 适用场景
+
+新增一个可游玩关卡（独立关卡 `self-contained` 或自由探索区 `overworld`）。
+
+### 执行步骤
+
+1. **新建关卡 JSON** → 放入 `src/core/data/levels/{level-id}.json`，构建期由 `import.meta.glob` 自动注册到 REGISTRY
+2. **注册到 LEVEL_ORDER** → 在 `src/game/LevelManager.ts` 的 `LEVEL_ORDER` 数组追加 level-id（决定选关场景展示与解锁顺序）
+3. **选关场景适配** → 在 `src/engine/scenes/LevelSelectScene.ts` 的 `THEME_META`（主题配色/图标/双语名）和 `LEVEL_TITLE`（关卡双语标题）中补条目
+4. **新主题处理**（仅当 theme 不在现有 6 个中时）→ 见下表
+
+### 关卡 JSON 字段速查
+
+```jsonc
+{
+  "id": "stage-xxx",                 // 全局唯一，小写连字符
+  "type": "self-contained",          // overworld=自由探索区；self-contained=独立关卡
+  "theme": "cave",                   // jungle/cave/snow/desert/volcano/meadow
+  "bounds": { "minX": -800, "minY": -200, "maxX": 800, "maxY": 600 }, // 世界边界
+  "playerStart": { "x": -300, "y": 542 },
+  "terrain": [ { "x": -500, "y": 160, "w": 220, "h": 24 } ],          // 额外平台（静态矩形，中心点坐标）
+  "spawns": [ { "typeId": "stone", "x": -200, "y": 330, "layer": 0 } ], // typeId 须在词典中存在
+  "npcs": [
+    { "id": "npc-miner", "typeId": "human", "x": 0, "y": 320, "gender": "male",
+      "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b2b2b", "hat": "miner" } }
+  ],
+  "decorations": [ { "kind": "stalactite", "x": -500, "y": 0 } ],      // kind 须在渲染器中已注册
+  "transitions": [ { "toLevelId": "overworld-meadow", "at": { /* AABB */ } } ], // 区域衔接
+  "starite": { "x": 600, "y": 300 },                                   // Starite 飞出位置
+  "challengeSlots": 3                                                  // 运行时从题库抽题数；quiz-arena 为 0
+}
+```
+
+> `challenges` 数组运行时由 `QuestionPicker` 按 `challengeSlots` 从题库随机抽取并装配，JSON 中留空或省略即可。
+
+### 新增关卡必改文件
+
+| 文件 | 改什么 |
+|---|---|
+| `src/core/data/levels/{level-id}.json` | 新建关卡 JSON（放入即自动注册） |
+| `src/game/LevelManager.ts` | `LEVEL_ORDER` 数组追加 level-id |
+| `src/engine/scenes/LevelSelectScene.ts` | `THEME_META` + `LEVEL_TITLE` 补条目（用已有主题则 THEME_META 无需改） |
+
+### 新主题判断
+
+| 场景 | 处理 |
+|---|---|
+| 用已有主题（jungle/cave/snow/desert/volcano/meadow） | 仅改关卡 JSON + LEVEL_ORDER + 选关标题 |
+| 新增主题 | 额外改 Environment.ts 的 `THEMES` 调色板 + PreloadScene 的 `BACKGROUND_PLATES` + `docs/background-prompts.md` 提示词 + 生成 `bg-far/bg-near-{theme}.png` |
+
+### 背景板生成（新主题时）
+
+按 `docs/background-prompts.md` 的提示词向 GPT 生图：
+- 远板 `bg-far-{theme}.png`（1920×1080，固定屏天空盒，scrollFactor 0,0）
+- 近板 `bg-near-{theme}.png`（1920×200，水平无缝视差条带，左右边缘可拼接）
+- 放入 `public/assets/backgrounds/`，PreloadScene 自动加载，缺图时 Environment 程序化回退
+
+### 关键文件
+
+- `src/core/data/levels/*.json`
+- `src/game/LevelManager.ts`
+- `src/engine/scenes/LevelSelectScene.ts`
+- `src/engine/render/Environment.ts`（`THEMES`）
+- `src/engine/scenes/PreloadScene.ts`（`BACKGROUND_PLATES`）
+- `docs/background-prompts.md`
+
+---
 
 | 错误做法 | 正确做法 |
 |---|---|
@@ -164,6 +252,9 @@ node scripts/gen-atlas.js {atlasKey}
 | 新增词条不补 `word-metadata` | 必须补 `cefr`/`freq`，否则 `getWordMeta` 回退最高档 `{3,3}` |
 | 每个颜色变体画新图 | 参数化对象用中性灰底 + 运行期 `setTint` |
 | 条目放在错误的 entries 文件 | 按 `category` 选文件（见 entries 文件选择表） |
+| 关卡 JSON 手写 `challenges` | 运行时由 `QuestionPicker` 按 `challengeSlots` 抽题覆盖，JSON 留空即可 |
+| 关卡 JSON 写完即生效 | 必须追加到 `LEVEL_ORDER`，否则不进选关场景与解锁顺序 |
+| 关卡用新主题却不补调色板 | 新主题需同步改 `Environment.THEMES` + `BACKGROUND_PLATES` + 背景板提示词 |
 
 ---
 

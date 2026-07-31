@@ -3,11 +3,11 @@
  *
  * 一个 Question 描述"玩家需要召唤什么物体来过关"的题目：
  * 单答案用 typeId + 可选形容词；多答案（情境题）用 answers 声明若干语义关联
- * 合格答案，任一即过关。双难度标注（CEFR / 词频）+ 双语故事化题面。
+ * 合格答案，任一即过关。双难度标注（等级档 / 词频）+ 双语故事化题面。
  *
  * 设计原则：
  * - 题目是纯数据，不含运行时逻辑；
- * - 难度双标注（cefr/freq）支持两种分档标准切换；
+ * - 难度双标注（cefr/freq，字段名沿用旧存档）支持两种分档标准切换；
  * - 题面故事化（NPC 第一人称陈述困境/需求），不直白索物；
  * - 多答案题任一关联答案即过关，自由度高、挫败感低；
  * - 题目复用既有词条与形容词，不新增 sprite/物理/外观。
@@ -19,7 +19,7 @@
 /** 难度档：基础 / 进阶 / 大师 */
 export type DifficultyTier = 1 | 2 | 3;
 
-/** 难度分档标准：CEFR 等级 / 词频排名 */
+/** 难度分档标准：游戏内等级档 / 词频启发式档 */
 export type DifficultyStandard = 'cefr' | 'frequency';
 
 /**
@@ -44,7 +44,7 @@ export interface Answer {
  *
  * adjectives/answers 缺省即为纯名词单答案题。运行时 QuestionPicker 按是否有
  * answers 装配为 object-present 或 any-of；难度取所有相关词 id 的中位档（主体答案难度）。
- * cefr/freq 为该题在两种标准下的档位，运行时按玩家所选 standard 取对应字段。
+ * cefr/freq 为该题在两种游戏内标准下的档位，字段名沿用旧存档，运行时按玩家所选 standard 取对应字段。
  */
 export interface Question {
   /** 全局唯一 id，如 'q-apple' / 'q-red-bird' / 'q-cold' */
@@ -55,9 +55,9 @@ export interface Question {
   adjectives?: string[];
   /** 多答案写法：2~6 个语义关联答案，任一即过关；有值时覆盖 typeId/adjectives */
   answers?: Answer[];
-  /** CEFR 档：A1/A2=1，B1/B2=2，C1/C2=3 */
+  /** 等级档：1/2/3，字段名沿用旧存档 */
   cefr: DifficultyTier;
-  /** 词频档：前5000=1，5000–20000=2，20000+=3 */
+  /** 词频启发式档：1/2/3 */
   freq: DifficultyTier;
   /** 题面：NPC 第一人称故事化需求陈述（如"好冷啊……能帮我弄点什么暖和的吗？"） */
   prompt: { zh: string; en: string };

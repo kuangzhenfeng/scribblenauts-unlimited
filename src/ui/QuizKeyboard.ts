@@ -461,7 +461,7 @@ export class QuizKeyboard {
   private _pickCandidate(index: number): void {
     const c = this.candidates[index];
     if (!c) return;
-    const fullText = this.completionPrefix + c.en;
+    const fullText = this.completionPrefix + c.text;
     log.info('quiz keyboard pick', { id: c.id, kind: c.kind, zh: c.zh, en: c.en, fullText });
     if (c.kind === 'adj') {
       // 形容词候选：回填到 buffer 并补一个空格，继续输入名词
@@ -502,8 +502,8 @@ export class QuizKeyboard {
     }
     this.candidateEl.innerHTML = '';
     this.candidates.forEach((c, i) => {
-      // 英文输入 → 英文名为主、中文为辅（与 Autocomplete 同构：按补全前缀脚本选主显）
-      const primary = c.en;
+      // 保留用户命中的英文名/别名，中文显示规范译名
+      const primary = c.text;
       const secondary = c.zh;
       const chip = document.createElement('button');
       chip.type = 'button';

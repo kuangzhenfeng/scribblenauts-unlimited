@@ -8,7 +8,7 @@
  *    2~6 个语义关联的合格答案（同功能/同场景/同类），玩家召唤任一即过关。
  *    难度取所有 answer 词 id 的中位档（主体答案难度，非最高档）。
  *
- * B. 词条覆盖单答案题（nounQuestions）：由 allEntries() 全量派生，保证 538
+ * B. 词条覆盖单答案题（nounQuestions）：由 allEntries() 全量派生，保证全部
  *    词条每个至少有一道题。题面套用 category 的故事化模板（第一人称情境
  *    + 点名目标词条），单答案 typeId。难度从 word-metadata 派生。
  *
@@ -16,14 +16,14 @@
  *    行为×生物/状态×物/材质×物/size×物），题面故事化点名"形容词+名词"，
  *    单答案 typeId+adjectives，GoalSystem 形容词超集校验。
  *
- * 难度双标注（cefr/freq）从 word-metadata 派生，运行时按玩家所选 standard 过滤。
+ * 难度双标注（游戏内等级档/词频启发式档）从 word-metadata 派生，运行时按玩家所选 standard 过滤。
  */
 
 import type { Question, DifficultyTier, DifficultyStandard } from '@/core/types/question';
 import { allEntries } from '@/core/data/dictionary/Dictionary';
 import { getWordMeta } from './word-metadata';
 
-/** 取多个词 id 的 CEFR 中位档（主体答案难度）；偶数个取中间两档平均后四舍五入 */
+/** 取多个词 id 的游戏内等级中位档（主体答案难度）；偶数个取中间两档平均后四舍五入 */
 function medianTier(ids: string[]): DifficultyTier {
   const tiers = ids.map(id => getWordMeta(id).cefr).sort((a, b) => a - b);
   const n = tiers.length;
@@ -136,7 +136,7 @@ const scenarios: Scenario[] = [
       { typeId: 'tea' },
       { typeId: 'coffee' },
       { typeId: 'milk' },
-      { typeId: 'water-food' },
+      { typeId: 'water' },
     ],
   },
   {
@@ -1028,7 +1028,7 @@ const scenarios: Scenario[] = [
       { typeId: 'bread' },
       { typeId: 'cheese' },
       { typeId: 'apple' },
-      { typeId: 'water-food' },
+      { typeId: 'water' },
       { typeId: 'cake' },
       { typeId: 'cookie' },
     ],
@@ -2366,7 +2366,7 @@ const situationalQuestions: Question[] = scenarios.map((s) => {
 
 // ---- B. 词条覆盖单答案题 ----
 //
-// 由 allEntries() 全量派生，保证 538 词条每个至少有一道题。
+// 由 allEntries() 全量派生，保证每个词条至少有一道题。
 // 题面套用 category 的故事化模板（第一人称情境 + 点名目标词条），
 // 不再是"给我一个X"。难度从 word-metadata 派生。
 
@@ -3158,7 +3158,7 @@ const adjZhName: Record<string, string> = {
   teal: '凫青', olive: '橄榄', marigold: '金盏', coral: '珊瑚', salmon: '鲑红', khaki: '卡其',
   plum: '梅紫', lavender: '薰衣草', mint: '薄荷', peach: '桃粉', skyblue: '天蓝',
   royalblue: '宝蓝', chocolate: '巧克力色', sienna: '赭石', chartreuse: '黄绿',
-  'cyan-bright': '亮青', 'magenta-bright': '亮品红', amber: '琥珀', 'crimson-red': '深红', 'amber-dark': '焦琥珀',
+  amber: '琥珀',
   flying: '飞行', swimming: '游泳', aggressive: '凶猛', friendly: '友好', scared: '胆小',
   sleepy: '嗜睡', hungry: '饥饿', brave: '勇敢', crazy: '疯狂', lazy: '懒惰',
   fast: '快速', slow: '缓慢', immobile: '静止', loyal: '忠诚', wild: '野性', gentle: '温顺',
@@ -3616,7 +3616,7 @@ export function questionCount(): number {
   return QUESTION_BANK.length;
 }
 
-/** 按 CEFR 标准各档位（基础/进阶/大师）的题目数，从 QUESTION_BANK 派生 */
+/** 按等级档各档位（基础/进阶/大师）的题目数，从 QUESTION_BANK 派生 */
 export const CEFR_QUESTION_COUNTS: readonly [number, number, number] = (() => {
   const c: [number, number, number] = [0, 0, 0];
   for (const q of QUESTION_BANK) c[q.cefr - 1]++;

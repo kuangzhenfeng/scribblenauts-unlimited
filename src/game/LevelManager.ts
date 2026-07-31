@@ -57,7 +57,7 @@ export class LevelManager {
    * 加载关卡：清场（保留玩家）→ 重建地形 → 生成静态物体/NPC → 重定位玩家
    * → 按难度抽题装配 challenges。
    * keepPlayerId 由 WorldScene 传入以跨关卡保留玩家。
-   * tier/standard 为难度档与标准，由选关界面传入；缺省回退基础档+CEFR。
+   * tier/standard 为难度档与标准，由选关界面传入；缺省回退基础档+等级标准。
    * seedSalt 为题目随机种子盐（如日期），同盐+同关+同难度 → 同题序。
    */
   load(

@@ -2,7 +2,7 @@
  * 双语输入解析器 —— 核心创新点。
  *
  * 结构恒为 [形容词]* 名词（名词在末尾）。
- * 流程：normalize → splitByScript → CJK 段后向贪婪分词 / ASCII 段按空格分词
+ * 流程：normalize → splitByScript → CJK 段后向贪婪分词 / ASCII 段短语匹配
  *      → 枚举名词边界多种切法生成候选 → 打分排序。
  *
  * 关键洞察：词典与形容词表是受限闭集，分词只在闭集内匹配，
@@ -16,6 +16,7 @@ import { normalize, collapseSpaces } from './normalize';
 import { splitByScript } from './Segmenter';
 import { cnExactId, enExactId } from '@/core/data/dictionary/Dictionary';
 import { lookupAdjByCn, lookupAdjByEn } from '@/core/data/dictionary/adjectives';
+import { normalizeEnglishKey } from '@/core/data/dictionary/normalize';
 
 /** 解析模式 */
 export type ParseMode = 'spawn' | 'adjectives-only';
@@ -73,12 +74,7 @@ export function parseInput(raw: string): ParseCandidate[] {
     if (seg.kind === 'cjk') {
       tokens.push(...segmentCjk(seg.text));
     } else {
-      // ASCII 段：折叠空白后按空格切
-      const collapsed = collapseSpaces(seg.text);
-      if (!collapsed) continue;
-      for (const w of collapsed.split(' ')) {
-        tokens.push(classifyAscii(w));
-      }
+      tokens.push(...segmentAscii(seg.text));
     }
   }
 
@@ -106,17 +102,59 @@ export function parseAdjectivesOnly(raw: string): ParsedAdjective[] {
         }
       }
     } else {
-      const collapsed = collapseSpaces(seg.text);
-      if (!collapsed) continue;
-      for (const w of collapsed.split(' ')) {
-        const adj = lookupAdjByEn(w.toLowerCase());
-        if (adj) {
-          out.push({ adjId: adj.id, text: w });
-        } else {
-          return [];
-        }
+      const tokens = segmentEnglishAdjectives(seg.text);
+      if (!tokens) return [];
+      for (const token of tokens) {
+        out.push({ adjId: token.adjId!, text: token.text });
       }
     }
+  }
+  return out;
+}
+
+/**
+ * ASCII 段优先识别最长的英文名词短语，再识别前置形容词。
+ * 例如 sea-turtle、sea turtle、big sea turtle 都保持为一个名词 token。
+ */
+function segmentAscii(s: string): Token[] {
+  const collapsed = collapseSpaces(s);
+  if (!collapsed) return [];
+  const words = collapsed.split(' ');
+
+  for (let start = 0; start < words.length; start++) {
+    const nounText = words.slice(start).join(' ');
+    const nounId = enExactId(nounText);
+    if (!nounId) continue;
+    const prefix = words.slice(0, start);
+    const adjectives = segmentEnglishAdjectives(prefix.join(' '));
+    if (adjectives) {
+      return [...adjectives, { kind: 'noun', text: nounText, nounId }];
+    }
+  }
+
+  return words.map(classifyAscii);
+}
+
+/** ASCII 形容词短语分词，最长优先，支持 sky blue 等自然多词颜色名。 */
+function segmentEnglishAdjectives(s: string): Token[] | undefined {
+  const collapsed = collapseSpaces(s);
+  if (!collapsed) return [];
+  const words = collapsed.split(' ');
+  const out: Token[] = [];
+  let i = 0;
+  while (i < words.length) {
+    let matched: Token | undefined;
+    for (let len = Math.min(3, words.length - i); len >= 1; len--) {
+      const text = words.slice(i, i + len).join(' ');
+      const adj = lookupAdjByEn(normalizeEnglishKey(text));
+      if (adj) {
+        matched = { kind: 'adjective', text, adjId: adj.id };
+        i += len;
+        break;
+      }
+    }
+    if (!matched) return undefined;
+    out.push(matched);
   }
   return out;
 }
@@ -178,7 +216,7 @@ function segmentCjkAdjectives(s: string): Token[] {
 
 /** ASCII token 分类 */
 function classifyAscii(w: string): Token {
-  const wl = w.toLowerCase();
+  const wl = normalizeEnglishKey(w);
   const nounId = enExactId(wl);
   if (nounId) return { kind: 'noun', text: w, nounId };
   const adj = lookupAdjByEn(wl);
@@ -198,7 +236,7 @@ function generateCandidates(tokens: Token[], raw: string): ParseCandidate[] {
       nounPositions.push(i);
     } else if (t.kind === 'unknown') {
       // 尝试把 unknown 整体当名词查中英精确
-      const id = cnExactId(t.text) ?? enExactId(t.text.toLowerCase());
+      const id = cnExactId(t.text) ?? enExactId(t.text);
       if (id) {
         t.kind = 'noun';
         t.nounId = id;
@@ -209,7 +247,7 @@ function generateCandidates(tokens: Token[], raw: string): ParseCandidate[] {
 
   if (nounPositions.length === 0) {
     // 完全无名词：尝试整串精确查（如单形容词无名词则失败）
-    const id = cnExactId(raw) ?? enExactId(raw.toLowerCase());
+    const id = cnExactId(raw) ?? enExactId(raw);
     if (id) {
       return [{ noun: { entryId: id, text: raw }, adjectives: [], score: 1, raw }];
     }
@@ -242,7 +280,7 @@ function generateCandidates(tokens: Token[], raw: string): ParseCandidate[] {
   // 多候选：若末尾名词前还有一个候选名词边界，产出"形容词+名词"的第二解
   // 例如 "hot dog"：可能整体是词条"热狗"，也可能是 hot(形)+dog(名)
   // 当 tokens 只有 1 个 noun 且无 unknown，且 raw 整体也能精确匹配词条时，追加整体候选
-  const altId = cnExactId(raw) ?? enExactId(raw.toLowerCase());
+  const altId = cnExactId(raw) ?? enExactId(raw);
   const candidates: ParseCandidate[] = [candidate];
   if (altId && altId !== nounTok.nounId) {
     candidates.push({

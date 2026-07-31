@@ -1,9 +1,9 @@
 /**
- * 词汇难度元数据 —— 538 词条 + 128 形容词的 CEFR 等级与词频排名双标注。
+ * 词汇难度元数据 —— 基础词条与形容词的游戏内难度双标注。
  *
- * 数据源：
- * - CEFR：Cambridge English Vocabulary Profile 公开等级（A1/A2=1, B1/B2=2, C1/C2=3）
- * - 词频：COCA/BNC 词频排名（前5000=1, 5000–20000=2, 20000+=3）
+ * `cefr` / `freq` 是游戏内 1–3 档位，不是对每个词的官方 CEFR 或词频认证。
+ * 词库包含专名、复合词和可召唤对象，无法用一个外部等级表完整覆盖；这里保留
+ * 稳定的人工分档，题库构建和两种难度筛选均只依赖这些档位。
  *
  * key 为词条/形容词的 id（全局唯一稳定标识，优于 en.name 可能重复）。
  * 题目难度在题库构建期由元数据派生，运行时按玩家所选 standard 取对应字段。
@@ -17,12 +17,14 @@
 import type { DifficultyTier } from '@/core/types/question';
 
 export interface WordMeta {
+  /** 游戏内难度档位，字段名保留以兼容题目类型与存档 */
   cefr: DifficultyTier;
+  /** 游戏内词频启发式档位，不代表外部语料库的精确排名 */
   freq: DifficultyTier;
 }
 
 export const WORD_METADATA: Record<string, WordMeta> = {
-  // ==================== animals（213）====================
+  // ==================== animals ====================
   dog: { cefr: 1, freq: 1 },
   cat: { cefr: 1, freq: 1 },
   cow: { cefr: 1, freq: 1 },
@@ -236,8 +238,25 @@ export const WORD_METADATA: Record<string, WordMeta> = {
   cockatrice: { cefr: 3, freq: 3 },
   willowisp: { cefr: 3, freq: 3 },
   'unicorn-dark': { cefr: 3, freq: 3 },
+  // ---- 节肢动物与小虫 ----
+  bee: { cefr: 1, freq: 1 },
+  ant: { cefr: 1, freq: 1 },
+  butterfly: { cefr: 2, freq: 2 },
+  moth: { cefr: 2, freq: 2 },
+  wasp: { cefr: 2, freq: 2 },
+  hornet: { cefr: 3, freq: 2 },
+  mosquito: { cefr: 2, freq: 2 },
+  beetle: { cefr: 2, freq: 2 },
+  dragonfly: { cefr: 3, freq: 2 },
+  ladybug: { cefr: 2, freq: 2 },
+  caterpillar: { cefr: 3, freq: 2 },
+  spider: { cefr: 2, freq: 1 },
+  scorpion: { cefr: 2, freq: 2 },
+  squid: { cefr: 2, freq: 2 },
+  seagull: { cefr: 2, freq: 2 },
+  dinosaur: { cefr: 2, freq: 2 },
 
-  // ==================== objects（112）====================
+  // ==================== objects ====================
   box: { cefr: 1, freq: 1 },
   rope: { cefr: 2, freq: 1 },
   fridge: { cefr: 2, freq: 2 },
@@ -351,7 +370,7 @@ export const WORD_METADATA: Record<string, WordMeta> = {
   amulet: { cefr: 3, freq: 3 },
   'totem-mini': { cefr: 3, freq: 3 },
 
-  // ==================== elements（40）====================
+  // ==================== elements ====================
   fire: { cefr: 1, freq: 1 },
   water: { cefr: 1, freq: 1 },
   ice: { cefr: 1, freq: 1 },
@@ -393,7 +412,7 @@ export const WORD_METADATA: Record<string, WordMeta> = {
   'shadow-element': { cefr: 3, freq: 3 },
   light: { cefr: 1, freq: 1 },
 
-  // ==================== misc（173）====================
+  // ==================== misc ====================
   apple: { cefr: 1, freq: 1 },
   meat: { cefr: 1, freq: 1 },
   bread: { cefr: 1, freq: 1 },
@@ -482,7 +501,6 @@ export const WORD_METADATA: Record<string, WordMeta> = {
   coffee: { cefr: 1, freq: 1 },
   wine: { cefr: 2, freq: 1 },
   beer: { cefr: 2, freq: 1 },
-  'water-food': { cefr: 3, freq: 3 },
   mace: { cefr: 3, freq: 3 },
   flail: { cefr: 3, freq: 3 },
   halberd: { cefr: 3, freq: 3 },
@@ -567,8 +585,120 @@ export const WORD_METADATA: Record<string, WordMeta> = {
   'clamp-lamp': { cefr: 3, freq: 3 },
   goggles: { cefr: 3, freq: 2 },
   apron: { cefr: 3, freq: 2 },
+  // ---- 蔬菜与加工食品 ----
+  potato: { cefr: 1, freq: 1 },
+  onion: { cefr: 2, freq: 1 },
+  garlic: { cefr: 2, freq: 2 },
+  cabbage: { cefr: 2, freq: 2 },
+  lettuce: { cefr: 2, freq: 2 },
+  spinach: { cefr: 3, freq: 2 },
+  bean: { cefr: 2, freq: 1 },
+  pea: { cefr: 2, freq: 2 },
+  nut: { cefr: 2, freq: 1 },
+  peanut: { cefr: 2, freq: 2 },
+  raisin: { cefr: 3, freq: 3 },
+  flour: { cefr: 2, freq: 2 },
+  sugar: { cefr: 2, freq: 1 },
+  cream: { cefr: 2, freq: 2 },
+  sandwich: { cefr: 2, freq: 1 },
+  pizza: { cefr: 2, freq: 1 },
+  hamburger: { cefr: 2, freq: 2 },
+  hotdog: { cefr: 2, freq: 2 },
+  sausage: { cefr: 2, freq: 2 },
+  bacon: { cefr: 2, freq: 2 },
+  popcorn: { cefr: 2, freq: 2 },
+  chips: { cefr: 2, freq: 2 },
+  lollipop: { cefr: 2, freq: 2 },
+  pancake: { cefr: 3, freq: 2 },
+  icecream: { cefr: 2, freq: 2 },
+  sushi: { cefr: 3, freq: 2 },
+  dumpling: { cefr: 3, freq: 3 },
+  // ---- 植物器官与新树花 ----
+  seed: { cefr: 2, freq: 2 },
+  root: { cefr: 2, freq: 1 },
+  branch: { cefr: 2, freq: 1 },
+  petal: { cefr: 3, freq: 2 },
+  acorn: { cefr: 3, freq: 3 },
+  pinecone: { cefr: 3, freq: 3 },
+  dandelion: { cefr: 3, freq: 2 },
+  poppy: { cefr: 3, freq: 2 },
+  lotus: { cefr: 3, freq: 2 },
+  maple: { cefr: 2, freq: 2 },
+  birch: { cefr: 3, freq: 3 },
+  // ---- 载具补充 ----
+  ship: { cefr: 2, freq: 1 },
+  van: { cefr: 2, freq: 2 },
+  taxi: { cefr: 2, freq: 2 },
+  ambulance: { cefr: 2, freq: 2 },
+  sailboat: { cefr: 3, freq: 2 },
+  canoe: { cefr: 3, freq: 3 },
+  ferry: { cefr: 3, freq: 3 },
+  skateboard: { cefr: 2, freq: 2 },
+  scooter: { cefr: 3, freq: 2 },
+  skis: { cefr: 3, freq: 3 },
+  forklift: { cefr: 3, freq: 3 },
+  // ---- 工具补充 ----
+  nail: { cefr: 2, freq: 1 },
+  screw: { cefr: 2, freq: 2 },
+  glue: { cefr: 2, freq: 2 },
+  tape: { cefr: 2, freq: 2 },
+  paint: { cefr: 2, freq: 2 },
+  paintbrush: { cefr: 3, freq: 2 },
+  rake: { cefr: 3, freq: 2 },
+  hoe: { cefr: 3, freq: 2 },
+  pitchfork: { cefr: 3, freq: 3 },
+  chainsaw: { cefr: 3, freq: 3 },
+  wire: { cefr: 2, freq: 2 },
+  pipe: { cefr: 2, freq: 2 },
+  lawnmower: { cefr: 3, freq: 3 },
+  // ---- 武器补充 ----
+  trident: { cefr: 3, freq: 2 },
+  rifle: { cefr: 2, freq: 2 },
+  machete: { cefr: 3, freq: 3 },
+  // ---- 元素补充 ----
+  thunder: { cefr: 2, freq: 2 },
+  storm: { cefr: 2, freq: 2 },
+  bubble: { cefr: 2, freq: 2 },
+  poison: { cefr: 2, freq: 2 },
+  gas: { cefr: 2, freq: 2 },
+  energy: { cefr: 2, freq: 2 },
+  electricity: { cefr: 3, freq: 2 },
+  iceberg: { cefr: 3, freq: 3 },
+  dust: { cefr: 2, freq: 2 },
+  // ---- 物品补充：餐具/文具/玩具/乐器/洗漱 ----
+  bottle: { cefr: 2, freq: 1 },
+  plate: { cefr: 2, freq: 1 },
+  bowl: { cefr: 2, freq: 1 },
+  spoon: { cefr: 2, freq: 1 },
+  fork: { cefr: 2, freq: 1 },
+  pen: { cefr: 1, freq: 1 },
+  pencil: { cefr: 2, freq: 1 },
+  eraser: { cefr: 2, freq: 2 },
+  toy: { cefr: 2, freq: 2 },
+  doll: { cefr: 2, freq: 2 },
+  kite: { cefr: 2, freq: 2 },
+  teddy: { cefr: 2, freq: 2 },
+  drum: { cefr: 2, freq: 2 },
+  guitar: { cefr: 2, freq: 2 },
+  piano: { cefr: 2, freq: 2 },
+  violin: { cefr: 2, freq: 2 },
+  'flute-instrument': { cefr: 3, freq: 2 },
+  trumpet: { cefr: 3, freq: 2 },
+  soap: { cefr: 2, freq: 2 },
+  towel: { cefr: 2, freq: 1 },
+  toothbrush: { cefr: 2, freq: 2 },
+  comb: { cefr: 2, freq: 2 },
+  broom: { cefr: 2, freq: 2 },
+  mop: { cefr: 2, freq: 2 },
+  lock: { cefr: 2, freq: 2 },
+  bell: { cefr: 2, freq: 1 },
+  flag: { cefr: 2, freq: 2 },
+  map: { cefr: 2, freq: 1 },
+  wallet: { cefr: 2, freq: 2 },
+  envelope: { cefr: 3, freq: 2 },
+  stamp: { cefr: 3, freq: 2 },
 
-  // ==================== 形容词（117，已去除与名词同 id 的 11 个）====================
+  // ==================== 形容词（与名词同 id 的项目不重复）====================
   // 说明：chocolate/coral/crystal/diamond/giant/lavender/lime/paper/peach/plum/stone
   // 这 11 个 id 既是名词又是形容词（如 giant 既是"巨人"词条又是"巨大的"形容词），
   // 同 id 难度标注一致，名词部分已标注，此处不重复。
@@ -622,11 +752,7 @@ export const WORD_METADATA: Record<string, WordMeta> = {
   royalblue: { cefr: 3, freq: 3 },
   sienna: { cefr: 3, freq: 3 },
   chartreuse: { cefr: 3, freq: 3 },
-  'cyan-bright': { cefr: 3, freq: 3 },
-  'magenta-bright': { cefr: 3, freq: 3 },
   amber: { cefr: 3, freq: 3 },
-  'crimson-red': { cefr: 3, freq: 3 },
-  'amber-dark': { cefr: 3, freq: 3 },
   // ---- behavior ----
   flying: { cefr: 1, freq: 1 },
   swimming: { cefr: 1, freq: 1 },
@@ -643,7 +769,6 @@ export const WORD_METADATA: Record<string, WordMeta> = {
   fast: { cefr: 1, freq: 1 },
   slow: { cefr: 1, freq: 1 },
   immobile: { cefr: 3, freq: 3 },
-  courage: { cefr: 2, freq: 2 },
   loyal: { cefr: 3, freq: 2 },
   wild: { cefr: 2, freq: 1 },
   gentle: { cefr: 3, freq: 2 },
@@ -703,7 +828,7 @@ export function getWordMeta(id: string): WordMeta {
   return WORD_METADATA[id] ?? { cefr: 3, freq: 3 };
 }
 
-/** 按 CEFR 标准各档位（基础/进阶/大师）的单词数，从 WORD_METADATA 派生 */
+/** 按等级档各档位（基础/进阶/大师）的单词数，从 WORD_METADATA 派生 */
 export const CEFR_WORD_COUNTS: readonly [number, number, number] = (() => {
   const c: [number, number, number] = [0, 0, 0];
   for (const m of Object.values(WORD_METADATA)) c[m.cefr - 1]++;

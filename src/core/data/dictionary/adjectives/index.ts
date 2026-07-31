@@ -10,6 +10,7 @@ import { colorAdjectives } from './color';
 import { behaviorAdjectives } from './behavior';
 import { stateAdjectives } from './state';
 import { materialAdjectives } from './material';
+import { normalizeEnglishKey } from '../normalize';
 
 /** 全部形容词 */
 export const adjectives: AdjectiveEntry[] = [
@@ -30,8 +31,8 @@ const enExact = new Map<string, string>();
 function indexAdj(a: AdjectiveEntry): void {
   cnExact.set(a.zh.name, a.id);
   for (const alias of a.zh.aliases ?? []) cnExact.set(alias, a.id);
-  enExact.set(a.en.name.toLowerCase(), a.id);
-  for (const alias of a.en.aliases ?? []) enExact.set(alias.toLowerCase(), a.id);
+  enExact.set(normalizeEnglishKey(a.en.name), a.id);
+  for (const alias of a.en.aliases ?? []) enExact.set(normalizeEnglishKey(alias), a.id);
 }
 for (const a of adjectives) indexAdj(a);
 
@@ -52,12 +53,12 @@ export function completeAdjCn(prefix: string, limit = 8): Completion[] {
 
 /** 英文前缀补全 */
 export function completeAdjEn(prefix: string, limit = 8): Completion[] {
-  const lp = prefix.toLowerCase();
+  const lp = normalizeEnglishKey(prefix);
   const out: Completion[] = [];
   for (const a of adjectives) {
     const cands = [a.en.name, ...(a.en.aliases ?? [])];
     for (const text of cands) {
-      if (text.toLowerCase().startsWith(lp)) {
+      if (normalizeEnglishKey(text).startsWith(lp)) {
         out.push({ text, id: a.id, zh: a.zh.name, en: a.en.name });
         if (out.length >= limit) return out;
       }
@@ -79,7 +80,7 @@ export function lookupAdjByCn(text: string): AdjectiveEntry | undefined {
 }
 
 export function lookupAdjByEn(text: string): AdjectiveEntry | undefined {
-  const id = enExact.get(text.toLowerCase());
+  const id = enExact.get(normalizeEnglishKey(text));
   return id ? byId.get(id) : undefined;
 }
 

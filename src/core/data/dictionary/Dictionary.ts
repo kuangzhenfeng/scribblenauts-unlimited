@@ -19,6 +19,7 @@ import { objectEntries } from './entries/objects';
 import { miscEntries } from './entries/misc';
 import { isModifiable } from './modifiable';
 import { getAdjective } from './adjectives';
+import { normalizeEnglishKey } from './normalize';
 
 /** 全部词条 */
 const entries: DictEntry[] = [
@@ -38,8 +39,8 @@ const enExact = new Map<string, string>();
 function indexEntry(entry: DictEntry): void {
   cnExact.set(entry.zh.name, entry.id);
   for (const a of entry.zh.aliases ?? []) cnExact.set(a, entry.id);
-  enExact.set(entry.en.name.toLowerCase(), entry.id);
-  for (const a of entry.en.aliases ?? []) enExact.set(a.toLowerCase(), entry.id);
+  enExact.set(normalizeEnglishKey(entry.en.name), entry.id);
+  for (const a of entry.en.aliases ?? []) enExact.set(normalizeEnglishKey(a), entry.id);
 }
 
 for (const e of entries) indexEntry(e);
@@ -52,7 +53,7 @@ export function lookupByCn(text: string): DictEntry | undefined {
 }
 
 export function lookupByEn(text: string): DictEntry | undefined {
-  const id = enExact.get(text.toLowerCase());
+  const id = enExact.get(normalizeEnglishKey(text));
   return id ? byId.get(id) : undefined;
 }
 
@@ -75,7 +76,7 @@ export function cnExactId(text: string): string | undefined {
 
 /** 英文精确 → entryId */
 export function enExactId(text: string): string | undefined {
-  return enExact.get(text.toLowerCase());
+  return enExact.get(normalizeEnglishKey(text));
 }
 
 // ---- 前缀补全（扁平过滤，首期词条规模小） ----
@@ -104,12 +105,12 @@ export function completeCn(prefix: string, limit = 8): Completion[] {
 
 /** 英文前缀补全 */
 export function completeEn(prefix: string, limit = 8): Completion[] {
-  const lp = prefix.toLowerCase();
+  const lp = normalizeEnglishKey(prefix);
   const out: Completion[] = [];
   for (const e of entries) {
     const cands = [e.en.name, ...(e.en.aliases ?? [])];
     for (const text of cands) {
-      if (text.toLowerCase().startsWith(lp)) {
+      if (normalizeEnglishKey(text).startsWith(lp)) {
         out.push({ text, id: e.id, zh: e.zh.name, en: e.en.name });
         if (out.length >= limit) return out;
       }

@@ -650,9 +650,9 @@ export class SettingsScene extends Phaser.Scene {
     });
     wrap.appendChild(tierGroup);
 
-    // 词库分布：CEFR / 词频两种标准下各档位的单词数
+    // 词库分布：等级档 / 词频两种标准下各档位的单词数
     wrap.appendChild(this._wordDistribution());
-    // 题目分布：CEFR / 词频两种标准下各档位的题目数
+    // 题目分布：等级档 / 词频两种标准下各档位的题目数
     wrap.appendChild(this._questionDistribution());
 
     const hint = document.createElement('div');
@@ -737,7 +737,7 @@ export class SettingsScene extends Phaser.Scene {
     return this._card(-0.4, this._head(ICON_SPARKLES, t('settings.difficulty'), t('settings.difficultyDesc')), wrap);
   }
 
-  /** 词库分布表：CEFR / 词频两种标准下各档位（基础/进阶/大师）的单词数 */
+  /** 词库分布表：等级档 / 词频两种标准下各档位（基础/进阶/大师）的单词数 */
   private _wordDistribution(): HTMLDivElement {
     const wrap = document.createElement('div');
     wrap.className = 'set-worddist';
@@ -756,7 +756,7 @@ export class SettingsScene extends Phaser.Scene {
       h.textContent = label;
       grid.appendChild(h);
     }
-    // CEFR 行
+    // 等级档行
     const cefrLabel = document.createElement('div');
     cefrLabel.className = 'set-wd-rl';
     cefrLabel.textContent = t('settings.stdCefrShort');
@@ -782,7 +782,7 @@ export class SettingsScene extends Phaser.Scene {
     return wrap;
   }
 
-  /** 题目分布表：CEFR / 词频两种标准下各档位（基础/进阶/大师）的题目数 */
+  /** 题目分布表：等级档 / 词频两种标准下各档位（基础/进阶/大师）的题目数 */
   private _questionDistribution(): HTMLDivElement {
     const wrap = document.createElement('div');
     wrap.className = 'set-worddist set-qdist';
@@ -801,7 +801,7 @@ export class SettingsScene extends Phaser.Scene {
       h.textContent = label;
       grid.appendChild(h);
     }
-    // CEFR 行
+    // 等级档行
     const cefrLabel = document.createElement('div');
     cefrLabel.className = 'set-wd-rl';
     cefrLabel.textContent = t('settings.stdCefrShort');

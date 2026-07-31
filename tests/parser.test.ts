@@ -43,6 +43,17 @@ describe('parseInput bilingual nouns', () => {
     const cs = parseInput('hound');
     expect(cs[0].noun.entryId).toBe('dog');
   });
+
+  it('parses a natural multi-word English noun phrase', () => {
+    const cs = parseInput('big sea turtle');
+    expect(cs[0].noun.entryId).toBe('turtle-sea');
+    expect(cs[0].adjectives.map((a) => a.adjId)).toContain('big');
+  });
+
+  it('accepts hyphen, spaces, and case differences for English keys', () => {
+    expect(parseInput('SEA-TURTLE')[0].noun.entryId).toBe('turtle-sea');
+    expect(parseInput('hot dog')[0].noun.entryId).toBe('hotdog');
+  });
 });
 
 describe('parseInput adjectives', () => {
@@ -70,6 +81,12 @@ describe('parseInput adjectives', () => {
     expect(cs[0].noun.entryId).toBe('octopus');
     const ids = cs[0].adjectives.map((a) => a.adjId).sort();
     expect(ids).toEqual(['flying', 'purple'].sort());
+  });
+
+  it('parses a multi-word color adjective', () => {
+    const cs = parseInput('sky blue door');
+    expect(cs[0].noun.entryId).toBe('door');
+    expect(cs[0].adjectives.map((a) => a.adjId)).toContain('skyblue');
   });
 });
 
