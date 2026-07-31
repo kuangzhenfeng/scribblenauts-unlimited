@@ -45,12 +45,14 @@ import { log } from '@/util/log';
 import { music, type MusicMood } from '@/audio/MusicDirector';
 import { sfx } from '@/audio/SoundEffects';
 import { loadSettings } from '@/core/data/settings/SettingsStore';
-import { ICON_ROTATE } from '@/ui/icons';
+import { ICON_PENCIL, ICON_ROTATE } from '@/ui/icons';
 import { UI_FONT } from '@/ui/paperStyle';
 import type { GameEntity } from '@/game/Entity';
 import type { ParseCandidate, ParsedAdjective } from '@/core/lex/InputParser';
 
 const START_LEVEL = 'overworld-meadow';
+/** 让地面贴近视口底缘，同时为角色与对话保留稳定的上方活动空间。 */
+const WORLD_CAMERA_FOCUS_OFFSET_Y = 28;
 
 /** 关卡主题 → 音乐情绪映射（替换旧硬编码 cave/meadow 二分） */
 function themeToMood(theme: string): MusicMood {
@@ -111,6 +113,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   async create(data: { levelId?: string } = {}): Promise<void> {
+    this.clearUiOverlays();
     const { width, height } = this.scale;
     void width;
     void height;
@@ -223,6 +226,8 @@ export class WorldScene extends Phaser.Scene {
     const lvl = this.level.currentLevel!;
     const player = this.spawner.spawnPlayer(lvl.playerStart.x, lvl.playerStart.y);
     if (player.gameObject) this.phys.attachBody(player.gameObject, player.body);
+    // 首帧直接落在玩家位置，避免相机从默认原点缓慢归位造成错误取景。
+    this.camera.snapTo(player.bodyPositionX, player.bodyPositionY, WORLD_CAMERA_FOCUS_OFFSET_Y);
 
     // 输入
     this.player = new PlayerController(this.entities, this.phys);
@@ -262,9 +267,12 @@ export class WorldScene extends Phaser.Scene {
     };
 
     // 右上角笔记本图标按钮
-    const nbBtn = document.createElement('div');
+    const nbBtn = document.createElement('button');
+    nbBtn.type = 'button';
     nbBtn.id = 'notebook-btn';
     nbBtn.title = '打开笔记本（Enter）';
+    nbBtn.setAttribute('aria-label', '打开笔记本');
+    nbBtn.setAttribute('aria-keyshortcuts', 'Enter');
     nbBtn.style.cssText = [
       'position:fixed',
       `top:max(14px,env(safe-area-inset-top))`,
@@ -272,23 +280,18 @@ export class WorldScene extends Phaser.Scene {
       'z-index:51',
       'width:46px',
       'height:46px',
-      'background:linear-gradient(145deg,#f0d060 0%,#c88010 100%)',
-      'border:3px solid #3d2200',
-      'border-radius:12px',
+      'background:#f4c54f',
+      'border:2px solid #6a3d08',
+      'border-radius:10px',
       'display:flex',
       'align-items:center',
       'justify-content:center',
       'cursor:pointer',
-      'box-shadow:0 4px 14px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,240,160,0.5)',
+      'box-shadow:0 2px 0 #6a3d08,0 4px 10px rgba(48,34,18,0.2),inset 0 1px 0 rgba(255,255,255,0.48)',
       'transition:transform 0.12s ease,box-shadow 0.12s ease',
       'user-select:none',
     ].join(';');
-    nbBtn.innerHTML =
-      `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"` +
-      ` fill="none" stroke="#3d2200" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">` +
-      `<line x1="18" y1="2" x2="22" y2="6"/>` +
-      `<path d="M7.5 20.5 19 9l-4-4L3.5 16.5 2 22z"/>` +
-      `</svg>`;
+    nbBtn.innerHTML = ICON_PENCIL;
     nbBtn.addEventListener('mouseenter', () => {
       nbBtn.style.transform = 'scale(1.1)';
       nbBtn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.65),inset 0 1px 0 rgba(255,240,160,0.5)';
@@ -359,7 +362,46 @@ export class WorldScene extends Phaser.Scene {
     if (orientationPref === 'landscape') this._setupRotateHint();
 
     this.ready = true;
+    this.showControlsHint();
     log.info('WorldScene.create done', { width, height, level: startLevelId });
+  }
+
+  /** 首次进入世界时给出短暂的核心操作提示，随后自动淡出，不常驻遮挡场景。 */
+  private showControlsHint(): void {
+    if (sessionStorage.getItem('scribblenauts-world-controls-seen')) return;
+    sessionStorage.setItem('scribblenauts-world-controls-seen', '1');
+    const hint = document.createElement('div');
+    hint.id = 'world-controls-hint';
+    if (document.body.dataset.speechBubbleActive === 'true') hint.dataset.speechActive = 'true';
+    hint.textContent = 'WASD 移动  ·  空格 跳跃  ·  F 拾取  ·  Enter 笔记本';
+    hint.style.cssText = [
+      'position:fixed',
+      'left:50%',
+      'bottom:max(14px,env(safe-area-inset-bottom))',
+      'transform:translateX(-50%)',
+      'z-index:44',
+      'pointer-events:none',
+      'padding:6px 12px',
+      'border:1px solid rgba(255,248,220,0.44)',
+      'border-radius:999px',
+      'background:rgba(18,25,31,0.72)',
+      'color:#fff8dd',
+      `font-family:${UI_FONT}`,
+      'font-size:12px',
+      'font-weight:800',
+      'letter-spacing:0.02em',
+      'white-space:nowrap',
+      'box-shadow:0 3px 12px rgba(0,0,0,0.22)',
+      'animation:worldControlsHint 5s ease both',
+    ].join(';');
+    if (!document.getElementById('world-controls-hint-style')) {
+      const style = document.createElement('style');
+      style.id = 'world-controls-hint-style';
+      style.textContent = '@keyframes worldControlsHint{0%{opacity:0;transform:translate(-50%,8px)}12%,72%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-4px)}}@media(max-width:600px){#world-controls-hint{font-size:10px;padding:5px 9px;bottom:8px}#world-controls-hint[data-speech-active="true"]{display:none!important}}';
+      document.head.appendChild(style);
+    }
+    document.body.appendChild(hint);
+    window.setTimeout(() => hint.remove(), 5200);
   }
 
   /**
@@ -438,7 +480,7 @@ export class WorldScene extends Phaser.Scene {
     const burning = new Set<string>();
     for (const e of this.entities.all()) {
       const ge = e as GameEntity;
-      if (ge.tags.hasState('burning') && !ge.dead) {
+      if (ge.tags.hasState('burning') && !ge.dead && ge.typeId !== 'lava') {
         burning.add(ge.id);
         this.fxParticles.attachFire(ge);
         this.fxFx.attachGlow(ge);
@@ -448,6 +490,7 @@ export class WorldScene extends Phaser.Scene {
       const ge = e as GameEntity;
       if (!burning.has(ge.id)) {
         this.fxParticles.detachFire(ge);
+        this.fxFx.detachGlow(ge);
       }
     }
   }
@@ -580,7 +623,7 @@ export class WorldScene extends Phaser.Scene {
         // 切关后刷新顶栏挑战节点为新关卡题目
         this.progress.setLevel(this.level.currentLevel?.challenges ?? []);
         // 立即 snap 相机到玩家新位置，避免 lerp 造成玩家飞出画面
-        this.camera.snapTo(p.bodyPositionX, p.bodyPositionY);
+        this.camera.snapTo(p.bodyPositionX, p.bodyPositionY, WORLD_CAMERA_FOCUS_OFFSET_Y);
       }
     }
     // 8b) 环境层每帧更新（云漂移、门户脉动）+ 纸纹漂移
@@ -607,7 +650,7 @@ export class WorldScene extends Phaser.Scene {
       this.objectActionPanel.hide();
     }
     // 10) 相机跟随
-    if (p) this.camera.followUpdate(p.bodyPositionX, p.bodyPositionY);
+    if (p) this.camera.followUpdate(p.bodyPositionX, p.bodyPositionY, WORLD_CAMERA_FOCUS_OFFSET_Y);
     // HUD
     this.hud.render(this.entities.count, this.goal.stariteCount, this.goal.shardCount);
   }
@@ -623,5 +666,34 @@ export class WorldScene extends Phaser.Scene {
     }
     this.rotateHint?.remove();
     this.rotateHint = undefined;
+
+    // WorldScene 的 DOM 浮层不属于 Phaser display list，切换/重启场景时必须显式清理。
+    // 否则逐关复核或从选关重新进入时会叠出多个 HUD、进度条和对话气泡，造成画面杂乱。
+    this.clearUiOverlays();
+  }
+
+  /** 清理本场景创建的 DOM 浮层，兼容场景重启与切换两种生命周期路径。 */
+  private clearUiOverlays(): void {
+    document.getElementById('title-overlay')?.remove();
+    for (const id of [
+      'hud',
+      'progress',
+      'speech-bubble',
+      'notebook',
+      'autocomplete',
+      'candidate-menu',
+      'object-action-panel',
+      'object-editor',
+      'pause-overlay',
+      'touch-controls',
+      'notebook-btn',
+      'progress-layout-style',
+      'speech-bubble-layout-style',
+      'world-controls-hint',
+      'world-controls-hint-style',
+    ]) {
+      document.getElementById(id)?.remove();
+    }
+    delete document.body.dataset.speechBubbleActive;
   }
 }

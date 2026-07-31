@@ -18,6 +18,8 @@ export class FxParticles {
 
   /** 为实体挂火焰粒子（按实体 body 大小估算粒子量/速度） */
   attachFire(e: GameEntity): void {
+    // 熔岩使用关卡专属矢量火舌绘制，避免通用柔光粒子形成不符合场景比例的光斑。
+    if (e.typeId === 'lava') return;
     if (this.fireEmitters.has(e.id)) return;
     if (!e.tags.hasState('burning')) return;
     const tex = PARTICLE_TEXTURE_KEY;

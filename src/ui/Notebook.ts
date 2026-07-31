@@ -88,6 +88,9 @@ export class Notebook {
     this.menu = new CandidateMenu({
       onSelect: (c: ParseCandidate) => this.spawn(c),
     });
+    this.input.setAttribute('aria-label', t('notebook.placeholder'));
+    this.autocomplete.bindInput(this.input);
+    this.menu.bindInput(this.input);
 
     this.ime = new ImeController({
       onComposeStart: () => {

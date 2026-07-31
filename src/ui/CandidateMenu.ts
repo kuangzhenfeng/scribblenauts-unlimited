@@ -19,17 +19,27 @@ export interface CandidateMenuCallbacks {
 
 export class CandidateMenu {
   private el: HTMLDivElement;
-  private items: HTMLDivElement[] = [];
+  private items: HTMLButtonElement[] = [];
   private candidates: ParseCandidate[] = [];
   private selected = 0;
   private active = false;
+  private input?: HTMLInputElement;
 
   constructor(private readonly cb: CandidateMenuCallbacks) {
     this.el = document.createElement('div');
     this.el.id = 'candidate-menu';
+    this.el.setAttribute('role', 'listbox');
+    this.el.setAttribute('aria-label', '候选词');
     this.el.style.cssText = menuStyle();
     document.body.appendChild(this.el);
     this.hide();
+  }
+
+  /** 绑定输入框，建立 listbox 的 ARIA 控制关系。 */
+  bindInput(input: HTMLInputElement): void {
+    this.input = input;
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-controls', [input.getAttribute('aria-controls'), this.el.id].filter(Boolean).join(' '));
   }
 
   show(candidates: ParseCandidate[]): boolean {
@@ -47,25 +57,41 @@ export class CandidateMenu {
     this.selected = 0;
     this.el.innerHTML = '';
     this.items = candidates.map((c, i) => {
-      const div = document.createElement('div');
-      div.textContent = this.labelFor(c);
-      div.style.cssText = itemStyle(i === this.selected);
-      // pointerdown 统一鼠标与触摸，消除移动端 hover 死区
-      div.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.id = `${this.el.id}-option-${i}`;
+      button.setAttribute('role', 'option');
+      button.tabIndex = -1;
+      button.textContent = this.labelFor(c);
+      button.setAttribute('aria-label', button.textContent);
+      button.setAttribute('aria-selected', String(i === this.selected));
+      button.style.cssText = itemStyle(i === this.selected);
+      const activate = (): void => {
         this.select(i);
         this.confirm();
+      };
+      // pointerdown 统一鼠标与触摸，消除移动端 hover 死区
+      button.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        activate();
       });
-      this.el.appendChild(div);
-      return div;
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        activate();
+      });
+      this.el.appendChild(button);
+      return button;
     });
     this.el.style.display = 'block';
+    this.syncAria();
     return true;
   }
 
   hide(): void {
     this.active = false;
     this.el.style.display = 'none';
+    this.input?.removeAttribute('aria-activedescendant');
+    this.input?.setAttribute('aria-expanded', 'false');
   }
 
   get isActive(): boolean {
@@ -75,7 +101,11 @@ export class CandidateMenu {
   move(delta: number): void {
     if (!this.active) return;
     this.selected = (this.selected + delta + this.candidates.length) % this.candidates.length;
-    this.items.forEach((it, i) => (it.style.cssText = itemStyle(i === this.selected)));
+    this.items.forEach((it, i) => {
+      it.style.cssText = itemStyle(i === this.selected);
+      it.setAttribute('aria-selected', String(i === this.selected));
+    });
+    this.syncAria();
   }
 
   confirm(): void {
@@ -91,7 +121,17 @@ export class CandidateMenu {
 
   private select(i: number): void {
     this.selected = i;
-    this.items.forEach((it, j) => (it.style.cssText = itemStyle(j === this.selected)));
+    this.items.forEach((it, j) => {
+      it.style.cssText = itemStyle(j === this.selected);
+      it.setAttribute('aria-selected', String(j === this.selected));
+    });
+    this.syncAria();
+  }
+
+  private syncAria(): void {
+    const active = this.items[this.selected];
+    if (active) this.input?.setAttribute('aria-activedescendant', active.id);
+    this.input?.setAttribute('aria-expanded', String(this.active));
   }
 
   private labelFor(c: ParseCandidate): string {
@@ -132,7 +172,13 @@ function menuStyle(): string {
 
 function itemStyle(selected: boolean): string {
   return [
+    'display:block',
+    'width:100%',
     'padding:8px 12px',
+    'border:0',
+    'font:inherit',
+    'color:inherit',
+    'text-align:left',
     'border-radius:6px',
     'cursor:pointer',
     selected ? `background:${INK_HIGHLIGHT}` : 'background:transparent',

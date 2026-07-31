@@ -153,7 +153,8 @@ export class LevelManager {
     }
     // 关卡预生成实体（树/石头等）标记为 levelSpawn：与玩家共享负过滤，不阻挡玩家移动，
     // 但仍与玩家生成的物体（火/武器等）正常碰撞以驱动规则引擎
-    const r = this.spawner.spawnEntry(entry, undefined, s.x, s.y, undefined, 'levelSpawn');
+    const y = this.groundSpawnY(entry.size.height, s.y, this.current!);
+    const r = this.spawner.spawnEntry(entry, undefined, s.x, y, undefined, 'levelSpawn');
     if (r.entity && s.layer !== undefined) r.entity.layer = s.layer;
   }
 
@@ -164,12 +165,21 @@ export class LevelManager {
       return;
     }
     // NPC 同为关卡预生成实体，不阻挡玩家
-    const r = this.spawner.spawnEntry(entry, undefined, n.x, n.y, undefined, 'levelSpawn');
+    const y = this.groundSpawnY(entry.size.height, n.y, this.current!);
+    const r = this.spawner.spawnEntry(entry, undefined, n.x, y, undefined, 'levelSpawn');
     if (r.entity) {
       r.entity.critical = true;
       r.entity.drawParams.gender = n.gender;
       Object.assign(r.entity.drawParams, n.drawParams ?? {});
       this.npcEntities.set(n.id, r.entity.id);
     }
+  }
+
+  /** 让首帧就满足“脚底—物理地面—地面视觉顶缘”的坐标契约。 */
+  private groundSpawnY(height: number, requestedY: number, data: LevelData): number {
+    const groundTopY = data.bounds.maxY - 30;
+    const groundThreshold = data.bounds.maxY - 320;
+    if (requestedY < groundThreshold) return requestedY;
+    return groundTopY - height / 2;
   }
 }

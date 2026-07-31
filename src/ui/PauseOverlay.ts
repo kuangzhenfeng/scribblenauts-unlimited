@@ -23,10 +23,11 @@ export class PauseOverlay {
     this.el.style.cssText = [
       'position:fixed',
       'inset:0',
+      'width:100vw',
+      'height:100vh',
       'z-index:180',
-      'display:flex',
-      'align-items:center',
-      'justify-content:center',
+      'display:grid',
+      'place-items:center',
       'background:rgba(10,18,8,0.6)',
       'pointer-events:auto',
       'animation:confirmFadeIn 0.16s ease',
@@ -34,7 +35,9 @@ export class PauseOverlay {
 
     const card = document.createElement('div');
     card.style.cssText = [
-      'position:relative',
+      'position:absolute',
+      'top:50%',
+      'left:50%',
       `background:${PAPER_BG}`,
       `box-shadow:${PAPER_SHADOW}`,
       TORN_EDGE,
@@ -47,7 +50,7 @@ export class PauseOverlay {
       'flex-direction:column',
       'align-items:center',
       'gap:14px',
-      'transform:rotate(-0.6deg)',
+      'transform:translate(-50%,-50%) rotate(-0.6deg)',
       'animation:confirmPop 0.2s ease',
     ].join(';');
 
@@ -98,7 +101,7 @@ export class PauseOverlay {
       style.id = 'confirm-anim-style';
       style.textContent = `
         @keyframes confirmFadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes confirmPop { from{opacity:0;transform:rotate(-0.6deg) scale(0.92)} to{opacity:1;transform:rotate(-0.6deg) scale(1)} }
+        @keyframes confirmPop { from{opacity:0;transform:translate(-50%,-50%) rotate(-0.6deg) scale(0.92)} to{opacity:1;transform:translate(-50%,-50%) rotate(-0.6deg) scale(1)} }
       `;
       document.head.appendChild(style);
     }

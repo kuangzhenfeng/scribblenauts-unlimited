@@ -183,9 +183,9 @@ function panelStyle(): string {
     'position:fixed',
     `top:max(78px,env(safe-area-inset-top))`,
     `left:max(18px,env(safe-area-inset-left))`,
-    'width:min(330px,calc(100vw - 36px))',
+    'width:min(300px,calc(100vw - 32px))',
     'box-sizing:border-box',
-    'padding:15px',
+    'padding:13px',
     `background:${PAPER_BG}`,
     `box-shadow:${PAPER_SHADOW}`,
     `color:${INK}`,
@@ -194,7 +194,7 @@ function panelStyle(): string {
     TORN_EDGE,
     'transform:rotate(-0.6deg)',
     'z-index:52',
-    'max-height:calc(100vh - 106px)',
+    'max-height:calc(100vh - 98px)',
     'overflow:auto',
   ].join(';');
 }

@@ -7,11 +7,11 @@
 2D 涂鸦风文字解谜游戏。玩家在魔法笔记本输入任意词（中/英），对应物体即出现在游戏世界；可叠加形容词修改物体；物体间基于属性标签与规则引擎进行深度交互。
 
 - 基础美术为 sprite atlas（统一 sprite + 运行期 `setTint` 染色，对齐行业做法：每对象一套美术 + tint，非每颜色变体画新图）；角色/动物/载具/特效及基础物品、装饰已完成背景去除、透明边缘颜色扩展和 atlas JSON 生成的 `public/assets/sprites/` 素材，`scripts/sprite-specs.js` 共 500 个规格。sprite 注册从 `SPRITE_SPECS` 派生：多帧对象（maxwell/bird/fish/tentacled/car/fire/water/steam/starite）显式注册帧序列，单帧静态物件由 `spriteRenderers.ts` 遍历 `SPRITE_SPECS` 自动注册，spec 新增条目即自动入册，无手工清单漂移。renderer===id 原则：creature 词条 renderer 直接等于自身 id（dog/cat/dragon/human/ghost...），每物种独立 sprite atlas，形态区分度由独立美术解决；vector paper-doll 路由已废弃删除。缺图对象由 `EntityGraphics` 按纹理存在性回退兜底绘制（占位矩形 + 粗黑描边 + 白色问号）。词库≫独立美术资源：近义词条可共享同一 atlas（如 amulet 复用 gem、totem-mini 复用 totem），并经 aliases 扩充可识别词汇
-- 游戏内远景背景已接入 GPT 生图双板：远板固定屏天空盒（`scrollFactor 0,0`）+ 近板水平无缝视差中景（`scrollFactor 0.5`），缺图自动回退程序化分层绘制；提示词见 `docs/background-prompts.md`
+- 游戏内远景背景已接入 GPT 生图双板：远板固定屏天空盒（`scrollFactor 0,0`）+ 近板水平无缝视差中景（`scrollFactor 0.5`），五个主题的远板与近板素材已落地，缺图时自动回退程序化分层绘制；世界场景首帧统一角色脚底、物理地面与可玩带接触层，首屏包含可交互目标并按主题校准对比度，同时降低丛林近板与前景装饰对比度、加入轻微环境摆动，避免交互实体被背景吞没；游玩 HUD 对齐原版三项资源栏与金色挑战槽，窄屏自动错层，场景重进时清理旧浮层；NPC 对话气泡提高字号并避让角色活动线，暂停层保持真正居中，传送门补充手绘石块细节；提示词见 `docs/background-prompts.md`
 - 双语闭集分词（中/英输入解析，零通用 NLP 依赖）
 - 声明式规则引擎 + 三重限流对抗反应链
-- 程序化粒子（火/蒸汽/墨迹飞溅）+ Filter 后处理（Glow/Vignette/ColorMatrix）
-- 涂鸦手绘纸片质感：手绘抖动笔触 + 纸片落地软影 + Camera 级纸纹颗粒，自托管无衬线字体 UI
+- 程序化粒子（火/蒸汽/墨迹飞溅）+ Filter 后处理（Glow/Vignette/ColorMatrix），传送门暖光使用轻量程序化图形避免全屏滤镜合成，燃烧实体 Glow 按状态幂等挂载并及时移除；HUD 数据未变化时不重复重建 DOM
+- 涂鸦手绘纸片质感：手绘抖动笔触 + 纸片落地软影 + 低分辨率静态纹理纸纹颗粒，自托管无衬线字体 UI
 - 分层视差环境：天空/远山/云/中景/地面/前景草丛，`setScrollFactor` 驱动，零 per-frame 重绘；主题色板覆盖丛林/洞穴/雪原/沙漠/火山
 - 生成动效：物体从笔记本飞出 + 墨迹飞溅 + pop-in 缩放（复用 `FxParticles.burst`）
 - Maxwell 专属渲染器（罗纹帽/背包带/表情眼/走路 bounce/跳跃 squash/stretch）

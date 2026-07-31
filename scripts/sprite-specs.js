@@ -41,6 +41,8 @@ export const SPRITE_SPECS = {
   // 元素
   ice:        { w: 40, h: 40, frames: ['ice_idle'] },
   snow:       { w: 36, h: 36, frames: ['snow_idle'] },
+  // 关卡环境装饰：雪地关卡的飘雪符号复用现有 snowflake atlas。
+  snowflake:  { w: 36, h: 36, frames: ['snowflake_idle'] },
   lightning:  { w: 24, h: 64, frames: ['lightning_idle'] },
   sand:       { w: 32, h: 32, frames: ['sand_idle'] },
   mud:        { w: 40, h: 40, frames: ['mud_idle'] },

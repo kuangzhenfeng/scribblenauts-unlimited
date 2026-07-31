@@ -97,7 +97,7 @@ export class LevelSelectScene extends Phaser.Scene {
     hint.style.cssText = [
       `font-family:${UI_FONT}`,
       'font-size:clamp(14px,1.6vw,18px)',
-      'color:rgba(43,43,43,0.6)',
+      'color:#5a554c',
       'margin-bottom:28px',
     ].join(';');
     this.overlay.appendChild(hint);
@@ -247,7 +247,7 @@ export class LevelSelectScene extends Phaser.Scene {
       // 序号 + 主题图标
       const iconRow = document.createElement('div');
       iconRow.style.cssText = ['display:flex', 'align-items:center', 'gap:10px', `color:${meta.color === '#b0d4e8' ? '#3a6b8a' : meta.color}`].join(';');
-      iconRow.innerHTML = `<span style="font-family:${UI_FONT};font-size:14px;opacity:0.6;font-weight:900">${t('levelSelect.levelN', { n: idx + 1 })}</span>${meta.icon}`;
+      iconRow.innerHTML = `<span style="font-family:${UI_FONT};font-size:14px;color:#5a554c;font-weight:900">${t('levelSelect.levelN', { n: idx + 1 })}</span>${meta.icon}`;
       body.appendChild(iconRow);
 
       // 关卡名
@@ -267,9 +267,9 @@ export class LevelSelectScene extends Phaser.Scene {
       const status = document.createElement('div');
       status.style.cssText = ['margin-top:4px', 'min-height:26px', 'display:flex', 'align-items:center', 'justify-content:center', 'gap:6px', `font-family:${UI_FONT}`, 'font-size:15px'].join(';');
       if (isCompleted) {
-        status.innerHTML = `${ICON_STAR}<span style="color:#d77a10;font-weight:900">${t('levelSelect.completed')}</span>`;
+        status.innerHTML = `${ICON_STAR}<span style="color:#9a5a00;font-weight:900">${t('levelSelect.completed')}</span>`;
       } else {
-        status.innerHTML = `<span style="color:#3a8c3a;font-weight:900">${t('levelSelect.go')}</span>`;
+        status.innerHTML = `<span style="color:#286a32;font-weight:900">${t('levelSelect.go')}</span>`;
       }
       body.appendChild(status);
 

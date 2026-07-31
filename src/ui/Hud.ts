@@ -3,29 +3,32 @@
  * 对齐截图原版样式：三个圆形/方形胶囊按钮并排，深色轮廓，涂鸦卡通质感。
  */
 
-import { ICON_BACKPACK, ICON_STAR, ICON_SHARD } from './icons';
+import { ICON_BACKPACK, ICON_STAR } from './icons';
 import { SAFE_TOP, SAFE_LEFT, UI_FONT } from './paperStyle';
 
-/** 单个图标胶囊按钮的 HTML */
+/** 单个资源图标的 HTML：保留原版三项资源栏的轻量层级。 */
 function iconBtn(icon: string, label: string, extraStyle = ''): string {
   return `
     <div style="
-      display:inline-flex;align-items:center;gap:5px;
-      background:rgba(10,20,8,0.72);
-      border:2.5px solid #1a1a1a;
-      border-radius:22px;
-      padding:5px 10px 5px 7px;
-      box-shadow:0 3px 10px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,255,255,0.12);
+      position:relative;display:grid;place-items:center;
+      width:46px;height:46px;box-sizing:border-box;
+      background:#f4c54f;
+      border:2px solid #6a3d08;
+      border-radius:10px;
+      padding:0;
+      box-shadow:0 2px 0 #6a3d08,0 4px 8px rgba(48,34,18,0.18),inset 0 1px 0 rgba(255,255,255,0.48);
       ${extraStyle}
     ">
       ${icon}
-      <span style="font-family:${UI_FONT};font-size:15px;font-weight:700;color:#f5f0e0;text-shadow:0 1px 3px rgba(0,0,0,0.8);letter-spacing:0.03em;min-width:14px;text-align:center">${label}</span>
+      <span style="position:absolute;right:-6px;bottom:-6px;min-width:17px;height:17px;box-sizing:border-box;padding:1px 4px;border:2px solid #6a3d08;border-radius:9px;background:#fff2b2;font-family:${UI_FONT};font-size:10px;font-weight:900;line-height:12px;color:#5a3105;text-align:center">${label}</span>
     </div>
   `.trim();
 }
 
 export class Hud {
   private readonly el: HTMLDivElement;
+  private lastObjectCount: number | undefined;
+  private lastStariteCount: number | undefined;
 
   constructor() {
     this.el = document.createElement('div');
@@ -38,7 +41,7 @@ export class Hud {
       'pointer-events:none',
       'display:flex',
       'align-items:center',
-      'gap:6px',
+      'gap:7px',
     ].join(';');
     document.body.appendChild(this.el);
     this.render(0, 0);
@@ -50,33 +53,33 @@ export class Hud {
    * @param shardCount 已收集碎片数
    */
   render(objectCount: number, stariteCount = 0, shardCount = 0): void {
+    if (this.lastObjectCount === objectCount && this.lastStariteCount === stariteCount) return;
+    this.lastObjectCount = objectCount;
+    this.lastStariteCount = stariteCount;
+
     // 背包（物体数量）
     const bag = iconBtn(
-      `<span style="color:#4ab3e8">${ICON_BACKPACK}</span>`,
+      `<span style="color:#1676b8;filter:drop-shadow(0 1px 0 rgba(255,255,255,0.55))">${ICON_BACKPACK}</span>`,
       String(objectCount),
     );
 
     // 星星（Starite 数）
     const star = iconBtn(
-      `<span style="color:#f5c518;filter:drop-shadow(0 0 4px #f5c51888)">${ICON_STAR}</span>`,
+      `<span style="color:#fff3a4;filter:drop-shadow(0 1px 1px #a05a00)">${ICON_STAR}</span>`,
       String(stariteCount),
     );
-
-    // 碎片（Shard 数）
-    const shard = iconBtn(
-      `<span style="color:#a8e4ff;filter:drop-shadow(0 0 3px #a8e4ff88)">${ICON_SHARD}</span>`,
-      String(shardCount),
-    );
+    // 碎片仍由进度系统维护，但不在默认游玩 HUD 单独占格，避免资源栏变成工具条。
+    void shardCount;
 
     // Maxwell 头像（圆形人脸）
     const maxwellPortrait = `
       <div style="
         display:inline-flex;align-items:center;justify-content:center;
-        width:36px;height:36px;
+        width:40px;height:40px;
         background:radial-gradient(circle at 40% 35%, #fddbb4 60%, #d4924a 100%);
-        border:2.5px solid #1a1a1a;
+        border:2.5px solid #6a3d08;
         border-radius:50%;
-        box-shadow:0 3px 10px rgba(0,0,0,0.55);
+        box-shadow:0 2px 0 #6a3d08,0 4px 8px rgba(48,34,18,0.18);
         position:relative;overflow:hidden;
       ">
         <!-- 红色罗纹帽 -->
@@ -93,6 +96,6 @@ export class Hud {
       </div>
     `.trim();
 
-    this.el.innerHTML = bag + star + shard + maxwellPortrait;
+    this.el.innerHTML = bag + star + maxwellPortrait;
   }
 }

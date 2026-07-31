@@ -3132,7 +3132,8 @@ const sizeCombos: Combo[] = [
   // 扩充：更多 size×物组合（已去重，不与上文同数组重复）
   { adj: 'big', noun: 'cottage' }, { adj: 'big', noun: 'bear' }, { adj: 'big', noun: 'table' },
   { adj: 'small', noun: 'mouse' }, { adj: 'small', noun: 'pig' },
-  { adj: 'giant', noun: 'spider' }, { adj: 'giant', noun: 'squid' },
+  // 复用现有生物词条，避免题库引用不存在的 renderer。
+  { adj: 'giant', noun: 'insectoid' }, { adj: 'giant', noun: 'octopus-giant' },
   { adj: 'giant', noun: 'stone' }, { adj: 'giant', noun: 'bear' },
   { adj: 'tiny', noun: 'mouse' },
   { adj: 'enormous', noun: 'cottage' },

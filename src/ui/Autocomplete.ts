@@ -19,10 +19,11 @@ export interface AutocompleteCallbacks {
 
 export class Autocomplete {
   private el: HTMLDivElement;
-  private items: HTMLDivElement[] = [];
+  private items: HTMLButtonElement[] = [];
   private selected = 0;
   private active = false;
   private completions: Completion[] = [];
+  private input?: HTMLInputElement;
   /** 已确认前缀（多词组合时保留，回填时拼接在选中名前） */
   private prefix = '';
   /** 补全前缀是否为 CJK（决定回填与显示用哪个语言名） */
@@ -31,9 +32,18 @@ export class Autocomplete {
   constructor(private readonly cb: AutocompleteCallbacks) {
     this.el = document.createElement('div');
     this.el.id = 'autocomplete';
+    this.el.setAttribute('role', 'listbox');
+    this.el.setAttribute('aria-label', '自动补全');
     this.el.style.cssText = boxStyle();
     document.body.appendChild(this.el);
     this.hide();
+  }
+
+  /** 绑定输入框，建立 listbox 的 ARIA 控制关系。 */
+  bindInput(input: HTMLInputElement): void {
+    this.input = input;
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-controls', [input.getAttribute('aria-controls'), this.el.id].filter(Boolean).join(' '));
   }
 
   update(text: string): void {
@@ -52,27 +62,43 @@ export class Autocomplete {
     this.selected = 0;
     this.el.innerHTML = '';
     this.items = completions.map((c, i) => {
-      const div = document.createElement('div');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.id = `${this.el.id}-option-${i}`;
+      button.setAttribute('role', 'option');
+      button.tabIndex = -1;
       // 输入英文时优先显示英文名，输入中文时优先显示中文名
       const primary = queryIsCjk ? c.zh : c.en;
       const secondary = queryIsCjk ? c.en : c.zh;
-      div.textContent = `${primary}（${secondary}）`;
-      div.style.cssText = itemStyle(i === this.selected);
-      // pointerdown 统一鼠标与触摸，消除移动端 hover 死区与点击延迟
-      div.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
+      button.textContent = `${primary}（${secondary}）`;
+      button.setAttribute('aria-label', button.textContent);
+      button.setAttribute('aria-selected', String(i === this.selected));
+      button.style.cssText = itemStyle(i === this.selected);
+      const activate = (): void => {
         this.select(i);
         this.confirm();
+      };
+      // pointerdown 统一鼠标与触摸，消除移动端 hover 死区与点击延迟
+      button.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        activate();
       });
-      this.el.appendChild(div);
-      return div;
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        activate();
+      });
+      this.el.appendChild(button);
+      return button;
     });
     this.el.style.display = 'block';
+    this.syncAria();
   }
 
   hide(): void {
     this.active = false;
     this.el.style.display = 'none';
+    this.input?.removeAttribute('aria-activedescendant');
+    this.input?.setAttribute('aria-expanded', 'false');
   }
 
   get isActive(): boolean {
@@ -82,7 +108,11 @@ export class Autocomplete {
   move(delta: number): void {
     if (!this.active) return;
     this.selected = (this.selected + delta + this.completions.length) % this.completions.length;
-    this.items.forEach((it, i) => (it.style.cssText = itemStyle(i === this.selected)));
+    this.items.forEach((it, i) => {
+      it.style.cssText = itemStyle(i === this.selected);
+      it.setAttribute('aria-selected', String(i === this.selected));
+    });
+    this.syncAria();
   }
 
   confirm(): Completion | undefined {
@@ -97,7 +127,17 @@ export class Autocomplete {
 
   private select(i: number): void {
     this.selected = i;
-    this.items.forEach((it, j) => (it.style.cssText = itemStyle(j === this.selected)));
+    this.items.forEach((it, j) => {
+      it.style.cssText = itemStyle(j === this.selected);
+      it.setAttribute('aria-selected', String(j === this.selected));
+    });
+    this.syncAria();
+  }
+
+  private syncAria(): void {
+    const active = this.items[this.selected];
+    if (active) this.input?.setAttribute('aria-activedescendant', active.id);
+    this.input?.setAttribute('aria-expanded', String(this.active));
   }
 }
 
@@ -124,7 +164,13 @@ function boxStyle(): string {
 
 function itemStyle(selected: boolean): string {
   return [
+    'display:block',
+    'width:100%',
     'padding:6px 10px',
+    'border:0',
+    'font:inherit',
+    'color:inherit',
+    'text-align:left',
     'cursor:pointer',
     `border-radius:6px`,
     selected ? `background:${INK_HIGHLIGHT}` : 'background:transparent',

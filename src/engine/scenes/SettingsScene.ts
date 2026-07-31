@@ -88,15 +88,15 @@ export class SettingsScene extends Phaser.Scene {
       .set-badge{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none;color:rgba(43,43,43,0.7);background:#efe6cf;border:2px solid rgba(43,43,43,0.22)}
       .set-head-text{display:flex;flex-direction:column;gap:2px}
       .set-title{font-size:21px;font-weight:900;color:#2b2b2b;letter-spacing:0.06em}
-      .set-desc{font-size:13px;color:rgba(43,43,43,0.6);line-height:1.35}
+      .set-desc{font-size:13px;color:#5a554c;line-height:1.35}
       /* —— 通用行 —— */
       .set-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;pointer-events:auto}
       .set-row:last-child{margin-bottom:0}
       .set-label{font-size:17px;font-weight:700;color:#2b2b2b;min-width:88px}
       .set-value{font-size:14px;font-weight:900;color:#2b2b2b;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
-      .set-sub{font-size:14px;font-weight:900;color:rgba(43,43,43,0.7);letter-spacing:0.04em;margin:14px 0 8px}
+      .set-sub{font-size:14px;font-weight:900;color:#514b42;letter-spacing:0.04em;margin:14px 0 8px}
       .set-sub:first-of-type{margin-top:0}
-      .set-hint{font-size:12px;color:rgba(43,43,43,0.6);line-height:1.45;margin-top:10px}
+      .set-hint{font-size:12px;color:#5a554c;line-height:1.45;margin-top:10px}
       /* —— 滑块：填充进度 + 自定义 thumb —— */
       .set-slider{
         -webkit-appearance:none;appearance:none;flex:1;height:12px;outline:none;cursor:pointer;
@@ -157,9 +157,9 @@ export class SettingsScene extends Phaser.Scene {
       .set-tier-desc{font-size:11px;opacity:0.75;margin-top:2px}
       /* —— 词库分布表 —— */
       .set-worddist{margin-top:14px;padding:12px 14px;background:#efe6cf;border:2px dashed rgba(43,43,43,0.22);border-radius:10px}
-      .set-worddist-title{font-size:13px;font-weight:900;color:rgba(43,43,43,0.7);letter-spacing:0.04em;margin-bottom:8px}
+      .set-worddist-title{font-size:13px;font-weight:900;color:#514b42;letter-spacing:0.04em;margin-bottom:8px}
       .set-worddist-grid{display:grid;grid-template-columns:auto repeat(3,1fr);gap:6px 10px;align-items:center}
-      .set-wd-h{font-size:12px;font-weight:900;color:rgba(43,43,43,0.6);text-align:center}
+      .set-wd-h{font-size:12px;font-weight:900;color:#5a554c;text-align:center}
       .set-wd-rl{font-size:13px;font-weight:900;color:#2b2b2b}
       .set-wd-c{font-size:18px;font-weight:900;color:#2b2b2b;text-align:center;font-variant-numeric:tabular-nums}
       .set-qdist{margin-top:10px}
@@ -167,7 +167,7 @@ export class SettingsScene extends Phaser.Scene {
       .set-danger-row{display:flex;align-items:center;gap:14px;pointer-events:auto}
       .set-danger-mid{flex:1;display:flex;flex-direction:column;gap:3px}
       .set-danger-label{font-size:17px;font-weight:700;color:#5a1a04;display:flex;align-items:center;gap:8px}
-      .set-danger-desc{font-size:12px;color:rgba(43,43,43,0.6);line-height:1.4}
+      .set-danger-desc{font-size:12px;color:#5a554c;line-height:1.4}
       /* —— 按钮 —— */
       .set-btn-ghost{
         display:flex;align-items:center;gap:8px;font-family:${UI_FONT};font-size:17px;font-weight:900;
@@ -194,7 +194,7 @@ export class SettingsScene extends Phaser.Scene {
       /* —— 标题区 —— */
       .set-header{display:flex;flex-direction:column;align-items:center;gap:4px;margin:6px 0 22px}
       .set-h1{font-family:${UI_FONT};font-size:clamp(34px,5vw,46px);font-weight:900;color:#2b2b2b;letter-spacing:0.1em;text-shadow:2px 2px 0 rgba(60,40,20,0.18)}
-      .set-subtitle{font-family:${UI_FONT};font-size:15px;color:rgba(43,43,43,0.6)}
+      .set-subtitle{font-family:${UI_FONT};font-size:15px;color:#5a554c}
       /* —— 焦点可见（a11y） —— */
       .set-card :focus-visible{outline:3px solid #d77a10;outline-offset:2px}
       /* —— 题目种子输入框 —— */
@@ -520,7 +520,7 @@ export class SettingsScene extends Phaser.Scene {
     const orientToggle = this._toggle(s.orientation === 'landscape', (next) => {
       const pref: OrientationPref = next ? 'landscape' : 'auto';
       orientStatus.textContent = next ? t('settings.landscape') : t('settings.auto');
-      orientStatus.style.color = next ? '#d77a10' : 'rgba(43,43,43,0.6)';
+      orientStatus.style.color = next ? '#9a5a00' : '#5a554c';
       this._persist({ orientation: pref });
       this._applyOrientation(pref);
       sfx.play('ui');
@@ -533,7 +533,7 @@ export class SettingsScene extends Phaser.Scene {
     orientLabel.style.flex = '1';
     orientLabel.textContent = t('settings.orientation');
     const orientStatus = document.createElement('span');
-    orientStatus.style.cssText = ['font-size:14px', 'font-weight:900', `color:${s.orientation === 'landscape' ? '#d77a10' : 'rgba(43,43,43,0.6)'}`].join(';');
+    orientStatus.style.cssText = ['font-size:14px', 'font-weight:900', `color:${s.orientation === 'landscape' ? '#9a5a00' : '#5a554c'}`].join(';');
     orientStatus.textContent = s.orientation === 'landscape' ? t('settings.landscape') : t('settings.auto');
     const orientRow = document.createElement('div');
     orientRow.className = 'set-row';

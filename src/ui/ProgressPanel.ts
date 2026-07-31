@@ -51,19 +51,23 @@ export class ProgressPanel {
       'z-index:50',
       'pointer-events:none',
       // 金色横幅
-      'background:linear-gradient(180deg,#f0b830 0%,#c8760a 55%,#f0b830 100%)',
-      'border:3px solid #3d2200',
-      'border-radius:28px',
-      'padding:5px 16px 5px 10px',
+      'background:#f0bd3c',
+      'border:2px solid #6a3d08',
+      'border-radius:20px',
+      'padding:5px 14px 5px 9px',
       'display:flex',
       'align-items:center',
       'gap:7px',
-      'box-shadow:0 4px 18px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,230,120,0.5),inset 0 -1px 0 rgba(80,30,0,0.3)',
+      'box-shadow:0 2px 0 #6a3d08,0 5px 10px rgba(48,34,18,0.2),inset 0 1px 0 rgba(255,244,170,0.55)',
       'min-width:160px',
       'max-width:calc(100vw - 32px)',
       'white-space:nowrap',
       'overflow:hidden',
     ].join(';');
+    const responsiveStyle = document.createElement('style');
+    responsiveStyle.id = 'progress-layout-style';
+    responsiveStyle.textContent = '@media (max-width:600px){#progress{top:64px!important;transform:translateX(-50%) scale(.88);transform-origin:top center;}}';
+    document.head.appendChild(responsiveStyle);
     document.body.appendChild(this.el);
     this.redraw([]);
   }

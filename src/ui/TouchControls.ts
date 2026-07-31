@@ -81,9 +81,9 @@ export class TouchControls {
     this.container.appendChild(this.joystickBase);
 
     // 右下动作按钮组：跳跃（上）+ 交互（下）
-    this.jumpBtn = this._makeActionBtn(t('touch.jump'), '#3ab5a0', '#0d3a30');
+    this.jumpBtn = this._makeActionBtn(t('touch.jump'), '#3ab5a0', '#0d3a30', '#0d3a30');
     this.jumpBtn.style.cssText += `;right:max(28px,env(safe-area-inset-right));bottom:max(108px,env(safe-area-inset-bottom));`;
-    this.interactBtn = this._makeActionBtn(t('touch.interact'), '#efad19', '#3d2200');
+    this.interactBtn = this._makeActionBtn(t('touch.interact'), '#efad19', '#3d2200', '#3d2200');
     this.interactBtn.innerHTML = ICON_ROTATE;
     this.interactBtn.style.cssText += `;right:max(96px,env(safe-area-inset-right));bottom:max(28px,env(safe-area-inset-bottom));`;
     this.container.appendChild(this.jumpBtn);
@@ -127,7 +127,7 @@ export class TouchControls {
   }
 
   /** 构造一个圆形动作按钮 */
-  private _makeActionBtn(label: string, glow: string, border: string): HTMLButtonElement {
+  private _makeActionBtn(label: string, glow: string, border: string, textColor: string): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = label;
@@ -139,7 +139,7 @@ export class TouchControls {
       'border-radius:50%',
       `background:radial-gradient(circle at 40% 35%,${glow}cc,${glow})`,
       `border:3px solid ${border}`,
-      'color:#fff8dd',
+      `color:${textColor}`,
       `font-family:${UI_FONT}`,
       'font-size:15px',
       'font-weight:900',

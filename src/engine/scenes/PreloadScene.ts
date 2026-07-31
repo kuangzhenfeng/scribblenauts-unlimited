@@ -28,6 +28,13 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('title-key-art', 'assets/title/title-key-art.png');
     this.load.image('title-key-art-portrait', 'assets/title/title-key-art-portrait.png');
     this.load.image('quiz-upper-bg', 'assets/quiz/quiz-upper-bg.png');
+    // 背景板体积大但数量少，优先入队，避免在数百个 atlas 后才完成而错过 WorldScene 首次装配。
+    // 文件不存在时 Phaser 静默跳过，Environment 会继续使用程序化回退。
+    for (const key of BACKGROUND_PLATES) {
+      if (!this.textures.exists(key)) {
+        this.load.image(key, `assets/backgrounds/${key}.png`);
+      }
+    }
     // 预先注册所有渲染器（vector paper-doll + sprite atlas），以便 SPRITE_ATLASES 清单完整
     registerAllRenderers();
     // Phaser 4 的预加载场景不会可靠地回填超过并行上限的待加载文件；确保所有 atlas 子文件首轮入队。
@@ -36,12 +43,6 @@ export class PreloadScene extends Phaser.Scene {
     for (const { atlasKey, textureUrl, atlasUrl } of SPRITE_ATLASES) {
       if (!this.textures.exists(atlasKey)) {
         this.load.atlas(atlasKey, textureUrl, atlasUrl);
-      }
-    }
-    // 远景背景板（单帧整图，非 atlas；文件不存在时静默跳过，Environment 自动回退程序化绘制）
-    for (const key of BACKGROUND_PLATES) {
-      if (!this.textures.exists(key)) {
-        this.load.image(key, `assets/backgrounds/${key}.png`);
       }
     }
   }

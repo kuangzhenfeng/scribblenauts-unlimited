@@ -20,6 +20,15 @@ import type { SpriteRendererDef } from './SpriteSheet';
 import { ensureSpriteAnims, frameForState, animKeyForState } from './SpriteSheet';
 
 let _renderersRegistered = false;
+const CHARACTER_VISUAL_SCALE = 1.24;
+const HUMAN_FRAME_WIDTH = 36;
+const HUMAN_FRAME_HEIGHT = 68;
+
+interface HumanClothingLayers {
+  shirt: Phaser.GameObjects.Sprite;
+  pants: Phaser.GameObjects.Sprite;
+}
+
 function ensureRegistered(): void {
   if (_renderersRegistered) return;
   registerAllRenderers();
@@ -38,15 +47,23 @@ export function createEntityGraphics(
   e: GameEntity,
 ): Phaser.GameObjects.GameObject {
   ensureRegistered();
+  // 熔岩是关卡固定的环境元素；独立绘制火舌，避免 fire atlas 的透明边缘在 WebGL 采样时形成方形底。
+  if (e.typeId === 'lava') {
+    const g = scene.add.graphics();
+    e.gameObject = g;
+    _drawLava(g, e);
+    return g;
+  }
   const entry = getRendererEntry(e.rendererId);
 
   if (entry?.kind === 'sprite' && scene.textures.exists(entry.def.atlasKey)) {
     ensureSpriteAnims(scene, entry.def);
     const frame = frameForState(entry.def, e.state.locomotion);
     const sprite = scene.add.sprite(e.bodyPositionX, e.bodyPositionY, entry.def.atlasKey, frame);
-    sprite.setScale(e.state.scale);
+    sprite.setScale(e.state.scale * visualScaleFor(e));
     sprite.setDepth(e.layer + e.bodyPositionY * 0.001);
     applyTint(sprite, e);
+    if (e.rendererId === 'human') createHumanClothingLayers(scene, e, entry.def.atlasKey, frame, sprite);
     e.gameObject = sprite;
     return sprite;
   }
@@ -60,6 +77,14 @@ export function createEntityGraphics(
 
 /** 每帧同步实体的 GameObject（位置/帧/动画/重绘/tint）。 */
 export function syncGraphics(e: GameEntity): void {
+  if (e.typeId === 'lava') {
+    const g = e.gameObject as Phaser.GameObjects.Graphics | undefined;
+    if (!g) return;
+    g.clear();
+    _drawLava(g, e);
+    g.setDepth(e.layer + e.bodyPositionY * 0.001);
+    return;
+  }
   const entry = getRendererEntry(e.rendererId);
 
   // 按 gameObject 实际类型分派：Sprite 走 sprite 同步，Graphics 走兜底重绘。
@@ -80,10 +105,11 @@ function _syncSprite(e: GameEntity, def: SpriteRendererDef): void {
   if (!sprite) return;
   sprite.setPosition(e.bodyPositionX, e.bodyPositionY);
   sprite.setRotation(e.bodyAngle);
-  sprite.setScale(e.state.scale);
+  sprite.setScale(e.state.scale * visualScaleFor(e));
   sprite.setFlipX(e.state.facing < 0);
   sprite.setDepth(e.layer + e.bodyPositionY * 0.001);
   applyTint(sprite, e);
+  syncHumanClothingLayers(e, sprite, def);
 
   const animKey = animKeyForState(def, e.state.locomotion);
   if (animKey) {
@@ -91,6 +117,11 @@ function _syncSprite(e: GameEntity, def: SpriteRendererDef): void {
   } else {
     sprite.setFrame(frameForState(def, e.state.locomotion));
   }
+}
+
+/** 角色是玩法焦点，只放大视觉皮，不改变物理刚体与拾取范围。 */
+function visualScaleFor(e: GameEntity): number {
+  return e.isPlayer || e.typeId === 'human' ? CHARACTER_VISUAL_SCALE : 1;
 }
 
 /**
@@ -131,6 +162,51 @@ function _drawFallback(g: Phaser.GameObjects.Graphics, e: GameEntity): void {
   g.fillRect(-1, r * 1.6, 2, 2);
 }
 
+/** 熔岩专用火舌：保持透明外轮廓与暖色内焰，不改变物理尺寸。 */
+function _drawLava(g: Phaser.GameObjects.Graphics, e: GameEntity): void {
+  const flicker = 1 + Math.sin(Date.now() * 0.006 + e.bodyPositionX * 0.02) * 0.06;
+  g.setPosition(e.bodyPositionX, e.bodyPositionY);
+  g.setRotation(e.bodyAngle);
+  g.setScale(e.state.scale * flicker, e.state.scale);
+
+  g.fillStyle(0xff5b16, 1);
+  g.lineStyle(2.5, 0x5e170f, 1);
+  g.beginPath();
+  g.moveTo(-18, 22);
+  g.lineTo(-15, 5);
+  g.lineTo(-8, -7);
+  g.lineTo(-10, -22);
+  g.lineTo(0, -13);
+  g.lineTo(6, -34);
+  g.lineTo(12, -14);
+  g.lineTo(18, -5);
+  g.lineTo(16, 22);
+  g.closePath();
+  g.fillPath();
+  g.strokePath();
+
+  g.fillStyle(0xffc52f, 1);
+  g.beginPath();
+  g.moveTo(-11, 22);
+  g.lineTo(-8, 5);
+  g.lineTo(-3, -4);
+  g.lineTo(1, -18);
+  g.lineTo(7, -5);
+  g.lineTo(11, 22);
+  g.closePath();
+  g.fillPath();
+
+  g.fillStyle(0xfff2a1, 1);
+  g.beginPath();
+  g.moveTo(-5, 22);
+  g.lineTo(-3, 9);
+  g.lineTo(1, 1);
+  g.lineTo(4, 9);
+  g.lineTo(6, 22);
+  g.closePath();
+  g.fillPath();
+}
+
 /**
  * sprite 染色：colorOverride（形容词 color）优先，否则取 drawParams.bodyColor；
  * 无颜色参数时 setTint(0xffffff) 恢复原色。
@@ -141,6 +217,49 @@ function applyTint(sprite: Phaser.GameObjects.Sprite, e: GameEntity): void {
     sprite.setTint(hexToNum(color));
   } else {
     sprite.setTint(0xffffff);
+  }
+}
+
+/** 用同一 atlas 的裁剪叠层只染服装区域，保留人形 sprite 的皮肤、头发与描边。 */
+function createHumanClothingLayers(
+  scene: Phaser.Scene,
+  e: GameEntity,
+  atlasKey: string,
+  frame: string,
+  base: Phaser.GameObjects.Sprite,
+): void {
+  const shirtColor = e.drawParams.shirtColor as string | undefined;
+  const pantsColor = e.drawParams.pantsColor as string | undefined;
+  if (!shirtColor && !pantsColor) return;
+
+  const shirt = scene.add.sprite(e.bodyPositionX, e.bodyPositionY, atlasKey, frame);
+  const pants = scene.add.sprite(e.bodyPositionX, e.bodyPositionY, atlasKey, frame);
+  for (const layer of [shirt, pants]) {
+    layer.setScale(e.state.scale * visualScaleFor(e));
+    layer.setDepth(base.depth + 0.001);
+  }
+  // 人形单帧规格固定为 36×68；裁剪只覆盖衫/裤，避免整体 tint 染到脸和头发。
+  shirt.setCrop(3, 29, HUMAN_FRAME_WIDTH - 6, 19);
+  pants.setCrop(8, 50, 20, HUMAN_FRAME_HEIGHT - 53);
+  if (shirtColor) shirt.setTint(hexToNum(shirtColor)).setTintMode(Phaser.TintModes.FILL);
+  if (pantsColor) pants.setTint(hexToNum(pantsColor)).setTintMode(Phaser.TintModes.FILL);
+  base.setData('humanClothingLayers', { shirt, pants } satisfies HumanClothingLayers);
+}
+
+function syncHumanClothingLayers(e: GameEntity, base: Phaser.GameObjects.Sprite, def: SpriteRendererDef): void {
+  let layers = base.getData('humanClothingLayers') as HumanClothingLayers | undefined;
+  if (!layers && e.rendererId === 'human') {
+    createHumanClothingLayers(base.scene, e, def.atlasKey, base.frame.name, base);
+    layers = base.getData('humanClothingLayers') as HumanClothingLayers | undefined;
+  }
+  if (!layers) return;
+  const depth = e.layer + e.bodyPositionY * 0.001 + 0.001;
+  for (const layer of [layers.shirt, layers.pants]) {
+    layer.setPosition(e.bodyPositionX, e.bodyPositionY);
+    layer.setScale(e.state.scale * visualScaleFor(e));
+    layer.setFlipX(e.state.facing < 0);
+    layer.setDepth(depth);
+    layer.setVisible(!e.hidden && !e.dead);
   }
 }
 
