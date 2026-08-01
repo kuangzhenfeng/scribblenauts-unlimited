@@ -57,4 +57,18 @@ describe('LevelRandomizer', () => {
       expect(npc.x).toBeLessThanOrEqual(level.bounds.maxX - 90);
     }
   });
+
+  it('保留挑战目标实体的固定词条和位置', () => {
+    const fixedLevel = {
+      ...level,
+      spawns: [
+        { typeId: 'rope', x: 720, y: 320, fixed: true },
+        ...level.spawns,
+      ],
+    };
+    const first = randomizeLevelContent(fixedLevel, 'seed-a');
+    const second = randomizeLevelContent(fixedLevel, 'seed-b');
+    expect(first.spawns[0]).toEqual({ typeId: 'rope', x: 720, y: 320, fixed: true });
+    expect(second.spawns[0]).toEqual({ typeId: 'rope', x: 720, y: 320, fixed: true });
+  });
 });

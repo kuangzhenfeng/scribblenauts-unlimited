@@ -32,7 +32,7 @@ export class FxFilters {
     void this.cam;
   }
 
-  /** 纸纹颗粒全屏层：静态小纹理 TileSprite + Multiply，缓慢漂移 */
+  /** 纸纹颗粒全屏层：静态小纹理 TileSprite + 低透明度叠加，缓慢漂移 */
   applyPaperGrain(): void {
     this.ensurePaperGrainTexture();
     const grain = this.scene.add.tileSprite(
@@ -45,8 +45,10 @@ export class FxFilters {
     grain.setOrigin(0, 0);
     grain.setScrollFactor(0, 0);
     grain.setDepth(-35);
-    grain.setBlendMode(Phaser.BlendModes.MULTIPLY);
-    grain.setAlpha(0.08);
+    // Phaser 4 WebGL 的 MULTIPLY 全屏混合会把相机帧缓冲压成近黑；
+    // 纹理本身已经是低对比度纸纹，使用普通叠加保留质感且不影响场景可见性。
+    grain.setBlendMode(Phaser.BlendModes.NORMAL);
+    grain.setAlpha(0.035);
     this.paperGrainObj = grain;
   }
 

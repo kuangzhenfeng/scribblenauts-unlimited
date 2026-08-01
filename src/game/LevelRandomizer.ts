@@ -27,19 +27,21 @@ export function randomizeLevelContent(level: LevelData, seedSalt: string): Level
 function randomizeSpawns(spawns: SpawnDef[], level: LevelData, rng: () => number): SpawnDef[] {
   if (spawns.length === 0) return [];
 
+  const movableSpawns = spawns.filter((spawn) => !spawn.fixed);
   const threshold = level.bounds.maxY - GROUND_BAND_HEIGHT;
   const groundTypes = shuffle(
-    spawns.filter((spawn) => spawn.y >= threshold).map((spawn) => spawn.typeId),
+    movableSpawns.filter((spawn) => spawn.y >= threshold).map((spawn) => spawn.typeId),
     rng,
   );
   const airTypes = shuffle(
-    spawns.filter((spawn) => spawn.y < threshold).map((spawn) => spawn.typeId),
+    movableSpawns.filter((spawn) => spawn.y < threshold).map((spawn) => spawn.typeId),
     rng,
   );
   let groundIndex = 0;
   let airIndex = 0;
 
   const randomized = spawns.map((spawn) => {
+    if (spawn.fixed) return { ...spawn };
     const isAir = spawn.y < threshold;
     const pool = isAir ? airTypes : groundTypes;
     const typeId = pool.length > 0

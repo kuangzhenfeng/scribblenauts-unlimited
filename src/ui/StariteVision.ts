@@ -175,10 +175,11 @@ export class StariteVision {
 
     instanceCount += 1;
     const labelId = `starite-vision-label-${instanceCount}`;
+    const titleId = `starite-vision-title-${instanceCount}`;
     this.el = document.createElement('div');
     this.el.className = 'starite-vision';
     this.el.setAttribute('role', 'region');
-    this.el.setAttribute('aria-labelledby', labelId);
+    this.el.setAttribute('aria-labelledby', titleId);
     this.el.style.cssText = [
       'position:fixed',
       'inset:0',
@@ -192,13 +193,13 @@ export class StariteVision {
     style.textContent = `
       .starite-vision__panel {
         position:fixed;top:${SAFE_TOP};right:${SAFE_RIGHT};
-        display:flex;flex-direction:column;gap:8px;width:min(260px,calc(100vw - 28px));
-        padding:10px 12px;background:${PAPER_BG};box-shadow:${PAPER_SHADOW};${TORN_EDGE};
+        display:flex;flex-direction:column;gap:12px;width:min(320px,calc(100vw - 28px));
+        padding:16px;background:${PAPER_BG};box-shadow:${PAPER_SHADOW};${TORN_EDGE};
         pointer-events:auto;
       }
       .starite-vision__toggle-row { display:flex;align-items:center;gap:8px; }
       .starite-vision__toggle {
-        display:flex;align-items:center;gap:7px;min-width:0;flex:1;padding:8px 10px;
+        display:flex;align-items:center;gap:7px;min-width:0;flex:1;min-height:44px;padding:8px 10px;
         color:#fff8dd;background:#3d2200;border:2px solid #6a3d08;border-radius:9px;
         font:800 13px/1.2 ${UI_FONT};cursor:pointer;transition:transform .16s ease,filter .16s ease,background .16s ease;
       }
@@ -206,14 +207,14 @@ export class StariteVision {
       .starite-vision__toggle:hover,.starite-vision__toggle:focus-visible { transform:translateY(-1px);filter:brightness(1.06); }
       .starite-vision__toggle-icon { display:grid;place-items:center;width:20px;height:20px;flex:none; }
       .starite-vision__toggle-label { min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-      .starite-vision__close { width:34px;height:34px;padding:6px;display:grid;place-items:center;color:${INK};background:${PAPER_BG_ALT};border:2px solid #6a3d08;border-radius:8px;cursor:pointer; }
+      .starite-vision__close { width:44px;height:44px;padding:9px;display:grid;place-items:center;color:${INK};background:${PAPER_BG_ALT};border:1px solid #6a3d08;border-radius:8px;cursor:pointer; }
       .starite-vision__close:hover,.starite-vision__close:focus-visible { filter:brightness(1.06); }
-      .starite-vision__meta { display:flex;align-items:center;justify-content:space-between;gap:8px;color:#5a554c;font-size:12px;font-weight:800; }
+      .starite-vision__meta { display:flex;align-items:center;justify-content:space-between;gap:8px;color:${INK};font-size:16px;font-weight:900; }
       .starite-vision__count { color:#8a5300; }
-      .starite-vision__list { display:flex;flex-direction:column;gap:5px;max-height:180px;overflow:auto; }
+      .starite-vision__list { display:flex;flex-direction:column;gap:6px;max-height:min(36vh,320px);overflow:auto; }
       .starite-vision__empty { padding:8px 4px;color:#5a554c;font-size:12px;line-height:1.4; }
       .starite-vision__target {
-        display:flex;align-items:center;gap:7px;width:100%;padding:6px 7px;box-sizing:border-box;
+        display:flex;align-items:center;gap:7px;width:100%;min-height:44px;padding:8px;box-sizing:border-box;
         color:${INK};background:rgba(255,255,255,.28);border:1px solid #c2b494;border-radius:7px;
         font:700 12px/1.2 ${UI_FONT};text-align:left;cursor:pointer;
       }
@@ -223,7 +224,7 @@ export class StariteVision {
       .starite-vision__target-label { min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
       .starite-vision__marker-layer { position:fixed;inset:0;pointer-events:none; }
       .starite-vision__marker {
-        position:fixed;display:grid;place-items:center;width:34px;height:34px;padding:5px;box-sizing:border-box;
+        position:fixed;display:grid;place-items:center;width:44px;height:44px;padding:8px;box-sizing:border-box;
         transform:translate(-50%,-50%);color:#fff8dd;background:#a05a00;border:2px solid #6a3d08;border-radius:50%;
         box-shadow:0 2px 0 #6a3d08;cursor:pointer;pointer-events:auto;transition:transform .16s ease,filter .16s ease;
       }
@@ -232,7 +233,7 @@ export class StariteVision {
       .starite-vision button:focus-visible { outline:3px solid #f0bd3c;outline-offset:2px; }
       @media (max-width:480px) {
         .starite-vision__panel { left:14px;right:14px;top:${SAFE_TOP};width:auto; }
-        .starite-vision__list { max-height:140px; }
+        .starite-vision__list { max-height:180px; }
       }
       @media (prefers-reduced-motion:reduce) {
         .starite-vision__toggle,.starite-vision__marker { transition:none; }
@@ -271,7 +272,10 @@ export class StariteVision {
 
     const meta = document.createElement('div');
     meta.className = 'starite-vision__meta';
-    const title = document.createElement('span');
+    const title = document.createElement('h2');
+    title.id = titleId;
+    title.style.margin = '0';
+    title.style.fontSize = '16px';
     title.textContent = this.labels.title;
     this.countEl = document.createElement('span');
     this.countEl.className = 'starite-vision__count';
@@ -279,7 +283,7 @@ export class StariteVision {
     this.listEl = document.createElement('div');
     this.listEl.className = 'starite-vision__list';
     this.listEl.setAttribute('role', 'list');
-    this.panel.append(toggleRow, meta, this.listEl);
+    this.panel.append(meta, toggleRow, this.listEl);
     this.el.append(this.markerLayer, this.panel);
     document.body.appendChild(this.el);
     this.render();
@@ -372,6 +376,7 @@ export class StariteVision {
         button.type = 'button';
         button.className = 'starite-vision__target';
         button.dataset.marked = String(target.marked);
+        button.setAttribute('aria-pressed', String(target.marked));
         button.setAttribute('aria-label', target.label ?? `${target.kind === 'starite' ? this.labels.starite : this.labels.shard} ${target.id}`);
         const icon = document.createElement('span');
         icon.className = 'starite-vision__target-icon';
@@ -399,6 +404,7 @@ export class StariteVision {
       marker.style.left = `${projection.x}px`;
       marker.style.top = `${projection.y}px`;
       marker.dataset.marked = String(target.marked);
+      marker.setAttribute('aria-pressed', String(target.marked));
       marker.innerHTML = iconFor(target.kind);
       marker.setAttribute('aria-label', target.label ?? `${target.kind === 'starite' ? this.labels.starite : this.labels.shard} ${target.id}`);
       marker.addEventListener('click', () => this.selectTarget(target));

@@ -1,112 +1,222 @@
 /**
- * 进度面板 —— 顶部居中金色横幅，显示关卡挑战进度（星星槽位）。
- * 对齐截图原版：Maxwell 头像 + 箭头 + N 个星星槽（完成=金实心，未完成=金轮廓）。
- * API 不变：setLevel(challenges) / render(starites, shards, completed)
+ * 挑战进度 HUD —— 顶部中轴的舞台槽位。
+ * API 不变：setLevel(challenges) / render(starites, shards, completed)。
+ * 资源数量仍由 Hud 展示，这里只把挑战完成状态做成一组可读的槽位。
  */
 
-import { SAFE_TOP, UI_FONT } from './paperStyle';
+import { ICON_MAXWELL, ICON_STAR } from './icons';
+import { INK, PAPER_BG, PAPER_BG_ALT, PAPER_SHADOW, SAFE_TOP, UI_FONT } from './paperStyle';
+import { getLang, t } from '@/core/i18n/I18n';
 
-/** 单个星星槽（五角星 SVG） */
-function starSlot(filled: boolean): string {
-  const fill = filled ? '#f5c518' : 'none';
-  const shadow = filled ? ';filter:drop-shadow(0 0 5px #f5c51899)' : '';
-  return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"` +
-    ` fill="${fill}" stroke="#a05a00" stroke-width="2.2"` +
-    ` stroke-linecap="round" stroke-linejoin="round"` +
-    ` style="vertical-align:middle${shadow}">` +
-    `<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>` +
-    `</svg>`
-  );
+const PROGRESS_STYLE_ID = 'progress-layout-style';
+const GOLD_DARK = '#6a3d08';
+
+function ensureStyle(): void {
+  if (document.getElementById(PROGRESS_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = PROGRESS_STYLE_ID;
+  style.textContent = `
+    #progress {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      box-sizing:border-box;
+      min-height:50px;
+      padding:6px 11px 6px 8px;
+      color:${INK};
+      font-family:${UI_FONT};
+      background:${PAPER_BG};
+      border:2px solid ${GOLD_DARK};
+      border-radius:14px;
+      box-shadow:0 2px 0 ${GOLD_DARK},${PAPER_SHADOW};
+      user-select:none;
+    }
+    #progress .progress__identity {
+      display:flex;
+      align-items:center;
+      gap:7px;
+      flex:none;
+    }
+    #progress .progress__portrait {
+      display:grid;
+      place-items:center;
+      width:34px;
+      height:34px;
+      box-sizing:border-box;
+      border:2px solid ${GOLD_DARK};
+      border-radius:50%;
+      color:#c92c24;
+      background:${PAPER_BG_ALT};
+    }
+    #progress .progress__portrait svg { width:24px; height:24px; }
+    #progress .progress__summary {
+      display:flex;
+      flex-direction:column;
+      gap:1px;
+      line-height:1;
+    }
+    #progress .progress__label {
+      color:#805000;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.11em;
+      text-transform:uppercase;
+    }
+    #progress .progress__counter {
+      color:${INK};
+      font-size:15px;
+      font-weight:900;
+      letter-spacing:.02em;
+    }
+    #progress .progress__arrow {
+      color:#805000;
+      font-size:18px;
+      font-weight:900;
+      line-height:1;
+    }
+    #progress .progress__slots {
+      display:flex;
+      align-items:center;
+      gap:2px;
+      min-width:0;
+      padding:3px 5px;
+      border-radius:9px;
+      background:rgba(240,189,60,.22);
+    }
+    #progress .progress__slot {
+      display:grid;
+      place-items:center;
+      width:28px;
+      height:32px;
+      color:#a05a00;
+    }
+    #progress .progress__slot svg { width:23px; height:23px; }
+    #progress .progress__slot.is-filled { color:#d88a00; }
+    #progress .progress__slot.is-filled svg { filter:drop-shadow(0 0 4px rgba(245,197,24,.58)); }
+    #progress .progress__toast {
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      min-height:34px;
+      padding:0 7px;
+      color:#3d2200;
+      font-size:13px;
+      font-weight:900;
+    }
+    #progress .progress__toast svg { width:18px; height:18px; }
+    @media (max-width:600px) {
+      #progress { top:68px!important; min-height:44px; gap:5px; padding:4px 7px; }
+      #progress .progress__portrait { width:29px; height:29px; }
+      #progress .progress__portrait svg { width:21px; height:21px; }
+      #progress .progress__label { font-size:8px; letter-spacing:.08em; }
+      #progress .progress__counter { font-size:13px; }
+      #progress .progress__slot { width:23px; height:27px; }
+      #progress .progress__slot svg { width:19px; height:19px; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      #progress { transform:translateX(-50%); }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
-/** Maxwell 小头像（顶栏左侧） */
-const MAXWELL_HEAD =
-  `<div style="display:inline-flex;align-items:center;justify-content:center;` +
-  `width:30px;height:30px;` +
-  `background:radial-gradient(circle at 40% 35%,#fddbb4 60%,#d4924a 100%);` +
-  `border:2px solid #3d2200;border-radius:50%;` +
-  `position:relative;overflow:hidden;flex-shrink:0">` +
-  `<div style="position:absolute;top:0;left:0;right:0;height:38%;` +
-  `background:linear-gradient(180deg,#cc2222 0%,#aa1818 100%);` +
-  `border-radius:50% 50% 0 0/60% 60% 0 0"></div>` +
-  `<div style="position:absolute;top:44%;display:flex;gap:5px;left:50%;transform:translateX(-50%)">` +
-  `<div style="width:4px;height:4px;background:#1a1a1a;border-radius:50%"></div>` +
-  `<div style="width:4px;height:4px;background:#1a1a1a;border-radius:50%"></div>` +
-  `</div></div>`;
+function starSlot(filled: boolean): string {
+  return `<span class="progress__slot${filled ? ' is-filled' : ''}" aria-hidden="true">${ICON_STAR}</span>`;
+}
 
 export class ProgressPanel {
   private readonly el: HTMLDivElement;
   private challenges: { id: string }[] = [];
+  private completedIds: string[] = [];
+  private starites = 0;
+  private shards = 0;
   private toastTimer = 0;
 
   constructor() {
+    ensureStyle();
     this.el = document.createElement('div');
     this.el.id = 'progress';
+    this.el.setAttribute('role', 'progressbar');
+    this.el.setAttribute('aria-valuemin', '0');
+    this.el.setAttribute('aria-valuenow', '0');
+    this.el.setAttribute('aria-valuemax', '3');
     this.el.style.cssText = [
       'position:fixed',
       `top:${SAFE_TOP}`,
       'left:50%',
       'transform:translateX(-50%)',
-      'z-index:50',
+      'z-index:49',
       'pointer-events:none',
-      // 金色横幅
-      'background:#f0bd3c',
-      'border:2px solid #6a3d08',
-      'border-radius:20px',
-      'padding:5px 14px 5px 9px',
-      'display:flex',
-      'align-items:center',
-      'gap:7px',
-      'box-shadow:0 2px 0 #6a3d08,0 5px 10px rgba(48,34,18,0.2),inset 0 1px 0 rgba(255,244,170,0.55)',
-      'min-width:160px',
       'max-width:calc(100vw - 32px)',
       'white-space:nowrap',
       'overflow:hidden',
     ].join(';');
-    const responsiveStyle = document.createElement('style');
-    responsiveStyle.id = 'progress-layout-style';
-    responsiveStyle.textContent = '@media (max-width:600px){#progress{top:64px!important;transform:translateX(-50%) scale(.88);transform-origin:top center;}}';
-    document.head.appendChild(responsiveStyle);
     document.body.appendChild(this.el);
-    this.redraw([]);
+    this.redraw();
   }
 
   /** 设置当前关卡挑战列表（换关时调用） */
   setLevel(challenges: { id: string }[]): void {
     this.challenges = challenges;
-    this.redraw([]);
+    this.completedIds = [];
+    this.redraw();
   }
 
   render(starites: number, shards: number, completed: string[] = []): void {
-    void starites; void shards; // 保留参数兼容性，星槽完全由 completed 驱动
-    this.redraw(completed);
+    this.starites = starites;
+    this.shards = shards;
+    this.completedIds = completed;
+    this.redraw();
   }
 
-  private redraw(completed: string[]): void {
-    // 没有挑战时显示 3 个占位槽
+  private redraw(): void {
+    // 没有关卡挑战时保留 3 个空槽，避免顶栏在加载阶段跳动。
     const list = this.challenges.length > 0 ? this.challenges : [{ id: '' }, { id: '' }, { id: '' }];
-    const stars = list.map((c) => starSlot(c.id !== '' && completed.includes(c.id))).join('');
+    const completedCount = list.filter((challenge) => challenge.id !== '' && this.completedIds.includes(challenge.id)).length;
+    const stars = list.map((challenge) => starSlot(challenge.id !== '' && this.completedIds.includes(challenge.id))).join('');
+    const completedLabel = t('levelSelect.completed');
+    const resourceLabels = getLang() === 'zh'
+      ? { starites: 'Starite', shards: '碎片' }
+      : { starites: 'Starites', shards: 'Shards' };
 
+    this.el.setAttribute('aria-valuenow', String(completedCount));
+    this.el.setAttribute('aria-valuemax', String(list.length));
+    this.el.setAttribute(
+      'aria-label',
+      `${t('settings.dataDesc')}: ${completedCount}/${list.length}; ${this.starites} ${resourceLabels.starites}, ${this.shards} ${resourceLabels.shards}`,
+    );
     this.el.innerHTML =
-      MAXWELL_HEAD +
-      `<span style="font-family:${UI_FONT};color:#3d2200;font-size:16px;font-weight:900;line-height:1;flex-shrink:0">&#9658;</span>` +
-      `<div style="display:flex;align-items:center;gap:3px">${stars}</div>`;
+      `<div class="progress__identity">
+        <div class="progress__portrait" aria-hidden="true">${ICON_MAXWELL}</div>
+        <div class="progress__summary">
+          <span class="progress__label">${completedLabel}</span>
+          <span class="progress__counter">${completedCount} / ${list.length}</span>
+        </div>
+      </div>
+      <span class="progress__arrow" aria-hidden="true">›</span>
+      <div class="progress__slots" aria-hidden="true">${stars}</div>`;
   }
 
   toast(msg: string): void {
     clearTimeout(this.toastTimer);
 
     const prev = this.el.innerHTML;
-    this.el.style.transition = 'transform 0.15s ease';
-    this.el.style.transform = 'translateX(-50%) scale(1.08)';
-    setTimeout(() => { this.el.style.transform = 'translateX(-50%) scale(1.0)'; }, 160);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reducedMotion) {
+      this.el.style.transition = 'transform 0.16s ease';
+      this.el.style.transform = 'translateX(-50%) scale(1.04)';
+      window.setTimeout(() => { this.el.style.transform = 'translateX(-50%)'; }, 170);
+    }
 
-    this.el.innerHTML =
-      `<span style="font-family:${UI_FONT};font-size:13px;font-weight:700;color:#3d2200;` +
-      `text-shadow:0 1px 0 rgba(255,230,120,0.6);padding:0 6px">` +
-      `&#10022; ${msg} &#10022;</span>`;
+    const toast = document.createElement('span');
+    toast.className = 'progress__toast';
+    toast.innerHTML = ICON_STAR;
+    toast.appendChild(document.createTextNode(msg));
+    this.el.replaceChildren(toast);
 
-    this.toastTimer = window.setTimeout(() => { this.el.innerHTML = prev; }, 2200);
+    this.toastTimer = window.setTimeout(() => {
+      this.el.innerHTML = prev;
+      this.redraw();
+    }, 2200);
   }
 }

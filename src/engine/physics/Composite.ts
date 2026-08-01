@@ -16,11 +16,22 @@ export interface Attachment {
   constraint: MatterJS.ConstraintType;
 }
 
-/** 把 child 附着到 parent 的指定锚点（相对 parent 中心的本地坐标） */
-export function attach(physics: Physics, parent: GameEntity, child: GameEntity, anchor: [number, number]): Attachment {
+/**
+ * 把 child 附着到 parent 的指定锚点（相对 parent 中心的本地坐标）。
+ *
+ * childAnchor 用于“手握物体”这类非质心绑定：例如手枪的握把不在精灵
+ * 中心，约束应绑定握把而不是把整把枪的中心塞进手里。
+ */
+export function attach(
+  physics: Physics,
+  parent: GameEntity,
+  child: GameEntity,
+  anchor: [number, number],
+  childAnchor: [number, number] = [0, 0],
+): Attachment {
   const constraint = physics.createConstraint(parent.body, child.body, 0, 1, {
     pointA: { x: anchor[0], y: anchor[1] },
-    pointB: { x: 0, y: 0 },
+    pointB: { x: childAnchor[0], y: childAnchor[1] },
   });
   return { parentId: parent.id, childId: child.id, constraint };
 }

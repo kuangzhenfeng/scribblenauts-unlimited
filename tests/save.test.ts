@@ -18,6 +18,7 @@ describe('SaveStore', () => {
     expect(data.completedSlots).toEqual([]);
     expect(data.difficultySetting.tier).toBe(1);
     expect(data.difficultySetting.standard).toBe('cefr');
+    expect(data.tutorialCompleted).toBe(false);
     expect(typeof data.questionSeed).toBe('string');
     expect(data.questionSeed.length).toBeGreaterThan(0);
   });
@@ -85,6 +86,12 @@ describe('SaveStore', () => {
     await store.updateQuestionSeed('abc123');
     const data = await store.load();
     expect(data.questionSeed).toBe('abc123');
+  });
+
+  it('markTutorialCompleted persists the first-run flow state', async () => {
+    const store = new SaveStore();
+    await store.markTutorialCompleted();
+    expect((await store.load()).tutorialCompleted).toBe(true);
   });
 
   it('clearChallengeProgress clears slots and counters but keeps unlocks', async () => {

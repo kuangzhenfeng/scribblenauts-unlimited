@@ -176,6 +176,13 @@
       "x": -1150,
       "y": 180,
       "layer": 0
+    },
+    {
+      "typeId": "rope",
+      "x": 720,
+      "y": 320,
+      "layer": 0,
+      "fixed": true
     }
   ],
   "npcs": [
@@ -508,7 +515,23 @@
       "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "box", "region": { "minX": 1550, "minY": 430, "maxX": 2050, "maxY": 600 } } ] } ],
       "reward": { "type": "starite", "count": 1 },
       "dialog": [ { "zh": "桥卫：先搬来木头，再把箱子放到桥头作为路障。", "en": "Bridgekeeper: Bring a log, then place a box at the bridgehead as a barrier." } ]
+    },
+    {
+      "id": "meadow-child-clear-road",
+      "giverNpcId": "npc-child",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "object-destroyed",
+            "typeId": "rope",
+            "region": { "minX": 600, "minY": 430, "maxX": 840, "maxY": 600 }
+          }
+        ]
+      },
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "孩子：这条绳索挡住了路，想办法清除它吧。", "en": "Child: This rope blocks the path. Find a way to clear it." } ]
     }
   ],
-  "challengeSlots": 6
+  "challengeSlots": 7
 }

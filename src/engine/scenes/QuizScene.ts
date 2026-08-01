@@ -1,11 +1,11 @@
 /**
- * 简易问答场景 —— 面向手机竖屏的问答玩法（学习 App 风）。
+ * 简易问答场景 —— 面向手机竖屏的纸片舞台与笔记本输入玩法。
  *
- * 三段式布局（顶栏 / 词汇任务卡 / 画布 / 键盘卡）：
- *  - QuizTopBar：返回 + 题序/得分/最高分徽章 + 换题
- *  - QuizQuestionCard：等级档/词频标准 + 难度档位切换 + 题面 + 操作提示
- *  - 画布：Phaser 视差背景 + 提问生物 + 生成物品物理交互（趣味内核）
- *  - QuizKeyboard：干净现代风定制键盘
+ * 四层布局（顶栏 / 任务条 / 画布 / 笔记本输入台）：
+ *  - QuizTopBar：返回 + 回合/得分/连胜状态 + 设置与换题
+ *  - QuizQuestionCard：题面与提示，延续世界中的纸片任务语言
+ *  - 画布：Phaser 视差背景 + 提问生物 + 生成物品视觉交互（趣味内核）
+ *  - QuizKeyboard：候选补全与定制键盘
  *
  * 与 WorldScene 的差异：无玩家/NPC 对话/规则引擎/行为系统/MousePicker/
  * TouchControls，只保留物理/生成/渲染/环境/动效的最小子集 + 问答循环。
@@ -233,8 +233,8 @@ export class QuizScene extends Phaser.Scene {
   }
 
   /**
-   * 应用画布视口：舞台从顶栏下方开始，委托条悬浮覆盖在舞台上；
-   * 只有下屏输入台从舞台高度中扣除，保证题面与背景形成同一层级。
+   * 应用画布视口：舞台从顶栏下方开始，任务条固定在舞台上沿；
+   * 下屏输入台从舞台高度中扣除，反馈 toast 在剩余舞台空间内定位。
    */
   private _applyViewport(): void {
     const cam = this.cameras.main;
@@ -254,6 +254,11 @@ export class QuizScene extends Phaser.Scene {
       this.keyboard?.setLandscapeTop(keyboardTop + 6);
     }
     const kbH = this.keyboard?.getHeight() ?? 0;
+    const stageBottom = Math.max(stageTop, totalH - kbH);
+    const feedbackHeight = 48;
+    const feedbackMaxTop = stageBottom - feedbackHeight - 8;
+    const feedbackTop = Math.max(stageTop + 8, Math.min(keyboardTop + 12, feedbackMaxTop));
+    this.hud?.setTop(feedbackTop);
     const minViewH = this.scale.width > totalH ? 0 : 120;
     const viewH = Math.max(minViewH, totalH - stageTop - kbH);
     cam.setViewport(0, stageTop, this.scale.width, viewH);

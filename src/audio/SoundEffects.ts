@@ -16,6 +16,7 @@ import type { InstrumentBank } from './instruments';
 
 type SfxName =
   | 'spawn'        // 生成：上扬钟琴琶音 + 纸面沙沙
+  | 'shoot'        // 开火：短促下滑方波 + 带通噪声
   | 'jump'         // 跳跃：短促上滑"啾"
   | 'land'         // 着地：低音拨弦 + 噪声冲击
   | 'interact'     // 拾取/交互：马林巴五度叮当
@@ -61,6 +62,7 @@ export class SoundEffects {
     const at = this.ctx.currentTime;
     switch (name) {
       case 'spawn':         this.playSpawn(at); break;
+      case 'shoot':         this.playShoot(at); break;
       case 'jump':          this.playJump(at); break;
       case 'land':          this.playLand(at); break;
       case 'interact':      this.playInteract(at); break;
@@ -97,6 +99,12 @@ export class SoundEffects {
     }
     // 纸面沙沙
     this.playNoise(at, 0.12, 0.1, 'bandpass', 3000, 1);
+  }
+
+  /** 开火：短促下滑方波与带通噪声，保持纸艺合成音色而非播放外部样本。 */
+  private playShoot(at: number): void {
+    this.playSlide(920, 320, at, 0.1, 'square', 0.16);
+    this.playNoise(at, 0.055, 0.22, 'bandpass', 1800, 0.7);
   }
 
   /** 跳跃：sine 300→700Hz 上滑"啾" + 起跳噪声咔哒 */

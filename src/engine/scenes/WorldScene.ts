@@ -25,6 +25,7 @@ import { BehaviorSystem } from '@/game/BehaviorSystem';
 import { DialogSystem } from '@/game/DialogSystem';
 import { QuestMarker } from '@/game/QuestMarker';
 import { GoalSystem, type ProgressCallbacks, type LevelRef } from '@/core/game/GoalSystem';
+import { EffectResultLog } from '@/core/game/EffectResultLog';
 import { ObjectEditor } from '@/game/ObjectEditor';
 import { Notebook } from '@/ui/Notebook';
 import { Hud } from '@/ui/Hud';
@@ -32,6 +33,7 @@ import { ProgressPanel } from '@/ui/ProgressPanel';
 import { SpeechBubble } from '@/ui/SpeechBubble';
 import { ObjectEditorUi } from '@/ui/ObjectEditorUi';
 import { ObjectActionPanel } from '@/ui/ObjectActionPanel';
+import { PlayerEquipmentPanel } from '@/ui/PlayerEquipmentPanel';
 import { BackpackPanel } from '@/ui/BackpackPanel';
 import { ObjectLibrary } from '@/game/ObjectLibrary';
 import { WorldMapOverlay, type WorldMapNode } from '@/ui/WorldMapOverlay';
@@ -39,6 +41,8 @@ import { MeritBoard, type MeritChallenge } from '@/ui/MeritBoard';
 import { StariteVision, type StariteCollectible } from '@/ui/StariteVision';
 import { PauseOverlay } from '@/ui/PauseOverlay';
 import { TouchControls } from '@/ui/TouchControls';
+import { BasicsOverlay } from '@/ui/BasicsOverlay';
+import { VictoryOverlay } from '@/ui/VictoryOverlay';
 import { SaveStore } from '@/core/data/save/SaveStore';
 import { registerCustomObject, getCustomDef, getEntry } from '@/core/data/dictionary/Dictionary';
 import { applyAdjectives } from '@/game/AdjectiveSystem';
@@ -86,11 +90,13 @@ export class WorldScene extends Phaser.Scene {
   private dialog!: DialogSystem;
   private questMarker!: QuestMarker;
   private goal!: GoalSystem;
+  private effectResults!: EffectResultLog;
   private hud!: Hud;
   private progress!: ProgressPanel;
   private bubble!: SpeechBubble;
   private objectEditorUi!: ObjectEditorUi;
   private objectActionPanel!: ObjectActionPanel;
+  private playerEquipmentPanel!: PlayerEquipmentPanel;
   private objectLibrary!: ObjectLibrary;
   private objectEditor!: ObjectEditor;
   private backpackPanel!: BackpackPanel;
@@ -113,6 +119,8 @@ export class WorldScene extends Phaser.Scene {
   private fxParticles!: FxParticles;
   private spawnFx!: SpawnFx;
   private touchControls!: TouchControls;
+  private basicsOverlay: BasicsOverlay | undefined;
+  private victoryOverlay: VictoryOverlay | undefined;
   /** 旋转提示遮罩（landscape 模式且当前为竖屏时显示） */
   private rotateHint: HTMLDivElement | undefined;
   /** orientation.change 监听器引用，shutdown 时移除 */
@@ -125,6 +133,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   async create(data: { levelId?: string } = {}): Promise<void> {
+    // Phaser 4 不自动调用 scene.shutdown()，显式绑定保证装备面板和附着关系
+    // 在离开世界场景时与其他 DOM 浮层一起清理。
+    this.events.once('shutdown', this.shutdown, this);
     this.clearUiOverlays();
     const { width, height } = this.scale;
     void width;
@@ -134,6 +145,7 @@ export class WorldScene extends Phaser.Scene {
     this.phys = new Physics(this);
     this.entities = new EntityManager();
     this.tagIndex = new TagIndex();
+    this.effectResults = new EffectResultLog();
     this.camera = new Camera(this.cameras.main);
     this.save = new SaveStore();
     this.objectLibrary = new ObjectLibrary(this.save);
@@ -159,6 +171,7 @@ export class WorldScene extends Phaser.Scene {
       },
       applyImpulse: (e: import('@/core/entity/Entity').Entity, dir: [number, number], mag: number) =>
         (e as GameEntity).applyImpulse(dir, mag),
+      onEffectResult: (result) => this.effectResults.record(result),
     };
 
     this.ruleEngine = new RuleEngine(this.entities, this.tagIndex, () => this.time.now, deps);
@@ -179,7 +192,7 @@ export class WorldScene extends Phaser.Scene {
     this.behavior = new BehaviorSystem(this.entities, () => this.time.now, deps, () => this.dialog.dialogActiveEntityId);
 
     // UI 浮层
-    this.hud = new Hud();
+    this.hud = new Hud(() => this.openPlayerEquipmentPanel());
     this.progress = new ProgressPanel();
     this.bubble = new SpeechBubble();
     this.objectEditor = new ObjectEditor(this.save);
@@ -216,14 +229,14 @@ export class WorldScene extends Phaser.Scene {
         }
         setTimeout(() => this.progress.render(this.goal.stariteCount, this.goal.shardCount, this.level.completedArray()), 2400);
       },
-      onWin: () => this.progress.toast('通关！Lily 解除石化'),
+      onWin: () => this.showVictoryOverlay(),
       onProgress: async (starites, shards, completed) => {
         await this.save.updateProgress(starites, shards, completed);
         this.meritBoard?.setCompleted(completed);
       },
     };
 
-    this.goal = new GoalSystem(this.entities, this.level as LevelRef, cb);
+    this.goal = new GoalSystem(this.entities, this.level as LevelRef, cb, this.effectResults);
     this.dialog = new DialogSystem(this.entities, this.level, this.bubble, this.camera);
     this.questMarker = new QuestMarker(this, this.entities, this.level, this.dialog);
 
@@ -237,6 +250,7 @@ export class WorldScene extends Phaser.Scene {
 
     // 加载首关（支持选关场景传入 levelId）
     const startLevelId = data.levelId ?? START_LEVEL;
+    this.effectResults.clear();
     this.level.load(startLevelId, undefined, {
       tier: this.diffTier,
       standard: this.diffStandard,
@@ -258,11 +272,29 @@ export class WorldScene extends Phaser.Scene {
     this.camera.snapTo(player.bodyPositionX, player.bodyPositionY, WORLD_CAMERA_FOCUS_OFFSET_Y);
 
     // 输入
-    this.player = new PlayerController(this.entities, this.phys);
+    this.player = new PlayerController(
+      this.entities,
+      this.phys,
+      (weapon: GameEntity, x: number, y: number, facing: number) => this.spawnProjectile(weapon, x, y, facing),
+      () => this.time.now,
+    );
     this.player.attach(this);
     // 兜底重生点：选关进入无 keepPlayer，lastGroundedPos 初始 {0,0}，用 playerStart 兜底
     this.player.setRespawnPoint(lvl.playerStart.x, lvl.playerStart.y);
-    this.picker = new MousePicker(this, this.entities, this.phys, this.camera);
+    this.picker = new MousePicker(
+      this,
+      this.entities,
+      this.phys,
+      this.camera,
+      {
+        onDropEntity: (entity, x, y) => this.player.tryAttachDropped(entity, x, y),
+        onTapEmpty: (x, y) => this.player.setMouseMoveTarget(x, y),
+        onTapEntity: (entity, x, y) => this.player.setMouseMoveTarget(x, y, entity),
+        onSecondaryDown: (x, y, entity) => this.player.handleMouseSecondaryDown(x, y, entity),
+        onSecondaryMove: (x, y) => this.player.handleMouseSecondaryMove(x, y),
+        onSecondaryUp: () => this.player.handleMouseSecondaryUp(),
+      },
+    );
     this.picker.attach();
 
     // E 键切换物体编辑器
@@ -288,10 +320,31 @@ export class WorldScene extends Phaser.Scene {
       onAddAdjective: () => notebook.show('adjective'),
       onEditObject: (entity) => this.objectEditorUi.openForEntity(entity),
     });
+    this.playerEquipmentPanel = new PlayerEquipmentPanel({
+      getEquipment: () => this.player.getEquipmentSnapshot(),
+      onUnequip: (slot) => this.player.unequip(slot),
+      onUnequipAll: () => this.player.unequipAll(),
+      onUseNotebook: () => {
+        this.playerEquipmentPanel.hide();
+        notebook.show('spawn');
+      },
+      onAddAdjective: () => {
+        this.playerEquipmentPanel.hide();
+        notebook.show('adjective');
+      },
+    });
     this.picker.onSelectionChanged = (entityId) => {
       const entity = entityId ? (this.entities.get(entityId) as GameEntity | undefined) : undefined;
-      if (entity) this.objectActionPanel.show(entity);
-      else this.objectActionPanel.hide();
+      if (entity?.isPlayer) {
+        this.objectActionPanel.hide();
+        this.playerEquipmentPanel.show();
+      } else if (entity) {
+        this.playerEquipmentPanel.hide();
+        this.objectActionPanel.show(entity);
+      } else {
+        this.playerEquipmentPanel.hide();
+        this.objectActionPanel.hide();
+      }
     };
 
     // 右上角笔记本图标按钮
@@ -346,16 +399,27 @@ export class WorldScene extends Phaser.Scene {
 
     // 窗口失焦：Phaser 全局 blur 事件（PlayerController 已用其清空按键集合，
     // 此处复用同一事件暂停游戏循环与音乐）
-    this.sys.game.events.on('blur', () => this.pauseGame());
+    this.sys.game.events.on('blur', () => {
+      if (!this.basicsOverlay?.isOpen && !this.victoryOverlay?.isOpen) this.pauseGame();
+    });
 
     // ESC 暂停：避开输入框聚焦与 Notebook/ConfirmDialog 的 ESC 语义
     if (kb) {
       kb.on('keydown-ESC', (e: KeyboardEvent) => {
+        if (this.basicsOverlay?.isOpen || this.victoryOverlay?.isOpen) return;
         const ae = document.activeElement;
         if (ae instanceof HTMLInputElement || ae instanceof HTMLTextAreaElement) return;
         e.preventDefault();
-        if (this.paused) this.resumeGame();
+        if (this.playerEquipmentPanel?.isOpen()) this.playerEquipmentPanel.hide();
+        else if (this.paused) this.resumeGame();
         else this.pauseGame();
+      });
+      kb.on('keydown-I', (e: KeyboardEvent) => {
+        const ae = document.activeElement;
+        if (ae instanceof HTMLInputElement || ae instanceof HTMLTextAreaElement || ae instanceof HTMLSelectElement) return;
+        e.preventDefault();
+        if (this.playerEquipmentPanel.isOpen()) this.playerEquipmentPanel.hide();
+        else this.openPlayerEquipmentPanel();
       });
     }
 
@@ -390,8 +454,22 @@ export class WorldScene extends Phaser.Scene {
     const orientationPref = loadSettings().orientation;
     if (orientationPref === 'landscape') this._setupRotateHint();
 
-    this.ready = true;
-    this.showControlsHint();
+    if (saveData.tutorialCompleted) {
+      this.ready = true;
+      this.showControlsHint();
+    } else {
+      this.matter.world.pause();
+      music.pause();
+      this.basicsOverlay = new BasicsOverlay(() => {
+        this.basicsOverlay?.hide();
+        this.ready = true;
+        this.matter.world.resume();
+        music.resume();
+        void this.save.markTutorialCompleted();
+        this.showControlsHint();
+      });
+      this.basicsOverlay.show();
+    }
     log.info('WorldScene.create done', { width, height, level: startLevelId });
   }
 
@@ -402,7 +480,7 @@ export class WorldScene extends Phaser.Scene {
     const hint = document.createElement('div');
     hint.id = 'world-controls-hint';
     if (document.body.dataset.speechBubbleActive === 'true') hint.dataset.speechActive = 'true';
-    hint.textContent = 'WASD 移动  ·  空格 跳跃  ·  F 拾取  ·  Enter 笔记本';
+    hint.textContent = '左键点地移动 · 点 Maxwell 查看装备 · 拖到 Maxwell 装备/骑乘 · 右键开火/动作/跳跃 · I 装备面板 · Enter 笔记本';
     hint.style.cssText = [
       'position:fixed',
       'left:50%',
@@ -442,6 +520,15 @@ export class WorldScene extends Phaser.Scene {
     this.environment.resize(width, height);
     this.touchControls?.onResize();
     log.info('WorldScene resize', { width, height });
+  }
+
+  /** 从 HUD 或键盘打开 Maxwell 专属装备/骑乘上下文面板。 */
+  private openPlayerEquipmentPanel(): void {
+    const player = this.entities?.getPlayer() as GameEntity | undefined;
+    if (!player || !this.playerEquipmentPanel) return;
+    this.picker.selectedId = player.id;
+    this.objectActionPanel.hide();
+    this.playerEquipmentPanel.show();
   }
 
   /** 装配原版核心辅助功能：魔法背包、世界地图、Merit Board 与 Starite Vision。 */
@@ -689,6 +776,34 @@ export class WorldScene extends Phaser.Scene {
     return true;
   }
 
+  /** 生成玩家武器发射的子弹，实体装配仍统一由 Spawner 负责。 */
+  private spawnProjectile(weapon: GameEntity, x: number, y: number, facing: number): void {
+    const bulletEntry = getEntry('bullet');
+    if (!bulletEntry) {
+      log.warn('projectile spawn rejected: bullet entry missing', { weapon: weapon.id });
+      sfx.play('error');
+      return;
+    }
+
+    // 从枪口前方生成，避免子弹出生时与手持枪和玩家自身重叠。
+    const muzzleX = x + facing * 24;
+    const muzzleY = y;
+    const weaponVelocity = (weapon.body as { velocity: { x: number; y: number } }).velocity;
+    const result = this.spawner.spawnEntry(bulletEntry, undefined, muzzleX, muzzleY);
+    if (!result.entity || result.reason) {
+      log.warn('projectile spawn rejected', {
+        weapon: weapon.id,
+        reason: result.reason ?? 'spawn returned no entity',
+      });
+      return;
+    }
+
+    const projectile = result.entity;
+    projectile.setBodyVelocity(weaponVelocity.x + facing * 14, weaponVelocity.y);
+    projectile.state.facing = facing < 0 ? -1 : 1;
+    sfx.play('shoot');
+  }
+
   /** 对选中实体施加形容词 */
   private onApplyAdjectives(entityId: string, adjs: ParsedAdjective[]): void {
     const e = this.entities.get(entityId) as GameEntity | undefined;
@@ -745,12 +860,38 @@ export class WorldScene extends Phaser.Scene {
     log.info('game resumed');
   }
 
+  /** Starite 门槛达成后暂停世界，给玩家明确的解咒结果与下一步出口。 */
+  private showVictoryOverlay(): void {
+    if (!this.victoryOverlay) {
+      this.victoryOverlay = new VictoryOverlay({
+        onContinue: () => this.dismissVictoryOverlay(),
+        onMap: () => {
+          this.dismissVictoryOverlay();
+          this.worldMapOverlay.show();
+        },
+      });
+    }
+    this.matter.world.pause();
+    music.pause();
+    this.victoryOverlay.show();
+    log.info('victory overlay shown');
+  }
+
+  /** 胜利卡两个出口共用同一恢复路径，避免继续探索与地图入口状态分叉。 */
+  private dismissVictoryOverlay(): void {
+    if (!this.victoryOverlay?.isOpen) return;
+    this.victoryOverlay.hide();
+    this.matter.world.resume();
+    music.resume();
+    log.info('victory overlay dismissed');
+  }
+
   update(_time: number, deltaMs: number): void {
     if (!this.ready) return;
-    if (this.paused) return;
+    if (this.paused || this.victoryOverlay?.isOpen) return;
     const dt = Math.min(deltaMs, 50);
     // 1) 输入 → 玩家运动学
-    this.player.update();
+    this.player.update(this.time.now);
     // 2) 物理由 Phaser Matter 自动步进
     // 3) 规则引擎
     this.ruleEngine.update(dt);
@@ -787,6 +928,10 @@ export class WorldScene extends Phaser.Scene {
       const next = this.level.checkTransition(p.bodyPositionX, p.bodyPositionY);
       if (next) {
         const keepId = p.id;
+        // 旧关卡实体会被 LevelManager 清场，先解除枪械/翅膀/坐骑约束，
+        // 避免 PlayerController 在下一关继续驱动已移除的 Matter body。
+        this.player.detachAllAttachments();
+        this.effectResults.clear();
         // 先销毁旧实体的 GameObjects，避免精灵图残留场景
         for (const e of this.entities.all()) {
           if (e.id === keepId) continue;
@@ -836,9 +981,17 @@ export class WorldScene extends Phaser.Scene {
     const selEnt = sel ? (this.entities.get(sel) as GameEntity | undefined) : undefined;
     if (selEnt) {
       this.highlightG = drawHighlight(this, selEnt, this.highlightG);
-      if (selEnt.dead) this.objectActionPanel.hide();
+      if (selEnt.isPlayer) {
+        this.objectActionPanel.hide();
+        if (selEnt.dead) this.playerEquipmentPanel.hide();
+        else this.playerEquipmentPanel.refresh();
+      } else if (selEnt.dead) {
+        this.objectActionPanel.hide();
+        this.playerEquipmentPanel.hide();
+      }
     } else if (this.highlightG) {
       this.highlightG.clear();
+      this.playerEquipmentPanel.hide();
       this.objectActionPanel.hide();
     }
     // 10) 相机跟随
@@ -849,6 +1002,11 @@ export class WorldScene extends Phaser.Scene {
 
   /** 场景关闭时清理 DOM 浮层与监听器，避免切场景后残留 */
   shutdown(): void {
+    this.basicsOverlay?.destroy();
+    this.basicsOverlay = undefined;
+    this.victoryOverlay?.destroy();
+    this.victoryOverlay = undefined;
+    this.player?.detachAllAttachments();
     this.pauseOverlay?.hide();
     this.touchControls?.hide();
     if (this.resizeTimer !== undefined) window.clearTimeout(this.resizeTimer);
@@ -870,6 +1028,8 @@ export class WorldScene extends Phaser.Scene {
     this.worldMapOverlay?.destroy();
     this.meritBoard?.destroy();
     this.stariteVision?.destroy();
+    this.victoryOverlay?.destroy();
+    this.victoryOverlay = undefined;
     for (const button of this.utilityButtons) button.remove();
     this.utilityButtons = [];
     document.getElementById('title-overlay')?.remove();
@@ -881,8 +1041,11 @@ export class WorldScene extends Phaser.Scene {
       'autocomplete',
       'candidate-menu',
       'object-action-panel',
+      'player-equipment-panel',
       'object-editor',
       'pause-overlay',
+      'basics-overlay',
+      'victory-overlay',
       'touch-controls',
       'notebook-btn',
       'backpack-panel',

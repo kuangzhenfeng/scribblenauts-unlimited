@@ -27,6 +27,7 @@ function currentSave(): SaveData {
     library: [],
     unlockedLevels: ['overworld-meadow'],
     difficultySetting: { tier: 1 as DifficultyTier, standard: 'cefr' as DifficultyStandard },
+    tutorialCompleted: false,
     questionSeed: generateSeed(),
   };
 }
@@ -45,6 +46,7 @@ function normalizeSave(data: Partial<SaveData> | undefined): SaveData {
     unlockedLevels: Array.isArray(data.unlockedLevels) && data.unlockedLevels.length > 0
       ? data.unlockedLevels
       : defaults.unlockedLevels,
+    tutorialCompleted: data.tutorialCompleted === true,
     completedSlots: Array.isArray(data.completedSlots) ? data.completedSlots : [],
   };
 }
@@ -207,6 +209,16 @@ export class SaveStore {
     const data = await this.load();
     data.questionSeed = seed;
     await this.save(data);
+    return data;
+  }
+
+  /** 记录一次基础入门完成，避免每次进入世界重复打断核心循环。 */
+  async markTutorialCompleted(): Promise<SaveData> {
+    const data = await this.load();
+    if (!data.tutorialCompleted) {
+      data.tutorialCompleted = true;
+      await this.save(data);
+    }
     return data;
   }
 

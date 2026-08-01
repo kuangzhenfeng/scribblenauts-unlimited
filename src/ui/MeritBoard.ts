@@ -134,41 +134,41 @@ export class MeritBoard {
     const style = document.createElement('style');
     style.textContent = `
       .merit-board__panel {
-        position:relative;display:flex;flex-direction:column;gap:14px;
-        width:min(760px,100%);max-height:100%;box-sizing:border-box;padding:clamp(18px,3vw,30px);
+        position:relative;display:flex;flex-direction:column;gap:16px;
+        width:min(820px,100%);max-height:100%;box-sizing:border-box;padding:clamp(18px,3vw,28px);
         background:${PAPER_BG};box-shadow:${PAPER_SHADOW};${TORN_EDGE};overflow:auto;
       }
       .merit-board__header { display:flex;align-items:flex-start;gap:12px; }
       .merit-board__badge { display:grid;place-items:center;width:34px;height:34px;flex:none;color:#fff8dd;background:#3d2200;border-radius:9px; }
       .merit-board__heading { min-width:0;flex:1; }
-      .merit-board__title { margin:0;font-size:clamp(24px,4vw,34px);font-weight:900;line-height:1.1;letter-spacing:.04em; }
+      .merit-board__title { margin:0;font-size:28px;font-weight:900;line-height:1.1;letter-spacing:.02em; }
       .merit-board__hint { margin-top:5px;color:#5a554c;font-size:14px;line-height:1.4; }
       .merit-board__level { margin-top:1px;color:#8a5300;font-size:13px;font-weight:800; }
-      .merit-board__close { width:42px;height:42px;padding:8px;display:grid;place-items:center;color:${INK};background:${PAPER_BG_ALT};border:2px solid #6a3d08;border-radius:10px;cursor:pointer;transition:transform .16s ease,filter .16s ease; }
+      .merit-board__close { width:44px;height:44px;padding:9px;display:grid;place-items:center;color:${INK};background:${PAPER_BG_ALT};border:1px solid #6a3d08;border-radius:8px;cursor:pointer;transition:transform .16s ease,filter .16s ease; }
       .merit-board__close:hover,.merit-board__close:focus-visible { transform:translateY(-1px);filter:brightness(1.06); }
-      .merit-board__summary { display:flex;align-items:center;gap:12px;padding:10px 12px;background:${PAPER_BG_ALT};border-radius:8px; }
+      .merit-board__summary { display:flex;align-items:center;gap:12px;padding:14px;background:${PAPER_BG_ALT};border-radius:8px; }
       .merit-board__summary-icon { display:grid;place-items:center;width:30px;height:30px;color:#a05a00;flex:none; }
       .merit-board__summary-copy { min-width:0;flex:1; }
-      .merit-board__completion-label { display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:900; }
+      .merit-board__completion-label { display:flex;justify-content:space-between;gap:8px;font-size:14px;font-weight:900; }
       .merit-board__meter { height:9px;margin-top:6px;overflow:hidden;background:#d8ccb3;border-radius:99px; }
       .merit-board__meter-fill { height:100%;background:#d49b20;border-radius:inherit;transition:width .2s ease; }
-      .merit-board__list { display:flex;flex-direction:column;gap:9px;min-height:0; }
+      .merit-board__list { display:flex;flex-direction:column;gap:0;min-height:0; }
       .merit-board__empty { padding:26px 14px;text-align:center;color:#5a554c;background:${PAPER_BG_ALT};border-radius:8px; }
-      .merit-board__item { display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:start;padding:12px 13px;background:#fbf7ec;border:2px solid #c2b494;border-radius:9px; }
-      .merit-board__item[data-completed="true"] { background:#edf5df;border-color:#83a66b; }
-      .merit-board__item-status { display:grid;place-items:center;width:28px;height:28px;color:#6a3d08;background:#e7dcc4;border-radius:50%; }
+      .merit-board__item { display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:start;padding:15px 4px;background:transparent;border-bottom:1px solid #c2b494; }
+      .merit-board__item[data-completed="true"] { background:#edf5df; }
+      .merit-board__item-status { display:grid;place-items:center;width:32px;height:32px;color:#6a3d08;background:#e7dcc4;border-radius:50%; }
       .merit-board__item[data-completed="true"] .merit-board__item-status { color:#fff8dd;background:#3f9a43; }
       .merit-board__item-copy { min-width:0; }
       .merit-board__item-title { font-size:16px;font-weight:900;line-height:1.25; }
       .merit-board__item-description { margin-top:4px;color:#4f4a40;font-size:13px;line-height:1.45; }
       .merit-board__item-hint { margin-top:7px;padding:6px 8px;color:#6a5b39;background:#f6edc9;border-radius:6px;font-size:12px;line-height:1.35; }
       .merit-board__item-state { margin-top:5px;color:#5a554c;font-size:11px;font-weight:800; }
-      .merit-board__reward { display:flex;align-items:center;gap:4px;min-width:68px;justify-content:flex-end;color:#8a5300;font-size:12px;font-weight:900;text-align:right; }
+      .merit-board__reward { display:flex;align-items:center;gap:4px;min-width:92px;justify-content:flex-end;color:#8a5300;font-size:12px;font-weight:900;text-align:right; }
       .merit-board__reward-icon { display:grid;place-items:center;width:20px;height:20px; }
       .merit-board button:focus-visible { outline:3px solid #f0bd3c;outline-offset:3px; }
       @media (max-width:560px) {
         .merit-board__panel { padding:16px 14px;gap:11px; }
-        .merit-board__item { grid-template-columns:28px minmax(0,1fr); }
+        .merit-board__item { grid-template-columns:36px minmax(0,1fr); }
         .merit-board__reward { grid-column:2;justify-content:flex-start;text-align:left; }
       }
       @media (prefers-reduced-motion:reduce) {
@@ -209,6 +209,8 @@ export class MeritBoard {
 
     const summary = document.createElement('div');
     summary.className = 'merit-board__summary';
+    summary.setAttribute('role', 'status');
+    summary.setAttribute('aria-live', 'polite');
     const summaryIcon = document.createElement('div');
     summaryIcon.className = 'merit-board__summary-icon';
     summaryIcon.innerHTML = ICON_STAR;
@@ -216,6 +218,7 @@ export class MeritBoard {
     summaryCopy.className = 'merit-board__summary-copy';
     this.completionLabelEl = document.createElement('div');
     this.completionLabelEl.className = 'merit-board__completion-label';
+    this.completionLabelEl.setAttribute('aria-live', 'polite');
     this.completionBarEl = document.createElement('div');
     this.completionBarEl.className = 'merit-board__meter-fill';
     this.completionBarEl.setAttribute('role', 'progressbar');

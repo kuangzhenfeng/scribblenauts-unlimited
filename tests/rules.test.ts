@@ -11,7 +11,7 @@ import { TagIndex } from '@/core/rules/TagIndex';
 import { RuleEngine } from '@/core/rules/RuleEngine';
 import { rules } from '@/core/data/dictionary/rules/rules';
 import type { Entity } from '@/core/entity/Entity';
-import type { EffectDeps } from '@/core/rules/effects';
+import type { EffectDeps, EffectResult } from '@/core/rules/effects';
 
 let fakeNow = 0;
 
@@ -226,6 +226,34 @@ describe('rule: projectile impact', () => {
   });
 });
 
+describe('rule result recording', () => {
+  it('records the actual target and source when a projectile destroys a breakable object', () => {
+    const results: EffectResult[] = [];
+    const deps = makeDeps();
+    deps.onEffectResult = (result) => results.push(result);
+    const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, deps);
+    for (const r of rules) if (r.id === 'projectile-breaks-breakable') engine.register(r);
+    const bullet = mockEntity('bullet1', 'bullet', ts({ flags: ['projectile'] }));
+    const barrel = mockEntity('barrel1', 'barrel', ts({ flags: ['breakable'] }));
+    barrel.setBodyPosition(48, 12);
+    engine.enqueueCollision({ a: bullet, b: barrel, phase: 'start' });
+    engine.update(16);
+    expect(results).toEqual([
+      expect.objectContaining({
+        kind: 'destroy',
+        ruleId: 'projectile-breaks-breakable',
+        sourceId: 'bullet1',
+        sourceTypeId: 'bullet',
+        targetId: 'barrel1',
+        targetTypeId: 'barrel',
+        targetX: 48,
+        targetY: 12,
+      }),
+      expect.objectContaining({ targetId: 'bullet1', targetTypeId: 'bullet' }),
+    ]);
+  });
+});
+
 describe('rule: poison and antidote', () => {
   it('poison contact applies a damaging poisoned state', () => {
     const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, makeDeps());
@@ -268,5 +296,25 @@ describe('effect: lethal damage', () => {
     expect(target.dead).toBe(true);
     expect(target.tags.hasState('dead')).toBe(true);
     expect(target.state.locomotion).toBe('dead');
+  });
+
+  it('does not report a respawning player as a destroyed object', () => {
+    const results: EffectResult[] = [];
+    const deps = makeDeps();
+    deps.onEffectResult = (result) => results.push(result);
+    const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, deps);
+    engine.register({
+      id: 'test-player-lethal-damage',
+      trigger: { kind: 'collision' },
+      match: { kind: 'pair', a: { flags: ['weapon'] }, b: { category: ['creature'] } },
+      effect: { kind: 'damage', target: 'b', amount: 120 },
+    });
+    const weapon = mockEntity('weapon-player-test', 'sword', ts({ flags: ['weapon'] }));
+    const player = mockEntity('player-test', 'human', ts({ material: ['flesh'], category: 'creature' }));
+    player.isPlayer = true;
+    engine.enqueueCollision({ a: weapon, b: player, phase: 'start' });
+    engine.update(16);
+    expect(player.dead).toBe(true);
+    expect(results).toHaveLength(0);
   });
 });

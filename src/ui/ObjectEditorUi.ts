@@ -33,54 +33,80 @@ export class ObjectEditorUi {
   constructor(private readonly editor: ObjectEditor) {
     this.el = document.createElement('div');
     this.el.id = 'object-editor';
+    this.el.setAttribute('role', 'dialog');
+    this.el.setAttribute('aria-modal', 'false');
     this.el.style.cssText = panelStyle();
     this.el.style.display = 'none';
 
+    const style = document.createElement('style');
+    style.textContent = `
+      #object-editor { gap:14px !important; }
+      #object-editor :focus-visible { outline:3px solid #b56a0b; outline-offset:3px; }
+      #object-editor .editor-title { display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid rgba(43,43,43,0.18); }
+      #object-editor .editor-title h2 { margin:0;font-size:22px;line-height:1.15; }
+      #object-editor .editor-hint { color:#514b42;font-size:12px;line-height:1.5; }
+      #object-editor .editor-section { margin-top:2px;padding-top:12px;border-top:1px solid rgba(43,43,43,0.14); }
+      #object-editor .editor-section-title { margin:0 0 8px;color:#8a5300;font-size:12px;font-weight:900;letter-spacing:.03em; }
+      #object-editor .editor-field { display:flex;flex-direction:column;gap:6px;min-height:62px;font-size:12px;font-weight:800;color:${INK}; }
+      #object-editor .editor-field input { min-height:44px; }
+      #object-editor .editor-save { min-height:44px; }
+      #object-editor .editor-status { min-height:20px;font-size:12px;line-height:1.45;color:#3f7b3a; }
+      #object-editor .editor-status[data-state="error"] { color:#8b2f18; }
+      @media (prefers-reduced-motion:reduce) { #object-editor button { transition:none !important; } }
+    `;
+    this.el.appendChild(style);
+
     const title = document.createElement('div');
-    title.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px';
-    const titleText = document.createElement('span');
+    title.className = 'editor-title';
+    const titleText = document.createElement('h2');
+    titleText.id = 'object-editor-title';
     titleText.textContent = t('editor.title');
-    titleText.style.cssText = `font-weight:700;letter-spacing:1px;color:${INK}`;
+    this.el.setAttribute('aria-labelledby', titleText.id);
     const close = document.createElement('button');
     close.type = 'button';
     close.title = t('editor.closeAria');
     close.setAttribute('aria-label', t('editor.closeAria'));
     close.innerHTML = ICON_CLOSE;
-    close.style.cssText = `width:28px;height:28px;padding:0;border:0;border-radius:50%;background:transparent;color:${INK};cursor:pointer`;
+    close.style.cssText = `width:44px;height:44px;padding:10px;border:1px solid rgba(43,43,43,0.24);border-radius:8px;background:${PAPER_BG};color:${INK};cursor:pointer;flex:none`;
     close.addEventListener('click', () => this.hide());
     title.append(titleText, close);
 
     const hint = document.createElement('div');
-    hint.textContent = '基础词条 + 中英文名称/别名 + 形容词 ID；颜色、尺寸、行为均可组合。';
-    hint.style.cssText = `opacity:0.7;font-size:12px;margin-bottom:8px;color:${INK}`;
+    hint.className = 'editor-hint';
+    hint.textContent = t('editor.hint');
 
     this.baseInput = mkInput(t('editor.basePh'));
-    this.adjInput = mkInput('形容词 ID 或中英文名称（空格分隔）');
+    this.adjInput = mkInput(t('editor.adjPh'));
     this.sizeInput = mkInput('尺寸形容词（如 big / 大，可选）');
     this.behaviorInput = mkInput('行为形容词（如 flying / 飞行，可选）');
-    this.zhNameInput = mkInput('中文规范名，例如：飞天龙');
-    this.enNameInput = mkInput('English canonical name, e.g. flying dragon');
+    this.zhNameInput = mkInput(t('editor.namePh'));
+    this.enNameInput = mkInput(t('editor.namePh'));
     this.zhAliasesInput = mkInput('中文别名（逗号分隔，可选）');
     this.enAliasesInput = mkInput('English aliases (comma-separated, optional)');
     this.colorInput = mkInput('颜色（可选，如 #E03131）');
     this.saveBtn = document.createElement('button');
+    this.saveBtn.className = 'editor-save';
     this.saveBtn.textContent = t('editor.save');
     this.saveBtn.style.cssText = btnStyle();
     this.status = document.createElement('div');
-    this.status.style.cssText = 'opacity:0.85;font-size:12px;margin-top:6px';
+    this.status.className = 'editor-status';
+    this.status.setAttribute('aria-live', 'polite');
 
     this.saveBtn.addEventListener('click', () => void this.save());
 
     this.el.appendChild(title);
     this.el.appendChild(hint);
+    this.el.appendChild(sectionTitle('实体组成'));
     this.el.appendChild(field('基础词条', this.baseInput));
     this.el.appendChild(field('形容词', this.adjInput));
     this.el.appendChild(field('尺寸', this.sizeInput));
     this.el.appendChild(field('行为', this.behaviorInput));
+    this.el.appendChild(sectionTitle('名称与识别'));
     this.el.appendChild(field('中文名称', this.zhNameInput));
     this.el.appendChild(field('英文名称', this.enNameInput));
     this.el.appendChild(field('中文别名', this.zhAliasesInput));
     this.el.appendChild(field('英文别名', this.enAliasesInput));
+    this.el.appendChild(sectionTitle('外观'));
     this.el.appendChild(field('外观颜色', this.colorInput));
     this.el.appendChild(this.saveBtn);
     this.el.appendChild(this.status);
@@ -93,7 +119,7 @@ export class ObjectEditorUi {
   }
 
   show(): void {
-    this.el.style.display = 'block';
+    this.el.style.display = 'flex';
     this.baseInput.focus();
   }
 
@@ -133,23 +159,33 @@ export class ObjectEditorUi {
     const enName = this.enNameInput.value.trim();
     if (!baseText || !zhName || !enName) {
       this.status.textContent = '基础词条、中文名称、英文名称均为必填项';
+      this.status.dataset.state = 'error';
       return;
     }
 
     const appearanceColor = this.colorInput.value.trim();
-    const result = await this.editor.save({
-      ...(this.editingId ? { id: this.editingId } : {}),
-      zh: { name: zhName, aliases: this.zhAliasesInput.value },
-      en: { name: enName, aliases: this.enAliasesInput.value },
-      baseText,
-      adjectives,
-      ...(appearanceColor ? { appearanceOverrides: { color: appearanceColor } } : {}),
-    });
+    let result: Awaited<ReturnType<ObjectEditor['save']>>;
+    try {
+      result = await this.editor.save({
+        ...(this.editingId ? { id: this.editingId } : {}),
+        zh: { name: zhName, aliases: this.zhAliasesInput.value },
+        en: { name: enName, aliases: this.enAliasesInput.value },
+        baseText,
+        adjectives,
+        ...(appearanceColor ? { appearanceOverrides: { color: appearanceColor } } : {}),
+      });
+    } catch {
+      this.status.textContent = getLang() === 'zh' ? '保存失败，请重试' : 'Could not save. Try again.';
+      this.status.dataset.state = 'error';
+      return;
+    }
     if ('error' in result) {
       this.status.textContent = result.error;
+      this.status.dataset.state = 'error';
       return;
     }
     this.status.textContent = t('editor.saved', { name: getLang() === 'zh' ? result.zh.name : result.en.name });
+    this.status.dataset.state = 'success';
     log.info('object editor saved', { name: result.zh.name, id: result.id });
     this.editingId = result.id;
     this.baseInput.value = result.baseTypeId;
@@ -167,33 +203,43 @@ export class ObjectEditorUi {
 
 function field(labelText: string, input: HTMLInputElement): HTMLLabelElement {
   const label = document.createElement('label');
+  label.className = 'editor-field';
   label.textContent = labelText;
-  label.style.cssText = `display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:${INK}`;
   label.appendChild(input);
   return label;
+}
+
+function sectionTitle(text: string): HTMLDivElement {
+  const title = document.createElement('div');
+  title.className = 'editor-section';
+  const label = document.createElement('h3');
+  label.className = 'editor-section-title';
+  label.textContent = text;
+  title.appendChild(label);
+  return title;
 }
 
 function panelStyle(): string {
   return [
     'position:fixed',
-    `top:max(60px,env(safe-area-inset-top))`,
+    `top:max(16px,env(safe-area-inset-top))`,
     `right:${SAFE_RIGHT}`,
+    `bottom:max(16px,env(safe-area-inset-bottom))`,
     // 窄屏兜底：不超出视口，预留 32px 边距
-    'width:min(340px,calc(100vw - 32px))',
-    'max-height:calc(100vh - 76px)',
+    'width:min(390px,calc(100vw - 32px))',
+    'max-height:calc(100vh - 32px)',
     'overflow:auto',
-    'padding:16px',
+    'padding:20px',
     `background:${PAPER_BG}`,
     `box-shadow:${PAPER_SHADOW}`,
     `color:${INK}`,
     `font-family:${UI_FONT}`,
     'font-size:14px',
     TORN_EDGE,
-    'transform:rotate(0.5deg)',
     'z-index:50',
     'display:flex',
     'flex-direction:column',
-    'gap:8px',
+    'gap:12px',
   ].join(';');
 }
 
@@ -204,24 +250,26 @@ function mkInput(placeholder: string): HTMLInputElement {
   i.style.cssText = [
     'width:100%',
     'box-sizing:border-box',
+    'min-height:44px',
     'padding:8px 10px',
     'font-size:14px',
     `color:${INK}`,
-    'background:transparent',
-    'border:none',
-    `border-bottom:2px solid ${INK}`,
+    'border:1px solid rgba(43,43,43,0.28)',
+    'border-radius:8px',
     'outline:none',
     `font-family:${UI_FONT}`,
+    'background:#efe6cf',
   ].join(';');
   return i;
 }
 
 function btnStyle(): string {
   return [
+    'min-height:44px',
     'padding:10px 14px',
-    'border:none',
-    'border-radius:6px',
-    `background:${INK}`,
+    'border:1px solid #3d2200',
+    'border-radius:8px',
+    'background:#3d2200',
     'color:#f7f1e3',
     'font-weight:700',
     'cursor:pointer',

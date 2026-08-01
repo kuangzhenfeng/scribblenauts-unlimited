@@ -11,6 +11,7 @@
 import type { LevelData, PuzzleCondition } from '@/core/types/level';
 import type { Entity, EntityQuery } from '@/core/entity/Entity';
 import type { BehaviorTag, StateTag } from '@/core/types/rules';
+import type { EffectResultQuery } from './EffectResultLog';
 import { log } from '@/util/log';
 import { L } from '@/core/i18n/I18n';
 
@@ -40,6 +41,7 @@ export class GoalSystem {
     private readonly entities: EntityQuery,
     private readonly level: LevelRef,
     private readonly cb: ProgressCallbacks,
+    private readonly effectResults: EffectResultQuery = { has: () => false },
   ) {}
 
   get shardCount(): number {
@@ -114,7 +116,13 @@ export class GoalSystem {
       case 'object-present':
         return this.countMatchingEntities(c.typeId, c.adjectives, c.near, undefined) >= normalizeCount(c.count, 1);
       case 'object-destroyed':
-        return this.countMatchingEntities(c.typeId, undefined, undefined, c.region) === 0;
+        return this.effectResults.has({
+          kind: 'destroy',
+          targetTypeId: c.typeId,
+          sourceTypeId: c.sourceTypeId,
+          ruleId: c.ruleId,
+          region: c.region,
+        });
       case 'counter':
         return this.countMatchingEntities(c.typeId, c.adjectives, c.near, c.region) >= normalizeCount(c.count, 0);
       case 'entity-at':

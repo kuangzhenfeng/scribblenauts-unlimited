@@ -2,7 +2,7 @@
  * 虚拟触屏控制 —— 触屏设备自动显示的虚拟摇杆 + 动作按钮。
  *
  * 职责边界：只产生输入意图并注入 PlayerController（setVirtualMove/setVirtualJump/
- * triggerInteract），不持有任何游戏逻辑。纯 DOM overlay + Pointer Events，
+ * setVirtualFire/triggerInteract/triggerShoot），不持有任何游戏逻辑。纯 DOM overlay + Pointer Events，
  * 不走 Phaser input pipeline，故不占 Phaser activePointers 槽。
  *
  * 多指：摇杆与按钮各自用独立 pointerId 跟踪（DOM Pointer Events 天然多指）。
@@ -30,6 +30,7 @@ export class TouchControls {
   private readonly joystickThumb: HTMLDivElement;
   private readonly jumpBtn: HTMLButtonElement;
   private readonly interactBtn: HTMLButtonElement;
+  private readonly fireBtn: HTMLButtonElement;
   /** 摇杆当前锁定的 pointerId（仅第一根落在 base 上的手指） */
   private joystickPointerId: number | null = null;
   /** 摇杆底座圆心屏幕坐标 */
@@ -80,20 +81,29 @@ export class TouchControls {
     this.joystickBase.appendChild(this.joystickThumb);
     this.container.appendChild(this.joystickBase);
 
-    // 右下动作按钮组：跳跃（上）+ 交互（下）
+    // 右下动作按钮组：跳跃（上）+ 开火/交互（下并排）
     this.jumpBtn = this._makeActionBtn(t('touch.jump'), '#3ab5a0', '#0d3a30', '#0d3a30');
     this.jumpBtn.style.cssText += `;right:max(28px,env(safe-area-inset-right));bottom:max(108px,env(safe-area-inset-bottom));`;
     this.interactBtn = this._makeActionBtn(t('touch.interact'), '#efad19', '#3d2200', '#3d2200');
     this.interactBtn.innerHTML = ICON_ROTATE;
     this.interactBtn.style.cssText += `;right:max(96px,env(safe-area-inset-right));bottom:max(28px,env(safe-area-inset-bottom));`;
+    this.fireBtn = this._makeActionBtn('开火', '#d45a3d', '#4a160f', '#fff3df');
+    this.fireBtn.style.cssText += `;right:max(28px,env(safe-area-inset-right));bottom:max(28px,env(safe-area-inset-bottom));`;
     this.container.appendChild(this.jumpBtn);
     this.container.appendChild(this.interactBtn);
+    this.container.appendChild(this.fireBtn);
 
     document.body.appendChild(this.container);
 
     this._attachJoystickEvents();
     this._attachButtonEvents(this.jumpBtn, () => player.setVirtualJump(true), () => player.setVirtualJump(false));
     this._attachButtonEvents(this.interactBtn, () => player.triggerInteract(), undefined);
+    this._attachButtonEvents(
+      this.fireBtn,
+      () => player.setVirtualFire(true),
+      () => player.setVirtualFire(false),
+      () => player.triggerShoot(),
+    );
   }
 
   /** 是否应显示：on 强制、off 强制隐藏、auto 用 pointer:coarse 判定触屏设备 */
@@ -112,9 +122,10 @@ export class TouchControls {
   hide(): void {
     this.shown = false;
     this.container.style.display = 'none';
-    // 隐藏时复位摇杆与跳跃，避免残留输入
+    // 隐藏时复位摇杆、跳跃与开火，避免残留输入
     this._resetJoystick();
     this.player.setVirtualJump(false);
+    this.player.setVirtualFire(false);
   }
 
   get isVisible(): boolean {
@@ -186,6 +197,7 @@ export class TouchControls {
     btn: HTMLButtonElement,
     onDown: () => void,
     onUp?: () => void,
+    onClick?: () => void,
   ): void {
     btn.addEventListener('pointerdown', (e: PointerEvent) => {
       btn.setPointerCapture(e.pointerId);
@@ -202,6 +214,7 @@ export class TouchControls {
     };
     btn.addEventListener('pointerup', release);
     btn.addEventListener('pointercancel', release);
+    btn.addEventListener('click', () => onClick?.());
   }
 
   /** 按当前指针位置移动 thumb 并注入 moveX */

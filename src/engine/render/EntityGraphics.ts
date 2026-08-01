@@ -3,6 +3,7 @@
  *
  *  - sprite：Phaser.GameObjects.Sprite + Atlas 帧动画，每帧仅同步位置/帧/翻转/tint，零重绘开销；
  *    参数化颜色（bodyColor 等）经 setTint 染色，对齐行业做法（每对象一套美术 + tint）。
+ *  - 装备特例：wing/bullet 暂无 atlas，使用本文件内的程序化 Graphics 绘制；
  *  - 兜底：rendererId 未注册或 atlas 缺图，内联 Graphics 绘制
  *    按 drawParams.color/w/h 染色的矩形 + 粗黑描边 + 白色问号，便于识别待接入条目。
  *
@@ -54,6 +55,12 @@ export function createEntityGraphics(
     _drawLava(g, e);
     return g;
   }
+  if (e.typeId === 'wing' || e.typeId === 'bullet') {
+    const g = scene.add.graphics();
+    e.gameObject = g;
+    _drawEquipment(g, e);
+    return g;
+  }
   const entry = getRendererEntry(e.rendererId);
 
   if (entry?.kind === 'sprite' && scene.textures.exists(entry.def.atlasKey)) {
@@ -83,6 +90,13 @@ export function syncGraphics(e: GameEntity): void {
     g.clear();
     _drawLava(g, e);
     g.setDepth(e.layer + e.bodyPositionY * 0.001);
+    return;
+  }
+  if (e.typeId === 'wing' || e.typeId === 'bullet') {
+    const g = e.gameObject as Phaser.GameObjects.Graphics | undefined;
+    if (!g) return;
+    g.clear();
+    _drawEquipment(g, e);
     return;
   }
   const entry = getRendererEntry(e.rendererId);
@@ -205,6 +219,104 @@ function _drawLava(g: Phaser.GameObjects.Graphics, e: GameEntity): void {
   g.lineTo(6, 22);
   g.closePath();
   g.fillPath();
+}
+
+/** 当前尚无 atlas 的装备与即时投射物：保留独立视觉，不改变普通缺图问号兜底。 */
+function _drawEquipment(g: Phaser.GameObjects.Graphics, e: GameEntity): void {
+  if (e.typeId === 'wing') {
+    _drawWing(g, e);
+  } else {
+    _drawBullet(g, e);
+  }
+}
+
+/** 翅膀：一对带羽片的背部翅翼，绘制原点对齐其 Matter 刚体锚点。 */
+function _drawWing(g: Phaser.GameObjects.Graphics, e: GameEntity): void {
+  const p = e.drawParams as { color?: string };
+  const fillColor = hexToNum(e.state.colorOverride ?? p.color ?? '#62C4FF');
+  const featherColor = 0xe9f8ff;
+
+  g.setPosition(e.bodyPositionX, e.bodyPositionY);
+  g.setRotation(e.bodyAngle);
+  g.setScale(e.state.scale, e.state.scale);
+  g.setDepth(e.layer + e.bodyPositionY * 0.001);
+  g.setVisible(!e.hidden);
+
+  for (const direction of [-1, 1]) {
+    g.fillStyle(fillColor, 1);
+    g.lineStyle(3, 0x1b2233, 1);
+    g.beginPath();
+    g.moveTo(0, 4);
+    g.lineTo(direction * 10, 10);
+    g.lineTo(direction * 28, 7);
+    g.lineTo(direction * 31, -7);
+    g.lineTo(direction * 23, -10);
+    g.lineTo(direction * 21, -20);
+    g.lineTo(direction * 13, -14);
+    g.lineTo(direction * 9, -23);
+    g.lineTo(direction * 5, -10);
+    g.lineTo(direction * 2, -4);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+
+    g.lineStyle(1.5, featherColor, 0.9);
+    for (const feather of [
+      [5, -2, 23, -8],
+      [7, 2, 25, -1],
+      [9, 5, 23, 4],
+    ] as const) {
+      g.beginPath();
+      g.moveTo(direction * feather[0], feather[1]);
+      g.lineTo(direction * feather[2], feather[3]);
+      g.strokePath();
+    }
+  }
+
+  g.fillStyle(0x1b2233, 1);
+  g.fillCircle(0, 4, 3);
+}
+
+/** 子弹：金色弹头与尾部束带，朝向由 facing、旋转由物理 bodyAngle 决定。 */
+function _drawBullet(g: Phaser.GameObjects.Graphics, e: GameEntity): void {
+  const p = e.drawParams as { color?: string };
+  const direction = e.state.facing < 0 ? -1 : 1;
+  const fillColor = hexToNum(e.state.colorOverride ?? p.color ?? '#F6C453');
+  const bandX = direction > 0 ? -5.2 : 2.7;
+
+  g.setPosition(e.bodyPositionX, e.bodyPositionY);
+  g.setRotation(e.bodyAngle);
+  g.setScale(e.state.scale, e.state.scale);
+  g.setDepth(e.layer + e.bodyPositionY * 0.001);
+  g.setVisible(!e.hidden);
+
+  g.fillStyle(fillColor, 1);
+  g.beginPath();
+  g.moveTo(-7 * direction, -3.5);
+  g.lineTo(2 * direction, -3.5);
+  g.lineTo(7 * direction, 0);
+  g.lineTo(2 * direction, 3.5);
+  g.lineTo(-7 * direction, 3.5);
+  g.closePath();
+  g.fillPath();
+
+  g.fillStyle(0xd79127, 1);
+  g.fillRect(bandX, -2.5, 2.5, 5);
+  g.lineStyle(1.5, 0xfff1a6, 1);
+  g.beginPath();
+  g.moveTo(-3 * direction, -1.5);
+  g.lineTo(2 * direction, -1.5);
+  g.strokePath();
+
+  g.lineStyle(2, 0x1b2233, 1);
+  g.beginPath();
+  g.moveTo(-7 * direction, -3.5);
+  g.lineTo(2 * direction, -3.5);
+  g.lineTo(7 * direction, 0);
+  g.lineTo(2 * direction, 3.5);
+  g.lineTo(-7 * direction, 3.5);
+  g.closePath();
+  g.strokePath();
 }
 
 /**

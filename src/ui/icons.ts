@@ -32,6 +32,24 @@ export const ICON_MAXWELL = svg(
   24,
 );
 
+/** 手持（Hand）—— 装备关系槽位 */
+export const ICON_HAND = svg(
+  '<path d="M7 11V5a1.5 1.5 0 0 1 3 0v5"></path><path d="M10 10V3.5a1.5 1.5 0 0 1 3 0V10"></path><path d="M13 10V5a1.5 1.5 0 0 1 3 0v6"></path><path d="M16 11V8a1.5 1.5 0 0 1 3 0v5c0 4-2.4 7-6.5 7H10c-2.8 0-5-2.2-5-5v-3a1.5 1.5 0 0 1 3 0v1"></path>',
+  19,
+);
+
+/** 背部翅膀（Wing）—— 装备关系槽位 */
+export const ICON_WING = svg(
+  '<path d="M12 20c-2.5-4.5-6.5-7.3-9-7.5 1.2 3.6 3.7 6.4 7 7.5"></path><path d="M12 20c2.5-4.5 6.5-7.3 9-7.5-1.2 3.6-3.7 6.4-7 7.5"></path><path d="M12 20V5"></path><path d="M12 8C10 5 8 4 5 4c.3 2.5 1.8 4.2 4.2 5.2"></path><path d="M12 8c2-3 4-4 7-4-.3 2.5-1.8 4.2-4.2 5.2"></path>',
+  19,
+);
+
+/** 骑乘（Saddle）—— 装备关系槽位 */
+export const ICON_RIDE = svg(
+  '<path d="M5 18h14"></path><path d="M7 18c0-4 1.8-7 5-7s5 3 5 7"></path><path d="M9 8h6"></path><path d="M10 5h4"></path><path d="M8 18v2"></path><path d="M16 18v2"></path>',
+  19,
+);
+
 /** 铅笔（Pencil） */
 export const ICON_PENCIL = svg(
   '<line x1="18" y1="2" x2="22" y2="6"></line><path d="M7.5 20.5 19 9l-4-4L3.5 16.5 2 22z"></path>',

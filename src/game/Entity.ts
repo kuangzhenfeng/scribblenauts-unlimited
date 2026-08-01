@@ -98,6 +98,12 @@ export class GameEntity implements EntityIface {
   setBodyVelocity(x: number, y: number): void {
     Matter.Body.setVelocity(this.body, { x, y });
   }
+  setBodyAngle(angle: number): void {
+    Matter.Body.setAngle(this.body, angle);
+  }
+  setBodyAngularVelocity(velocity: number): void {
+    Matter.Body.setAngularVelocity(this.body, velocity);
+  }
   applyImpulse(dir: [number, number], mag: number): void {
     // Matter force 值极小，dir×mag 作为力施加于质心
     Matter.Body.applyForce(this.body, this.body.position, { x: dir[0] * mag, y: dir[1] * mag });

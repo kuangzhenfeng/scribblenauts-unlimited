@@ -35,6 +35,8 @@ export interface EffectContext {
   a: Entity;
   b: Entity | undefined;
   self: Entity;
+  /** 产生当前 effect 的规则 id */
+  ruleId: string;
   /** 派生 effect 入队（供反应链使用） */
   enqueue: (effect: RuleEffect, target: EffectTarget, chainTag?: string, depthInc?: number) => void;
 }
@@ -45,6 +47,7 @@ const MAX_EFFECTS_PER_FRAME = 256;
 /** 待执行的 effect（已绑定具体实体） */
 interface PendingEffect {
   effect: RuleEffect;
+  ruleId: string;
   a: Entity;
   b: Entity | undefined;
   chainTag?: string;
@@ -187,6 +190,7 @@ export class RuleEngine {
     for (const effect of cr.effects) {
       this.pendingEffects.push({
         effect,
+        ruleId: cr.rule.id,
         a,
         b,
         chainTag: cr.chainTag,
@@ -210,8 +214,9 @@ export class RuleEngine {
         a: pe.a,
         b: pe.b,
         self: pe.a,
+        ruleId: pe.ruleId,
         enqueue: (eff, _tgt, chainTag, depthInc) =>
-          this.enqueueDerived(eff, pe.a, pe.b, chainTag ?? pe.chainTag, pe.chainDepth + (depthInc ?? 1)),
+          this.enqueueDerived(eff, pe.ruleId, pe.a, pe.b, chainTag ?? pe.chainTag, pe.chainDepth + (depthInc ?? 1)),
       };
       executeEffect(pe.effect, ctx, this.deps);
     }
@@ -219,6 +224,7 @@ export class RuleEngine {
 
   private enqueueDerived(
     effect: RuleEffect,
+    ruleId: string,
     a: Entity,
     b: Entity | undefined,
     chainTag: string | undefined,
@@ -228,6 +234,7 @@ export class RuleEngine {
     if (chainTag) this.chainDepth.set(chainTag, depth);
     this.pendingEffects.push({
       effect,
+      ruleId,
       a,
       b,
       chainTag,

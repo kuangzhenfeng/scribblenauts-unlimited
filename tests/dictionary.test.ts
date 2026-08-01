@@ -56,6 +56,19 @@ describe('dictionary box entry', () => {
     expect(size()).toBe(allEntries().length);
   });
 
+  it('declares composable equipment capabilities', () => {
+    expect(getEntry('gun')?.tags.flags.has('ranged')).toBe(true);
+    expect(getEntry('gun')?.tags.flags.has('projectile')).toBe(false);
+    expect(getEntry('wing')?.tags.flags.has('wing')).toBe(true);
+    expect(getEntry('dragon')?.tags.flags.has('rideable')).toBe(true);
+    expect(getEntry('horse')?.tags.flags.has('rideable')).toBe(true);
+    expect(getEntry('unicorn')?.tags.flags.has('rideable')).toBe(true);
+    expect(getEntry('bullet')?.tags.flags.has('projectile')).toBe(true);
+    for (const id of ['slingshot', 'crossbow', 'cannon', 'rifle']) {
+      expect(getEntry(id)?.tags.flags.has('ranged')).toBe(true);
+    }
+  });
+
   it('has no exact Chinese or English collisions within a dictionary layer', () => {
     expect(findExactCollisions(allEntries())).toEqual([]);
     expect(findExactCollisions(allAdjectives())).toEqual([]);

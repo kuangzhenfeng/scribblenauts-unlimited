@@ -1,25 +1,30 @@
 /**
- * 标题场景 —— 游戏入口，使用完整 key art 的手绘纸片风格主屏。
+ * 标题场景 —— 以完整 key art 承载品牌，纸片操作条承载入口。
  *
  * 设计要点：
  *  - DOM 浮层承载全部 UI（与 WorldScene 保持一致的 paperStyle 体系）
- *  - 完整主屏插画直接承载背景、Maxwell 与场景道具
- *  - 任意键 / 点击 → WorldScene
+ *  - key art 保持为完整世界画布，不额外叠加大面积装饰层
+ *  - 「开始探索」是唯一主操作，选择关卡/简易问答为次级入口
+ *  - 所有入口支持键盘焦点、触控目标与 reduced-motion
  */
 
 import Phaser from 'phaser';
-import { UI_FONT } from '@/ui/paperStyle';
-import { ICON_PENCIL, ICON_SETTINGS, ICON_MAP, ICON_KEYBOARD } from '@/ui/icons';
+import { INK, SAFE_BOTTOM, SAFE_RIGHT, SAFE_TOP, UI_FONT } from '@/ui/paperStyle';
+import { ICON_KEYBOARD, ICON_MAP, ICON_PENCIL, ICON_SETTINGS } from '@/ui/icons';
 import { music } from '@/audio/MusicDirector';
-import { t } from '@/core/i18n/I18n';
+import { getLang, t } from '@/core/i18n/I18n';
+
+const TITLE_STYLE_ID = 'title-ui-style';
 
 export class TitleScene extends Phaser.Scene {
   private keyArt?: Phaser.GameObjects.Image;
   private keyArtTexture = '';
   private overlay!: HTMLDivElement;
-  private buttonRow!: HTMLDivElement;
+  private actionRail!: HTMLDivElement;
   private windowResizeListener?: () => void;
   private started = false;
+  private transitioning = false;
+  private reducedMotion = false;
 
   constructor() {
     super({ key: 'TitleScene' });
@@ -27,217 +32,264 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     const { width, height } = this.scale;
+    this.started = false;
+    this.transitioning = false;
+    this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
     // Phaser 4 不自动调用 scene.shutdown()，须显式绑到 SHUTDOWN 事件，
     // 否则复用实例时 keyArt 残留已销毁对象，重进后不重建导致主屏纯蓝
     this.events.once('shutdown', this.shutdown, this);
 
     this._setKeyArtTexture(width, height);
-
     this._buildDomOverlay(width, height);
 
     this.windowResizeListener = () => this._handleResize(window.innerWidth, window.innerHeight);
     window.addEventListener('resize', this.windowResizeListener);
 
-    // 键盘 / 鼠标触发
-    this.input.keyboard?.on('keydown', () => this._startGame());
-    this.input.on('pointerdown', () => this._startGame());
+    // 保留原版“任意键 / 点击画布开始”，但不抢占按钮的键盘操作。
+    this.input.keyboard?.on('keydown', this._handleKeyDown, this);
+    this.input.on('pointerdown', this._handleCanvasPointerDown, this);
 
     this.cameras.main.setBackgroundColor('#5cb6d9');
   }
 
   private _buildDomOverlay(w: number, h: number): void {
+    this._ensureStyle();
+
     this.overlay = document.createElement('div');
     this.overlay.id = 'title-overlay';
+    this.overlay.setAttribute('aria-label', getLang() === 'zh' ? '涂鸦冒险家 无限' : 'Scribblenauts Unlimited');
 
-    // 按钮容器（横屏并排，竖屏纵向堆叠）
-    const btnRow = document.createElement('div');
-    btnRow.style.cssText = [
-      'position:absolute',
-      'display:flex',
-      'gap:14px',
-      'align-items:center',
-    ].join(';');
-    this.buttonRow = btnRow;
-    this._layoutButtonRow(w, h);
+    this.actionRail = document.createElement('div');
+    this.actionRail.className = 'title-action-rail';
+    this._layoutActionRail(w, h);
 
-    const start = document.createElement('button');
-    start.type = 'button';
-    start.innerHTML = `${ICON_PENCIL}<span>${t('title.start')}</span>`;
-    start.style.cssText = [
-      'display:flex',
-      'align-items:center',
-      'gap:9px',
-      `font-family:${UI_FONT}`,
-      'font-size:clamp(18px,2.5vw,26px)',
-      'font-weight:900',
-      'letter-spacing:0.08em',
-      'color:#fff8dd',
-      'background:linear-gradient(135deg,#efad19,#d77a10)',
-      'border:3px solid #3d2200',
-      'border-radius:999px',
-      'padding:11px 26px 12px',
-      'box-shadow:0 7px 0 #8d4e0c,0 12px 24px rgba(62,45,12,0.28),inset 0 1px rgba(255,255,255,0.55)',
-      'cursor:pointer',
-      'pointer-events:auto',
-      'transform:rotate(0.8deg)',
-      'transition:transform 0.16s ease,filter 0.16s ease',
-    ].join(';');
-    start.addEventListener('mouseenter', () => {
-      start.style.transform = 'translateY(-3px) rotate(0.8deg)';
-      start.style.filter = 'brightness(1.08)';
-    });
-    start.addEventListener('mouseleave', () => {
-      start.style.transform = 'rotate(0.8deg)';
-      start.style.filter = '';
-    });
-    start.addEventListener('click', (event) => {
+    const brand = document.createElement('div');
+    brand.className = 'title-brand';
+    const brandName = document.createElement('span');
+    brandName.className = 'title-brand-name';
+    brandName.textContent = getLang() === 'zh' ? '涂鸦冒险家' : 'Scribblenauts';
+    const brandSub = document.createElement('span');
+    brandSub.className = 'title-brand-sub';
+    brandSub.textContent = getLang() === 'zh' ? '无限' : 'Unlimited';
+    brand.append(brandName, brandSub);
+    this.actionRail.appendChild(brand);
+
+    const primary = this._makeButton('title-primary-action', ICON_PENCIL, t('title.start'));
+    primary.setAttribute('aria-label', t('title.start'));
+    primary.addEventListener('click', (event) => {
       event.stopPropagation();
       this._startGame();
     });
-    btnRow.appendChild(start);
+    this.actionRail.appendChild(primary);
 
-    const select = document.createElement('button');
-    select.type = 'button';
-    select.innerHTML = `${ICON_MAP}<span>${t('title.select')}</span>`;
-    select.style.cssText = [
-      'display:flex',
-      'align-items:center',
-      'gap:9px',
-      `font-family:${UI_FONT}`,
-      'font-size:clamp(18px,2.5vw,26px)',
-      'font-weight:900',
-      'letter-spacing:0.08em',
-      'color:#f0fbff',
-      'background:linear-gradient(135deg,#3ab5a0,#1a7a6a)',
-      'border:3px solid #0d3a30',
-      'border-radius:999px',
-      'padding:11px 26px 12px',
-      'box-shadow:0 7px 0 #14554a,0 12px 24px rgba(13,58,48,0.28),inset 0 1px rgba(255,255,255,0.45)',
-      'cursor:pointer',
-      'pointer-events:auto',
-      'transform:rotate(-0.6deg)',
-      'transition:transform 0.16s ease,filter 0.16s ease',
-    ].join(';');
-    select.addEventListener('mouseenter', () => {
-      select.style.transform = 'translateY(-3px) rotate(-0.6deg)';
-      select.style.filter = 'brightness(1.08)';
-    });
-    select.addEventListener('mouseleave', () => {
-      select.style.transform = 'rotate(-0.6deg)';
-      select.style.filter = '';
-    });
+    const secondaryActions = document.createElement('div');
+    secondaryActions.className = 'title-secondary-actions';
+
+    const select = this._makeButton('title-secondary-action', ICON_MAP, t('title.select'));
+    select.setAttribute('aria-label', t('title.select'));
     select.addEventListener('click', (event) => {
       event.stopPropagation();
       music.start('title');
-      this.overlay.style.animation = 'titleFadeOut 0.4s ease forwards';
-      this.cameras.main.fadeOut(400, 0, 0, 0);
-      window.setTimeout(() => {
-        this.overlay.remove();
-        this.scene.start('LevelSelectScene');
-      }, 420);
+      this._transitionTo('LevelSelectScene');
     });
-    btnRow.appendChild(select);
 
-    // 简易问答按钮
-    const quiz = document.createElement('button');
-    quiz.type = 'button';
-    quiz.innerHTML = `${ICON_KEYBOARD}<span>${t('quiz.start')}</span>`;
-    quiz.style.cssText = [
-      'display:flex',
-      'align-items:center',
-      'gap:9px',
-      `font-family:${UI_FONT}`,
-      'font-size:clamp(18px,2.5vw,26px)',
-      'font-weight:900',
-      'letter-spacing:0.08em',
-      'color:#fff8dd',
-      'background:linear-gradient(135deg,#9b59d0,#6c3a8f)',
-      'border:3px solid #3a1a4f',
-      'border-radius:999px',
-      'padding:11px 26px 12px',
-      'box-shadow:0 7px 0 #4a1a5a,0 12px 24px rgba(58,26,79,0.28),inset 0 1px rgba(255,255,255,0.45)',
-      'cursor:pointer',
-      'pointer-events:auto',
-      'transform:rotate(0.4deg)',
-      'transition:transform 0.16s ease,filter 0.16s ease',
-    ].join(';');
-    quiz.addEventListener('mouseenter', () => {
-      quiz.style.transform = 'translateY(-3px) rotate(0.4deg)';
-      quiz.style.filter = 'brightness(1.08)';
-    });
-    quiz.addEventListener('mouseleave', () => {
-      quiz.style.transform = 'rotate(0.4deg)';
-      quiz.style.filter = '';
-    });
+    const quiz = this._makeButton('title-secondary-action', ICON_KEYBOARD, t('quiz.start'));
+    quiz.setAttribute('aria-label', t('quiz.start'));
     quiz.addEventListener('click', (event) => {
       event.stopPropagation();
       music.start('title');
-      this.overlay.style.animation = 'titleFadeOut 0.4s ease forwards';
-      this.cameras.main.fadeOut(400, 0, 0, 0);
-      window.setTimeout(() => {
-        this.overlay.remove();
-        this.scene.start('QuizScene');
-      }, 420);
+      this._transitionTo('QuizScene');
     });
-    btnRow.appendChild(quiz);
 
-    this.overlay.appendChild(btnRow);
+    secondaryActions.append(select, quiz);
+    this.actionRail.appendChild(secondaryActions);
+    this.overlay.appendChild(this.actionRail);
 
     const settings = document.createElement('button');
     settings.type = 'button';
+    settings.className = 'title-settings-action';
     settings.title = t('title.settings');
+    settings.setAttribute('aria-label', t('title.settings'));
     settings.innerHTML = ICON_SETTINGS;
-    settings.style.cssText = [
-      'position:absolute',
-      'top:22px',
-      'right:24px',
-      'width:42px',
-      'height:42px',
-      'display:grid',
-      'place-items:center',
-      'color:#274e68',
-      'background:rgba(247,241,227,0.72)',
-      'border:2px solid rgba(39,78,104,0.72)',
-      'border-radius:50%',
-      'cursor:pointer',
-      'pointer-events:auto',
-      'transition:transform 0.16s ease,background 0.16s ease',
-    ].join(';');
-    settings.addEventListener('mouseenter', () => { settings.style.transform = 'rotate(45deg) scale(1.08)'; });
-    settings.addEventListener('mouseleave', () => { settings.style.transform = ''; });
     settings.addEventListener('click', (event) => {
       event.stopPropagation();
       music.start('title');
-      this.overlay.style.animation = 'titleFadeOut 0.4s ease forwards';
-      this.cameras.main.fadeOut(400, 0, 0, 0);
-      window.setTimeout(() => {
-        this.overlay.remove();
-        this.scene.start('SettingsScene');
-      }, 420);
+      this._transitionTo('SettingsScene');
     });
     this.overlay.appendChild(settings);
 
-    // 呼吸动效样式注入（只注一次）
-    if (!document.getElementById('title-anim-style')) {
-      const style = document.createElement('style');
-      style.id = 'title-anim-style';
-      style.textContent = `
-        @keyframes titleFadeOut {
-          to { opacity:0; transform:scale(1.04); }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    this.overlay.style.cssText = [
-      'position:fixed',
-      'inset:0',
-      'pointer-events:none',
-      'z-index:100',
-    ].join(';');
-
     document.body.appendChild(this.overlay);
+  }
+
+  private _makeButton(className: string, icon: string, label: string): HTMLButtonElement {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'title-button-icon';
+    iconWrap.innerHTML = icon;
+    const text = document.createElement('span');
+    text.className = 'title-button-label';
+    text.textContent = label;
+    button.append(iconWrap, text);
+    return button;
+  }
+
+  private _ensureStyle(): void {
+    if (document.getElementById(TITLE_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = TITLE_STYLE_ID;
+    style.textContent = `
+      #title-overlay {
+        position:fixed;
+        inset:0;
+        z-index:100;
+        pointer-events:none;
+        font-family:${UI_FONT};
+        color:${INK};
+      }
+      #title-overlay *, #title-overlay *::before, #title-overlay *::after { box-sizing:border-box; }
+      .title-action-rail {
+        position:absolute;
+        left:clamp(24px,6vw,92px);
+        bottom:max(28px,6vh);
+        width:min(430px,calc(100vw - 48px));
+        padding:18px 18px 16px;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+        pointer-events:auto;
+        background:rgba(247,241,227,.95);
+        border:2px solid ${INK};
+        border-radius:12px;
+        box-shadow:0 5px 0 rgba(43,43,43,.72);
+        transform:rotate(-.6deg);
+      }
+      .title-brand {
+        display:flex;
+        align-items:baseline;
+        gap:10px;
+        padding:0 2px 2px;
+      }
+      .title-brand-name {
+        font-size:26px;
+        line-height:1;
+        font-weight:950;
+        letter-spacing:.04em;
+      }
+      .title-brand-sub {
+        color:#48657a;
+        font-size:15px;
+        font-weight:900;
+        letter-spacing:.08em;
+      }
+      .title-primary-action,
+      .title-secondary-action,
+      .title-settings-action {
+        appearance:none;
+        -webkit-tap-highlight-color:transparent;
+        font:inherit;
+        cursor:pointer;
+        transition:transform .16s ease,filter .16s ease,background-color .16s ease,box-shadow .16s ease;
+      }
+      .title-primary-action,
+      .title-secondary-action {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        min-height:52px;
+        padding:10px 16px;
+        border-radius:9px;
+        font-size:18px;
+        font-weight:900;
+        letter-spacing:.04em;
+      }
+      .title-primary-action {
+        width:100%;
+        color:#2b2b2b;
+        background:#f2bd2f;
+        border:2px solid #2b2b2b;
+        box-shadow:0 4px 0 #8d4e0c;
+      }
+      .title-secondary-actions {
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+      }
+      .title-secondary-action {
+        color:#274e68;
+        background:rgba(255,255,255,.28);
+        border:2px solid #52718a;
+        box-shadow:0 3px 0 rgba(39,78,104,.38);
+      }
+      .title-button-icon {
+        display:grid;
+        place-items:center;
+        width:21px;
+        height:21px;
+        flex:none;
+      }
+      .title-settings-action {
+        position:absolute;
+        top:${SAFE_TOP};
+        right:${SAFE_RIGHT};
+        width:48px;
+        height:48px;
+        display:grid;
+        place-items:center;
+        padding:10px;
+        pointer-events:auto;
+        color:${INK};
+        background:rgba(247,241,227,.93);
+        border:2px solid ${INK};
+        border-radius:9px;
+        box-shadow:0 3px 0 rgba(43,43,43,.62);
+      }
+      .title-primary-action:hover,
+      .title-secondary-action:hover,
+      .title-settings-action:hover {
+        transform:translateY(-2px);
+        filter:brightness(1.04);
+      }
+      .title-primary-action:active,
+      .title-secondary-action:active,
+      .title-settings-action:active {
+        transform:translateY(2px);
+        box-shadow:0 1px 0 rgba(43,43,43,.58);
+      }
+      .title-primary-action:focus-visible,
+      .title-secondary-action:focus-visible,
+      .title-settings-action:focus-visible {
+        outline:3px solid #fff;
+        outline-offset:3px;
+      }
+      #title-overlay.is-leaving { animation:title-ui-leave .36s ease both; }
+      @keyframes title-ui-leave {
+        to { opacity:0; transform:scale(1.015); }
+      }
+      @media (max-width:720px) {
+        .title-action-rail {
+          left:50%;
+          bottom:${SAFE_BOTTOM};
+          width:calc(100vw - 28px);
+          padding:15px 14px 14px;
+          transform:translateX(-50%) rotate(-.4deg);
+        }
+        .title-brand-name { font-size:22px; }
+        .title-brand-sub { font-size:13px; }
+        .title-primary-action { min-height:54px; font-size:18px; }
+        .title-secondary-action { min-height:48px; padding-inline:10px; font-size:15px; }
+      }
+      @media (prefers-reduced-motion:reduce) {
+        .title-primary-action,
+        .title-secondary-action,
+        .title-settings-action { transition:none; }
+        #title-overlay.is-leaving { animation:none; }
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   private _fitKeyArt(w: number, h: number): void {
@@ -265,34 +317,45 @@ export class TitleScene extends Phaser.Scene {
     this._fitKeyArt(w, h);
   }
 
-  private _layoutButtonRow(w: number, h: number): void {
-    if (!this.buttonRow) return;
-    const portrait = h > w;
-    this.buttonRow.style.left = portrait ? '50%' : '10%';
-    this.buttonRow.style.bottom = portrait ? 'max(5%,env(safe-area-inset-bottom))' : '9%';
-    this.buttonRow.style.flexDirection = portrait ? 'column' : 'row';
-    this.buttonRow.style.transform = portrait ? 'translateX(-50%)' : '';
+  private _layoutActionRail(w: number, h: number): void {
+    if (!this.actionRail) return;
+    this.actionRail.classList.toggle('is-portrait', h > w);
   }
 
   private _handleResize(width: number, height: number): void {
     this._setKeyArtTexture(width, height);
-    this._layoutButtonRow(width, height);
+    this._layoutActionRail(width, height);
+  }
+
+  private _handleCanvasPointerDown(): void {
+    this._startGame();
+  }
+
+  private _handleKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Tab') return;
+    const target = event.target;
+    if (target instanceof HTMLElement && target.closest('button,input,select,textarea,a,[contenteditable="true"]')) return;
+    this._startGame();
+  }
+
+  private _transitionTo(sceneKey: string, beforeStart?: () => void): void {
+    if (this.transitioning) return;
+    this.transitioning = true;
+    const duration = this.reducedMotion ? 0 : 360;
+    this.overlay?.classList.add('is-leaving');
+    this.cameras.main.fadeOut(duration, 0, 0, 0);
+    window.setTimeout(() => {
+      beforeStart?.();
+      this.overlay?.remove();
+      this.scene.start(sceneKey);
+    }, duration);
   }
 
   private _startGame(): void {
-    if (this.started) return;
+    if (this.started || this.transitioning) return;
     this.started = true;
     music.start('title');
-
-    // 淡出动效
-    this.overlay.style.animation = 'titleFadeOut 0.4s ease forwards';
-    this.cameras.main.fadeOut(400, 0, 0, 0);
-
-    window.setTimeout(() => {
-      this.overlay.remove();
-      music.setMood('meadow');
-      this.scene.start('WorldScene', { levelId: 'overworld-meadow' });
-    }, 420);
+    this._transitionTo('WorldScene', () => music.setMood('meadow'));
   }
 
   shutdown(): void {
@@ -300,6 +363,8 @@ export class TitleScene extends Phaser.Scene {
       window.removeEventListener('resize', this.windowResizeListener);
       this.windowResizeListener = undefined;
     }
+    this.input.keyboard?.off('keydown', this._handleKeyDown, this);
+    this.input.off('pointerdown', this._handleCanvasPointerDown, this);
     this.overlay?.remove();
     // keyArt 已被 Phaser 场景销毁，置空避免复用实例时 _setKeyArtTexture 误用已销毁对象
     this.keyArt = undefined;

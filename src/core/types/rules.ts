@@ -79,10 +79,12 @@ export type FlagTag =
   | 'cuttable'
   | 'breakable'
   | 'weapon'
+  | 'ranged'
   | 'tool'
   | 'projectile'
   | 'container'
   | 'rideable'
+  | 'wing'
   | 'igniter'
   | 'edible-target';
 

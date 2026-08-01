@@ -19,7 +19,8 @@ import {
   SAFE_BOTTOM,
   SAFE_LEFT,
   SAFE_RIGHT,
-  QUIZ_CARD,
+  QUIZ_CARD_BRIGHT,
+  QUIZ_PANEL,
   QUIZ_INK,
   QUIZ_INK_SOFT,
   QUIZ_BORDER,
@@ -35,6 +36,7 @@ import {
   QUIZ_KB_RADIUS,
   QUIZ_KB_GAP,
   QUIZ_KB_KEY_HEIGHT,
+  QUIZ_SHADOW_LIFT,
 } from './quizStyle';
 import { ICON_BACKSPACE, ICON_CLEAR, ICON_CHECK } from './icons';
 import { t } from '@/core/i18n/I18n';
@@ -95,7 +97,7 @@ export class QuizKeyboard {
       'box-sizing:border-box',
       'display:flex',
       'flex-direction:column',
-      'gap:6px',
+      'gap:7px',
       // 默认宽度：竖屏占满，横屏/桌面居中限宽
       'width:100vw',
       'max-width:none',
@@ -105,20 +107,22 @@ export class QuizKeyboard {
       `background:${QUIZ_KB_BG} url("assets/quiz/quiz-lower-bg.png") center/cover no-repeat`,
       `border:2px solid ${QUIZ_BORDER}`,
       `border-radius:${QUIZ_RADIUS_MD} ${QUIZ_RADIUS_MD} 0 0`,
+      'box-shadow:0 -4px 0 rgba(23,37,53,0.12)',
     ].join(';');
 
     // 上区：输入显示 + 候选词，以纸面分区承载，不叠加悬浮卡片。
     this.appZoneEl = document.createElement('div');
     this.appZoneEl.style.cssText = [
-      'background:rgba(247,237,207,0.82)',
-      `border:1px solid ${QUIZ_BORDER}`,
+      `background:${QUIZ_PANEL}`,
+      `border:2px solid ${QUIZ_BORDER}`,
       `border-radius:${QUIZ_RADIUS_SM}`,
-      'padding:8px 10px',
+      'padding:8px 10px 7px',
       'box-sizing:border-box',
       'display:flex',
       'flex-direction:column',
-      'gap:8px',
+      'gap:7px',
       'width:min(720px,100%)',
+      `box-shadow:${QUIZ_SHADOW_LIFT}`,
     ].join(';');
     this.el.appendChild(this.appZoneEl);
 
@@ -127,8 +131,8 @@ export class QuizKeyboard {
     this.displayEl.style.cssText = [
       'min-height:36px',
       'padding:8px 12px',
-      `background:${QUIZ_CARD}`,
-      `border:1px solid ${QUIZ_BORDER}`,
+      `background:${QUIZ_CARD_BRIGHT}`,
+      `border:2px solid ${QUIZ_BORDER}`,
       `border-radius:${QUIZ_RADIUS_SM}`,
       'font-size:17px',
       'font-weight:600',
@@ -140,14 +144,18 @@ export class QuizKeyboard {
       'display:flex',
       'align-items:center',
       'gap:2px',
+      'box-sizing:border-box',
     ].join(';');
+    this.displayEl.setAttribute('role', 'textbox');
+    this.displayEl.setAttribute('aria-live', 'polite');
+    this.displayEl.setAttribute('aria-label', t('quiz.inputPh'));
     this.appZoneEl.appendChild(this.displayEl);
 
     // 中部：候选词区
     this.candidateEl = document.createElement('div');
     this.candidateEl.style.cssText = [
       'min-height:40px',
-      'max-height:64px',
+      'max-height:56px',
       'display:flex',
       'gap:6px',
       'overflow-x:auto',
@@ -155,6 +163,8 @@ export class QuizKeyboard {
       'padding:4px 2px',
       'scrollbar-width:thin',
     ].join(';');
+    this.candidateEl.setAttribute('role', 'listbox');
+    this.candidateEl.setAttribute('aria-label', t('quiz.inputPh'));
     this.appZoneEl.appendChild(this.candidateEl);
 
     // 下区：透明键盘区，让浅青纸纹贯穿输入台。
@@ -167,6 +177,7 @@ export class QuizKeyboard {
       'flex-direction:column',
       `gap:${QUIZ_KB_GAP}`,
       'width:min(720px,100%)',
+      'min-width:0',
     ].join(';');
     this.el.appendChild(this.kbZoneEl);
 
@@ -196,20 +207,23 @@ export class QuizKeyboard {
     style.id = 'quiz-keyboard-style';
     style.textContent = `
       @keyframes quizCaret { 0%,50% { opacity:1 } 51%,100% { opacity:0 } }
-      #quiz-keyboard button:hover { filter:brightness(.97); }
-      #quiz-keyboard button:focus-visible { outline:3px solid ${QUIZ_YELLOW}; outline-offset:1px; }
-      #quiz-keyboard button:active { transform:translateY(2px); box-shadow:none !important; }
+      #quiz-keyboard button:hover:not(:disabled) { filter:brightness(.97); }
+      #quiz-keyboard button:focus-visible { outline:3px solid ${QUIZ_YELLOW}; outline-offset:2px; }
+      #quiz-keyboard button:active:not(:disabled) { transform:translateY(2px); box-shadow:none !important; }
+      #quiz-keyboard button:disabled { opacity:.5; cursor:not-allowed; filter:none; box-shadow:none !important; }
+      #quiz-keyboard .quiz-candidate-chip:hover:not(:disabled) { border-color:${QUIZ_ACCENT} !important; }
+      #quiz-keyboard .quiz-candidate-chip:active:not(:disabled) { transform:translateY(2px); }
       @media (max-height:720px) {
-        #quiz-keyboard { padding-top:6px !important; }
-        #quiz-keyboard button { height:40px !important; }
-        #quiz-keyboard > div:first-child { padding-top:6px !important; padding-bottom:6px !important; gap:4px !important; }
-        #quiz-keyboard > div:first-child > div:nth-child(2) { min-height:34px !important; }
+        #quiz-keyboard { padding-top:6px !important; gap:5px !important; }
+        #quiz-keyboard > div:first-child { padding-top:6px !important; padding-bottom:6px !important; gap:5px !important; }
+        #quiz-keyboard > div:first-child > div:nth-child(2) { min-height:44px !important; }
       }
       @media (max-width:390px) {
         #quiz-keyboard .quiz-clear-label { display:none; }
       }
       @media (orientation:landscape) and (max-height:520px) {
         #quiz-keyboard { border-radius:0 !important; }
+        #quiz-keyboard > div:first-child { width:min(720px,100%); }
       }
       @media (orientation:portrait) {
         #quiz-keyboard { top:auto !important; height:auto !important; max-height:none !important; min-height:0 !important; overflow-y:visible !important; }
@@ -512,6 +526,9 @@ export class QuizKeyboard {
     // 光标用闪烁竖线模拟（靛蓝光标，替代原深灰）
     const cursor = this.buffer ? `<span style="display:inline-block;width:2px;height:1.1em;background:${QUIZ_ACCENT};margin-left:2px;animation:quizCaret 1s steps(1) infinite"></span>` : '';
     this.displayEl.innerHTML = `<span style="color:${color}">${this._escape(text)}</span>${cursor}`;
+    this.displayEl.setAttribute('aria-label', this.buffer || t('quiz.inputPh'));
+    this.clearButton.disabled = !this.buffer;
+    this.submitButton.disabled = !this.buffer.trim();
   }
 
   private _refreshCandidates(): void {
@@ -524,7 +541,7 @@ export class QuizKeyboard {
 
   private _renderCandidates(): void {
     if (this.candidates.length === 0) {
-      this.candidateEl.innerHTML = `<span style="color:${QUIZ_INK_SOFT};padding:8px 12px;font-size:14px">${t('quiz.noCandidate')}</span>`;
+      this.candidateEl.innerHTML = `<span role="status" style="color:${QUIZ_INK_SOFT};padding:8px 12px;font-size:14px">${t('quiz.noCandidate')}</span>`;
       return;
     }
     this.candidateEl.innerHTML = '';
@@ -534,14 +551,17 @@ export class QuizKeyboard {
       const secondary = c.zh;
       const chip = document.createElement('button');
       chip.type = 'button';
+      chip.className = 'quiz-candidate-chip';
+      chip.setAttribute('role', 'option');
       chip.innerHTML = `<span style="font-weight:800">${this._escape(primary)}</span><span style="margin-left:4px;font-size:12px;opacity:0.55">${this._escape(secondary)}</span>`;
       const selected = i === this.selectedCandidate;
+      chip.setAttribute('aria-selected', String(selected));
       chip.style.cssText = [
         'flex:none',
         'min-height:44px',
         'padding:6px 12px',
-        `background:${selected ? QUIZ_ACCENT_SOFT : QUIZ_CARD}`,
-        `border:1px solid ${selected ? QUIZ_ACCENT : QUIZ_BORDER}`,
+        `background:${selected ? QUIZ_ACCENT_SOFT : QUIZ_CARD_BRIGHT}`,
+        `border:2px solid ${selected ? QUIZ_ACCENT : QUIZ_BORDER}`,
         `border-radius:${QUIZ_KB_RADIUS}`,
         `color:${QUIZ_INK}`,
         `font-family:${UI_FONT}`,
@@ -551,6 +571,7 @@ export class QuizKeyboard {
         'pointer-events:auto',
         'transition:filter 160ms ease-out, transform 120ms ease-out',
         'touch-action:manipulation',
+        'box-sizing:border-box',
       ].join(';');
       chip.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -567,8 +588,8 @@ export class QuizKeyboard {
       'flex:1',
       'min-width:0',
       `height:${QUIZ_KB_KEY_HEIGHT}`,
-      `background:${QUIZ_KB_KEY}`,
-      `border:1px solid ${QUIZ_BORDER}`,
+      `background:${QUIZ_CARD_BRIGHT}`,
+      `border:2px solid ${QUIZ_BORDER}`,
       `border-radius:${QUIZ_KB_RADIUS}`,
       `color:${QUIZ_KB_KEY_TEXT}`,
       `font-family:${UI_FONT}`,
@@ -578,7 +599,7 @@ export class QuizKeyboard {
       'pointer-events:auto',
       'transition:transform 120ms ease-out,filter 160ms ease-out',
       'touch-action:manipulation',
-      'box-shadow:0 3px 0 rgba(23,37,53,0.2)',
+      `box-shadow:${QUIZ_SHADOW_LIFT}`,
       'position:relative',
     ].join(';');
   }
@@ -588,8 +609,8 @@ export class QuizKeyboard {
       'flex:5',
       'min-width:0',
       `height:${QUIZ_KB_KEY_HEIGHT}`,
-      `background:${QUIZ_KB_KEY}`,
-      `border:1px solid ${QUIZ_BORDER}`,
+      `background:${QUIZ_CARD_BRIGHT}`,
+      `border:2px solid ${QUIZ_BORDER}`,
       `border-radius:${QUIZ_KB_RADIUS}`,
       `color:${QUIZ_KB_KEY_TEXT}`,
       `font-family:${UI_FONT}`,
@@ -599,7 +620,7 @@ export class QuizKeyboard {
       'pointer-events:auto',
       'transition:transform 120ms ease-out,filter 160ms ease-out',
       'touch-action:manipulation',
-      'box-shadow:0 3px 0 rgba(23,37,53,0.2)',
+      `box-shadow:${QUIZ_SHADOW_LIFT}`,
     ].join(';');
   }
 
@@ -609,7 +630,7 @@ export class QuizKeyboard {
       'min-width:38px',
       `height:${QUIZ_KB_KEY_HEIGHT}`,
       `background:${bg}`,
-      `border:1px solid ${QUIZ_BORDER}`,
+      `border:2px solid ${QUIZ_BORDER}`,
       `border-radius:${QUIZ_KB_RADIUS}`,
       `color:${fg}`,
       `font-family:${UI_FONT}`,
@@ -621,7 +642,7 @@ export class QuizKeyboard {
       'pointer-events:auto',
       'transition:transform 120ms ease-out,filter 160ms ease-out',
       'touch-action:manipulation',
-      'box-shadow:0 3px 0 rgba(23,37,53,0.2)',
+      `box-shadow:${QUIZ_SHADOW_LIFT}`,
     ].join(';');
   }
 

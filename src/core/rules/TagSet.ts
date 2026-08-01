@@ -37,7 +37,7 @@ const BEHAVIOR_ORDER: BehaviorTag[] = [
 ];
 const FLAG_ORDER: FlagTag[] = [
   'flammable', 'conductive', 'sharp', 'edible', 'fragile', 'cuttable',
-  'breakable', 'weapon', 'tool', 'projectile', 'container', 'rideable',
+  'breakable', 'weapon', 'ranged', 'tool', 'projectile', 'container', 'rideable', 'wing',
   'igniter', 'edible-target',
 ];
 

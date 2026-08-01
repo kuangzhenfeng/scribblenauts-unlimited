@@ -14,6 +14,7 @@ import type { EntityManager } from '@/game/EntityManager';
 import type { EffectDeps } from '@/core/rules/effects';
 import { damageEntity } from '@/core/rules/effects';
 import type { GameEntity } from '@/game/Entity';
+import { PLAYER_CONTROLLED_MOUNT } from '@/game/PlayerController';
 
 /** AI 转向速度（世界像素/帧） */
 const AI_SPEED = 1.5;
@@ -36,6 +37,8 @@ const WANDER_MAX = 2000;
 const WANDER_RADIUS = 80;
 /** 飞行反重力补偿 */
 const FLY_LIFT = 0.0011;
+/** 投射物最长存在时间，避免落空的子弹/箭永久留在世界中。 */
+const PROJECTILE_LIFETIME = 2200;
 
 export class BehaviorSystem {
   constructor(
@@ -62,6 +65,20 @@ export class BehaviorSystem {
       if (tags.hasState('poisoned') && !ge.dead && this.shouldTick(ge, 'poison-tick', now, POISON_TICK_INTERVAL)) {
         damageEntity(ge, 8, this.deps);
       }
+
+      if (tags.hasFlag('projectile') && !ge.dead) {
+        const timers = ge.stateTimers ?? (ge.stateTimers = new Map<string, number>());
+        const expireAt = timers.get('projectile-expire-at') ?? now + PROJECTILE_LIFETIME;
+        timers.set('projectile-expire-at', expireAt);
+        if (now >= expireAt) {
+          ge.dead = true;
+          this.deps.destroyEntity(ge);
+          continue;
+        }
+      }
+
+      // 玩家接管的坐骑由 PlayerController 驱动，不能再被 AI 改写速度或 locomotion。
+      if (ge.aiMem?.get(PLAYER_CONTROLLED_MOUNT) === true) continue;
 
       // 冻结、石化、睡眠和死亡都会锁定移动；玩家仍由 PlayerController 处理。
       if (ge.isPlayer && !ge.dead) continue;

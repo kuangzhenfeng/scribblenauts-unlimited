@@ -30,6 +30,8 @@ export interface SpawnDef {
   x: number;
   y: number;
   layer?: number;
+  /** 关卡挑战依赖的实体不参与布局随机化，但仍按物理地面重新落位。 */
+  fixed?: boolean;
 }
 
 /** 关卡装饰（手绘纸片环境点缀，由 Environment 渲染） */
@@ -67,7 +69,15 @@ export type PuzzleCondition =
       /** 至少需要满足的实体数量，缺省为 1。 */
       count?: number;
     }
-  | { kind: 'object-destroyed'; typeId: string; region?: AABB }
+  | {
+      kind: 'object-destroyed';
+      typeId: string;
+      region?: AABB;
+      /** 可选：限制必须由指定来源词条触发，例如 bullet 或 sword。 */
+      sourceTypeId?: string;
+      /** 可选：限制必须由指定规则触发。 */
+      ruleId?: string;
+    }
   | {
       kind: 'counter';
       typeId: string;

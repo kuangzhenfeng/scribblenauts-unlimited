@@ -420,6 +420,8 @@ export const WORD_METADATA: Record<string, WordMeta> = {
   sword: { cefr: 2, freq: 1 },
   knife: { cefr: 1, freq: 1 },
   gun: { cefr: 1, freq: 1 },
+  wing: { cefr: 1, freq: 1 },
+  bullet: { cefr: 1, freq: 1 },
   bomb: { cefr: 2, freq: 1 },
   bow: { cefr: 2, freq: 1 },
   tree: { cefr: 1, freq: 1 },

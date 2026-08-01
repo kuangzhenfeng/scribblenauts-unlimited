@@ -1,9 +1,8 @@
 /**
  * 笔记本 UI —— Maxwell 的魔法笔记本，玩家输入入口。
  *
- * 涂鸦纸片质感：平整纸色面板 + 手写字体 + 墨迹斑。
- * 接入 IME 合成态、自动补全、候选菜单、双语分词解析。
- * 单候选直接生成；多候选弹菜单选择。
+ * 纸片面板承载输入本身；自动补全与候选菜单仍由各自模块管理，
+ * 这里只负责它们的层级、键盘/IME 协作和生成回调。
  */
 
 import type { ParseCandidate, ParsedAdjective } from '@/core/lex/InputParser';
@@ -11,11 +10,155 @@ import { parse } from '@/core/lex/InputParser';
 import { ImeController } from './ime';
 import { Autocomplete } from './Autocomplete';
 import { CandidateMenu } from './CandidateMenu';
-import { UI_FONT, PAPER_BG, INK, paperPanel, paperInput, TORN_EDGE, PAPER_SHADOW } from './paperStyle';
-import { ICON_BOOK } from './icons';
+import { ICON_BOOK, ICON_CLOSE, ICON_PLAY } from './icons';
+import {
+  INK,
+  PAPER_BG,
+  PAPER_BG_ALT,
+  PAPER_SHADOW,
+  TORN_EDGE,
+  UI_FONT,
+  paperInput,
+  paperPanel,
+} from './paperStyle';
 import { log } from '@/util/log';
 import { sfx } from '@/audio/SoundEffects';
 import { t } from '@/core/i18n/I18n';
+
+const NOTEBOOK_STYLE_ID = 'notebook-layout-style';
+
+function ensureStyle(): void {
+  if (document.getElementById(NOTEBOOK_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = NOTEBOOK_STYLE_ID;
+  style.textContent = `
+    #notebook {
+      box-sizing:border-box;
+      display:grid;
+      gap:10px;
+      border:2px solid rgba(43,43,43,.2);
+      background:${PAPER_BG};
+      color:${INK};
+      font-family:${UI_FONT};
+      box-shadow:${PAPER_SHADOW};
+      ${TORN_EDGE};
+    }
+    #notebook .notebook__header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      min-height:44px;
+    }
+    #notebook .notebook__title {
+      display:flex;
+      align-items:center;
+      min-width:0;
+      color:${INK};
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.08em;
+    }
+    #notebook .notebook__title svg { flex:none; width:21px; height:21px; }
+    #notebook .notebook__title-label { margin-left:7px; }
+    #notebook .notebook__close {
+      display:grid;
+      place-items:center;
+      width:44px;
+      height:44px;
+      box-sizing:border-box;
+      padding:0;
+      border:2px solid rgba(43,43,43,.2);
+      border-radius:10px;
+      background:${PAPER_BG_ALT};
+      color:${INK};
+      cursor:pointer;
+      transition:transform .16s ease,background .16s ease;
+    }
+    #notebook .notebook__close:hover { transform:translateY(-1px); background:#f6e7b4; }
+    #notebook .notebook__input {
+      min-height:48px;
+      border-bottom-color:${INK};
+      background:rgba(255,255,255,.24);
+      border-radius:7px 7px 0 0;
+    }
+    #notebook .notebook__input:focus { box-shadow:0 2px 0 ${INK}; }
+    #notebook .notebook__blot {
+      position:absolute;
+      top:-8px;
+      right:24px;
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      background:radial-gradient(circle,rgba(43,43,43,.15),transparent 70%);
+      pointer-events:none;
+    }
+    #notebook[data-state="error"] .notebook__input { border-bottom-color:#9d3a27; }
+    #notebook .notebook__footer {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-height:44px;
+    }
+    #notebook .notebook__hint {
+      min-width:0;
+      color:rgba(43,43,43,.64);
+      font-size:11px;
+      font-weight:700;
+      line-height:1.25;
+    }
+    #notebook .notebook__submit {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      min-width:110px;
+      min-height:44px;
+      box-sizing:border-box;
+      padding:8px 13px;
+      border:2px solid #245c2c;
+      border-radius:9px;
+      background:#328c39;
+      color:#f7ffe7;
+      font:inherit;
+      font-size:14px;
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .16s ease,filter .16s ease,opacity .16s ease;
+    }
+    #notebook .notebook__submit:hover:not(:disabled) { transform:translateY(-1px); filter:brightness(1.06); }
+    #notebook .notebook__submit:disabled { cursor:not-allowed; opacity:.46; }
+    #notebook .notebook__submit svg { width:18px; height:18px; }
+    #notebook button:focus-visible,
+    #notebook input:focus-visible {
+      outline:3px solid #2b2b2b;
+      outline-offset:3px;
+    }
+    /* 候选菜单属于同一输入台，给触控条目保留足够的命中高度。 */
+    #autocomplete button,
+    #candidate-menu button {
+      min-height:44px;
+    }
+    #autocomplete { bottom:calc(132px + env(safe-area-inset-bottom)) !important; }
+    #candidate-menu { bottom:calc(142px + env(safe-area-inset-bottom)) !important; }
+    @media (max-width:600px) {
+      #notebook {
+        width:min(520px,calc(100vw - 20px)) !important;
+        bottom:max(18px,env(safe-area-inset-bottom)) !important;
+        padding:13px 14px !important;
+      }
+      #notebook .notebook__hint { font-size:10px; }
+      #notebook .notebook__submit { min-width:96px; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      #notebook *, #notebook button { transition:none !important; }
+      #notebook .notebook__close:hover,
+      #notebook .notebook__submit:hover:not(:disabled) { transform:none; }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 export interface NotebookCallbacks {
   /** 用户确定生成某个候选 */
@@ -38,31 +181,50 @@ export class Notebook {
   private readonly el: HTMLDivElement;
   private readonly input: HTMLInputElement;
   private readonly labelText: HTMLSpanElement;
+  private readonly submitButton: HTMLButtonElement;
   private readonly ime: ImeController;
   private readonly autocomplete: Autocomplete;
   private readonly menu: CandidateMenu;
   private mode: NotebookMode = 'spawn';
 
   constructor(private readonly cb: NotebookCallbacks) {
+    ensureStyle();
     this.el = document.createElement('div');
     this.el.id = 'notebook';
+    this.el.setAttribute('role', 'dialog');
+    this.el.setAttribute('aria-modal', 'false');
     this.el.style.cssText = paperPanel([
       'left:50%',
-      `bottom:max(32px,env(safe-area-inset-bottom))`,
+      'bottom:max(32px,env(safe-area-inset-bottom))',
       'transform:translateX(-50%) rotate(-0.4deg)',
       'width:min(560px,calc(92vw - 16px))',
-      'padding:18px 22px',
+      'padding:16px 20px',
       'z-index:50',
     ]);
 
     const label = document.createElement('div');
-    label.innerHTML = `${ICON_BOOK}<span style="margin-left:6px;vertical-align:middle;font-weight:700;letter-spacing:2px"></span>`;
-    this.labelText = label.querySelector('span')!;
+    label.id = 'notebook-label';
+    label.className = 'notebook__title';
+    label.innerHTML = `${ICON_BOOK}<span class="notebook__title-label"></span>`;
+    this.labelText = label.querySelector('.notebook__title-label')!;
     this.labelText.textContent = t('notebook.label');
-    label.style.cssText = `opacity:0.9;margin-bottom:10px;color:${INK}`;
+    this.el.setAttribute('aria-labelledby', label.id);
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'notebook__close';
+    close.title = t('common.close');
+    close.setAttribute('aria-label', t('common.close'));
+    close.innerHTML = ICON_CLOSE;
+    close.addEventListener('click', () => this.hide());
+
+    const header = document.createElement('div');
+    header.className = 'notebook__header';
+    header.append(label, close);
 
     this.input = document.createElement('input');
     this.input.type = 'text';
+    this.input.className = 'notebook__input';
     this.input.placeholder = t('notebook.placeholder');
     this.input.spellcheck = false;
     this.input.autocomplete = 'off';
@@ -71,12 +233,28 @@ export class Notebook {
     this.input.lang = 'en';
     this.input.setAttribute('inputmode', 'latin');
     this.input.setAttribute('enterkeyhint', 'done');
-    this.input.style.cssText = paperInput();
+    this.input.setAttribute('aria-label', t('notebook.placeholder'));
+    this.input.style.cssText = paperInput(['min-height:48px']);
+
+    const hint = document.createElement('span');
+    hint.className = 'notebook__hint';
+    hint.textContent = `${t('notebook.placeholder')} · ${t('actionPanel.useHint')}`;
+    hint.id = 'notebook-hint';
+    this.input.setAttribute('aria-describedby', hint.id);
+
+    this.submitButton = document.createElement('button');
+    this.submitButton.type = 'button';
+    this.submitButton.className = 'notebook__submit';
+    this.submitButton.innerHTML = `${ICON_PLAY}<span>${t('actionPanel.useHint')}</span>`;
+    this.submitButton.addEventListener('click', () => this.submit());
+
+    const footer = document.createElement('div');
+    footer.className = 'notebook__footer';
+    footer.append(hint, this.submitButton);
 
     // 墨迹斑（角落装饰）
     const blot = document.createElement('div');
-    blot.style.cssText =
-      'position:absolute;top:-8px;right:24px;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,rgba(43,43,43,0.15),transparent 70%);pointer-events:none';
+    blot.className = 'notebook__blot';
 
     this.autocomplete = new Autocomplete({
       // 回填完整文本（已确认前缀 + 选中名），保留多词组合
@@ -84,6 +262,7 @@ export class Notebook {
         this.input.value = fullText;
         this.input.focus();
         this.autocomplete.hide();
+        this.updateSubmitState();
       },
       isAdjectiveMode: () => this.mode === 'adjective',
     });
@@ -91,7 +270,6 @@ export class Notebook {
     this.menu = new CandidateMenu({
       onSelect: (c: ParseCandidate) => this.spawn(c),
     });
-    this.input.setAttribute('aria-label', t('notebook.placeholder'));
     this.autocomplete.bindInput(this.input);
     this.menu.bindInput(this.input);
 
@@ -113,6 +291,9 @@ export class Notebook {
     this.ime.attach(this.input);
 
     this.input.addEventListener('input', () => {
+      this.el.dataset.state = '';
+      this.input.removeAttribute('aria-invalid');
+      this.updateSubmitState();
       if (this.composing) return;
       this.refreshAutocomplete();
     });
@@ -132,9 +313,14 @@ export class Notebook {
           this.menu.confirm();
           return;
         }
-        if (this.autocomplete.isActive) {
-          this.autocomplete.confirm();
+        // 输入本身已经是完整词条时，优先提交精确结果。
+        // 例如“枪”同时是“枪乌贼”的前缀，不能先被自动补全改写后再提交。
+        const exactCandidates = parse(this.input.value.trim(), 'spawn') as ParseCandidate[];
+        if (exactCandidates.length > 0) {
+          this.submit();
+          return;
         }
+        if (this.autocomplete.isActive) this.autocomplete.confirm();
         this.submit();
         return;
       }
@@ -165,16 +351,19 @@ export class Notebook {
       }
     });
 
-    this.el.appendChild(label);
-    this.el.appendChild(this.input);
-    this.el.appendChild(blot);
+    this.el.append(header, this.input, footer, blot);
     // 默认隐藏，由外部 toggle() 控制显隐
     this.el.style.display = 'none';
     document.body.appendChild(this.el);
+    this.updateSubmitState();
   }
 
   private refreshAutocomplete(): void {
     this.autocomplete.update(this.input.value);
+  }
+
+  private updateSubmitState(): void {
+    this.submitButton.disabled = this.input.value.trim().length === 0;
   }
 
   private submit(): void {
@@ -188,6 +377,7 @@ export class Notebook {
         log.info('notebook apply adjectives', { target: targetId, adj: adjs.map((a) => a.adjId) });
         this.hide();
       } else {
+        this.markInvalid();
         log.warn('no adjective result', { text });
       }
       return;
@@ -201,15 +391,23 @@ export class Notebook {
         log.info('notebook apply adjectives', { target: targetId, adj: adjs.map((a) => a.adjId) });
         this.input.value = '';
         this.autocomplete.hide();
+        this.updateSubmitState();
         return;
       }
     }
     const candidates = parse(text, 'spawn') as ParseCandidate[];
     if (candidates.length === 0) {
+      this.markInvalid();
       log.warn('no parse result', { text });
       return;
     }
+    this.el.dataset.state = '';
     this.menu.show(candidates);
+  }
+
+  private markInvalid(): void {
+    this.el.dataset.state = 'error';
+    this.input.setAttribute('aria-invalid', 'true');
   }
 
   private spawn(candidate: ParseCandidate): void {
@@ -230,10 +428,14 @@ export class Notebook {
 
   show(mode: NotebookMode = 'spawn'): void {
     this.mode = mode;
+    this.el.dataset.mode = mode;
+    this.el.dataset.state = '';
     this.labelText.textContent = mode === 'adjective' ? t('notebook.labelAdj') : t('notebook.label');
     this.input.placeholder = mode === 'adjective' ? t('notebook.placeholderAdj') : t('notebook.placeholder');
-    this.el.style.display = '';
+    this.input.setAttribute('aria-label', this.input.placeholder);
+    this.el.style.display = 'grid';
     this.input.focus();
+    this.updateSubmitState();
     sfx.play('ui');
   }
 
@@ -242,10 +444,14 @@ export class Notebook {
     this.menu.cancel();
     this.autocomplete.hide();
     this.input.value = '';
+    this.input.removeAttribute('aria-invalid');
     this.input.blur();
     this.el.style.display = 'none';
+    this.el.dataset.mode = 'spawn';
+    this.el.dataset.state = '';
     this.labelText.textContent = t('notebook.label');
     this.input.placeholder = t('notebook.placeholder');
+    this.updateSubmitState();
   }
 
   toggle(): void {
@@ -253,9 +459,3 @@ export class Notebook {
     else this.hide();
   }
 }
-
-// 保留导入供未来扩展（无衬线字体/纸色常量）
-void UI_FONT;
-void PAPER_BG;
-void TORN_EDGE;
-void PAPER_SHADOW;

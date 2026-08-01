@@ -49,6 +49,8 @@ export interface SaveData {
   unlockedLevels: string[];
   /** 玩家上次选择的难度设置，进关默认复用 */
   difficultySetting: { tier: DifficultyTier; standard: DifficultyStandard };
+  /** 首次进入世界时的基础入门是否已完成。 */
+  tutorialCompleted: boolean;
   /**
    * 题目随机种子。QuestionPicker 以 {levelId}:{tier}:{standard}:{questionSeed}
    * 派生 RNG 种子，同种子+同关+同难度 → 同题序；换种子 = 换一轮题目。

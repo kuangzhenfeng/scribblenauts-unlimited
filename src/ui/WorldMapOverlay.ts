@@ -131,10 +131,10 @@ export class WorldMapOverlay {
         position:relative;
         display:flex;
         flex-direction:column;
-        gap:14px;
-        width:min(1080px,100%);
+        gap:16px;
+        width:min(1140px,100%);
         max-height:100%;
-        padding:clamp(18px,3vw,30px);
+        padding:clamp(18px,3vw,28px);
         box-sizing:border-box;
         background:${PAPER_BG};
         box-shadow:${PAPER_SHADOW};
@@ -143,21 +143,21 @@ export class WorldMapOverlay {
       }
       .world-map-overlay__header { display:flex;align-items:flex-start;gap:12px; }
       .world-map-overlay__heading { min-width:0;flex:1; }
-      .world-map-overlay__title { margin:0;font-size:clamp(24px,4vw,36px);font-weight:900;line-height:1.1;letter-spacing:.04em; }
+      .world-map-overlay__title { margin:0;font-size:28px;font-weight:900;line-height:1.1;letter-spacing:.02em; }
       .world-map-overlay__hint { margin-top:5px;color:#5a554c;font-size:14px;line-height:1.4; }
       .world-map-overlay__close,
       .world-map-overlay__enter {
         display:inline-flex;align-items:center;justify-content:center;gap:7px;
-        min-height:42px;box-sizing:border-box;padding:8px 14px;
-        border:2px solid #6a3d08;border-radius:10px;
+        min-height:44px;box-sizing:border-box;padding:8px 14px;
+        border:1px solid #6a3d08;border-radius:8px;
         font:800 14px/1.1 ${UI_FONT};cursor:pointer;
         transition:transform .16s ease,filter .16s ease,background .16s ease;
       }
-      .world-map-overlay__close { width:42px;padding:8px;color:${INK};background:${PAPER_BG_ALT}; }
+      .world-map-overlay__close { width:44px;padding:9px;color:${INK};background:${PAPER_BG_ALT}; }
       .world-map-overlay__close:hover,.world-map-overlay__close:focus-visible { filter:brightness(1.06);transform:translateY(-1px); }
       .world-map-overlay__stage {
-        position:relative;isolation:isolate;width:100%;aspect-ratio:16 / 9;min-height:260px;
-        background:#dfe9d1;border:2px solid #6a3d08;box-sizing:border-box;overflow:hidden;
+        position:relative;isolation:isolate;width:100%;aspect-ratio:16 / 9;min-height:320px;
+        background:#dfe9d1;border:1px solid #6a3d08;box-sizing:border-box;overflow:hidden;
       }
       .world-map-overlay__stage::before,.world-map-overlay__stage::after {
         content:"";position:absolute;pointer-events:none;border-radius:50%;opacity:.34;
@@ -168,32 +168,33 @@ export class WorldMapOverlay {
       .world-map-overlay__nodes { position:absolute;inset:0;z-index:2; }
       .world-map-overlay__node {
         position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;
-        width:clamp(62px,9vw,96px);min-height:58px;padding:5px 4px;box-sizing:border-box;
+        width:clamp(74px,10vw,104px);min-height:64px;padding:8px 6px;box-sizing:border-box;
         transform:translate(-50%,-50%) rotate(-1deg);
-        border:2px solid #6a3d08;border-radius:11px;background:${PAPER_BG};color:${INK};
-        box-shadow:0 3px 0 #6a3d08,0 6px 10px rgba(60,40,20,.18);
+        border:1px solid #6a3d08;border-radius:10px;background:${PAPER_BG};color:${INK};
+        box-shadow:0 3px 0 #6a3d08;
         font:800 11px/1.12 ${UI_FONT};cursor:pointer;
         transition:transform .16s ease,filter .16s ease,opacity .16s ease;
       }
       .world-map-overlay__node:nth-child(even) { transform:translate(-50%,-50%) rotate(1deg); }
       .world-map-overlay__node:hover:not(:disabled),.world-map-overlay__node:focus-visible { transform:translate(-50%,-55%) rotate(0deg) scale(1.04);filter:brightness(1.04); }
       .world-map-overlay__node[aria-current="true"] { outline:3px solid #f0bd3c;outline-offset:2px; }
+      .world-map-overlay__node[aria-pressed="true"] { background:#f0bd3c; }
       .world-map-overlay__node:disabled { cursor:not-allowed;opacity:.62;filter:grayscale(.35); }
       .world-map-overlay__node-icon { display:grid;place-items:center;width:27px;height:27px;color:var(--node-accent,#3d2200); }
       .world-map-overlay__node-label { max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
       .world-map-overlay__node-state { display:flex;align-items:center;gap:3px;font-size:10px;color:#6a3d08; }
-      .world-map-overlay__footer { display:flex;align-items:center;gap:14px;min-height:62px; }
-      .world-map-overlay__selection { min-width:0;flex:1;padding:10px 12px;background:${PAPER_BG_ALT};border-radius:8px; }
+      .world-map-overlay__footer { display:flex;align-items:stretch;gap:14px;min-height:74px; }
+      .world-map-overlay__selection { min-width:0;flex:1;padding:12px 14px;background:${PAPER_BG_ALT};border-radius:8px; }
       .world-map-overlay__selected-title { font-size:17px;font-weight:900;line-height:1.2; }
       .world-map-overlay__selected-subtitle { margin-top:3px;color:#5a554c;font-size:12px;line-height:1.35; }
       .world-map-overlay__selected-progress { margin-top:4px;color:#8a5300;font-size:11px;font-weight:800; }
-      .world-map-overlay__enter { flex:none;color:#fff8dd;background:#3f9a43;box-shadow:0 3px 0 #1f4d22; }
+      .world-map-overlay__enter { min-width:150px;flex:none;color:#fff8dd;background:#3f7b3a;box-shadow:0 3px 0 #1f4d22; }
       .world-map-overlay__enter:hover:not(:disabled),.world-map-overlay__enter:focus-visible { transform:translateY(-1px);filter:brightness(1.08); }
       .world-map-overlay__enter:disabled { cursor:not-allowed;opacity:.48;box-shadow:none; }
       .world-map-overlay button:focus-visible { outline:3px solid #f0bd3c;outline-offset:3px; }
       @media (max-width:640px) {
         .world-map-overlay__panel { padding:16px 14px;gap:11px; }
-        .world-map-overlay__stage { min-height:230px; }
+        .world-map-overlay__stage { min-height:250px; }
         .world-map-overlay__footer { align-items:stretch;flex-direction:column;gap:8px; }
         .world-map-overlay__enter { width:100%; }
       }
@@ -245,6 +246,8 @@ export class WorldMapOverlay {
     footer.className = 'world-map-overlay__footer';
     const selection = document.createElement('div');
     selection.className = 'world-map-overlay__selection';
+    selection.setAttribute('role', 'status');
+    selection.setAttribute('aria-live', 'polite');
     this.selectedTitle = document.createElement('div');
     this.selectedTitle.className = 'world-map-overlay__selected-title';
     this.selectedSubtitle = document.createElement('div');
@@ -257,6 +260,7 @@ export class WorldMapOverlay {
     this.enterButton.type = 'button';
     this.enterButton.className = 'world-map-overlay__enter';
     this.enterButton.innerHTML = `${ICON_PLAY}<span></span>`;
+    this.enterButton.setAttribute('aria-label', this.labels.enter);
     this.enterButton.querySelector('span')!.textContent = this.labels.enter;
     this.enterButton.addEventListener('click', () => this.enterSelected());
     footer.append(selection, this.enterButton);

@@ -15,6 +15,8 @@ import {
   QUIZ_INK,
   QUIZ_INK_SOFT,
   QUIZ_ACCENT,
+  QUIZ_ACCENT_PRESS,
+  QUIZ_ACCENT_SOFT,
   QUIZ_YELLOW,
   QUIZ_BORDER,
   QUIZ_SHADOW,
@@ -46,6 +48,7 @@ export class QuizTopBar {
   private readonly el: HTMLDivElement;
   private readonly backButton: HTMLButtonElement;
   private readonly statsEl: HTMLDivElement;
+  private readonly toolsEl: HTMLDivElement;
   private readonly settingsButton: HTMLButtonElement;
   private readonly reshuffleButton: HTMLButtonElement;
   private popoverEl: HTMLDivElement;
@@ -72,7 +75,7 @@ export class QuizTopBar {
     this.el.id = 'quiz-topbar';
     this.el.style.cssText = [
       'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:70',
-      'display:flex', 'align-items:center', 'justify-content:space-between', 'gap:8px',
+      'display:flex', 'align-items:center', 'gap:10px',
       `padding:${SAFE_TOP} ${SAFE_RIGHT} 8px ${SAFE_LEFT}`,
       `background:${QUIZ_CARD}`, `border-bottom:2px solid ${QUIZ_BORDER}`,
       `box-shadow:${QUIZ_SHADOW_BAR}`, `font-family:${UI_FONT}`, `color:${QUIZ_INK}`,
@@ -86,10 +89,12 @@ export class QuizTopBar {
     this.statsEl.className = 'quiz-topbar-stats';
     this.el.appendChild(this.statsEl);
 
+    this.toolsEl = document.createElement('div');
+    this.toolsEl.className = 'quiz-topbar-tools';
     this.settingsButton = this._buildSettingsButton();
-    this.el.appendChild(this.settingsButton);
     this.reshuffleButton = this._actionButton(ICON_RESET, t('quiz.reshuffle'), () => this.cb.onReshuffle());
-    this.el.appendChild(this.reshuffleButton);
+    this.toolsEl.append(this.settingsButton, this.reshuffleButton);
+    this.el.appendChild(this.toolsEl);
 
     this.popoverEl = this._buildPopover();
     document.body.appendChild(this.el);
@@ -158,17 +163,30 @@ export class QuizTopBar {
     const style = document.createElement('style');
     style.id = 'quiz-topbar-style';
     style.textContent = `
-      #quiz-topbar .quiz-topbar-action:hover, #quiz-topbar #quiz-settings-button:hover { background:#dce9f5 !important; color:${QUIZ_ACCENT} !important; }
-      #quiz-topbar .quiz-topbar-action:active, #quiz-topbar #quiz-settings-button:active { transform:translateY(1px); }
+      #quiz-topbar .quiz-topbar-tools { display:flex; align-items:center; gap:6px; flex:none; }
+      #quiz-topbar .quiz-topbar-action:hover, #quiz-topbar #quiz-settings-button:hover { background:${QUIZ_ACCENT_SOFT} !important; color:${QUIZ_ACCENT} !important; }
+      #quiz-topbar .quiz-topbar-action:active, #quiz-topbar #quiz-settings-button:active { transform:translateY(2px); border-color:${QUIZ_ACCENT_PRESS}; }
       #quiz-topbar button:focus-visible, #quiz-difficulty-popover button:focus-visible { outline:3px solid ${QUIZ_YELLOW}; outline-offset:2px; }
-      .quiz-topbar-stats { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; min-width:0; }
+      #quiz-topbar button:disabled, #quiz-difficulty-popover button:disabled { opacity:.5; cursor:not-allowed; pointer-events:none; }
+      .quiz-topbar-stats { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; min-width:0; overflow:hidden; }
+      .quiz-topbar-stat { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+      .quiz-topbar-stat span { overflow:hidden; text-overflow:ellipsis; }
+      .quiz-choice-button { transition:background 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out, transform 120ms ease-out; }
+      .quiz-choice-button:hover { border-color:${QUIZ_ACCENT} !important; color:${QUIZ_ACCENT} !important; }
+      .quiz-choice-button:active { transform:translateY(2px); }
       #quiz-difficulty-popover { animation:quizPopoverIn 180ms cubic-bezier(.22,1,.36,1); }
       @keyframes quizPopoverIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
       @media (max-width:430px) {
         #quiz-topbar .quiz-action-label { display:none; }
+        #quiz-topbar { gap:6px !important; }
         #quiz-topbar .quiz-topbar-action, #quiz-topbar #quiz-settings-button { width:44px; padding:0 !important; }
+        #quiz-topbar .quiz-topbar-tools { gap:3px; }
         .quiz-topbar-stats { gap:3px; }
-        .quiz-topbar-stat { padding:5px 6px !important; font-size:10px !important; }
+        .quiz-topbar-stat { padding:5px 6px !important; font-size:11px !important; }
+      }
+      @media (max-width:360px) {
+        #quiz-topbar { gap:3px !important; }
+        #quiz-topbar .quiz-topbar-stat { padding-left:4px !important; padding-right:4px !important; font-size:10px !important; }
       }
       @media (prefers-reduced-motion:reduce) {
         #quiz-topbar *, #quiz-difficulty-popover { transition:none !important; animation:none !important; }
@@ -211,7 +229,7 @@ export class QuizTopBar {
     return [
       'min-width:44px', 'height:44px', 'padding:0 10px', 'display:inline-flex',
       'align-items:center', 'justify-content:center', 'gap:6px',
-      'background:transparent', `border:1px solid ${QUIZ_BORDER}`, `border-radius:${QUIZ_RADIUS_SM}`,
+      'flex:none', 'box-sizing:border-box', 'background:transparent', `border:2px solid ${QUIZ_BORDER}`, `border-radius:${QUIZ_RADIUS_SM}`,
       `color:${QUIZ_INK}`, `font-family:${UI_FONT}`, 'font-size:12px', 'font-weight:700',
       'cursor:pointer', 'touch-action:manipulation',
       'transition:background 180ms cubic-bezier(.22,1,.36,1),color 180ms cubic-bezier(.22,1,.36,1),transform 120ms ease-out',
@@ -238,7 +256,7 @@ export class QuizTopBar {
     popover.setAttribute('role', 'group');
     popover.setAttribute('aria-label', t('quiz.difficulty'));
     popover.style.cssText = [
-      'position:fixed', 'z-index:80', 'width:min(320px,calc(100vw - 28px))', 'padding:12px',
+      'position:fixed', 'z-index:80', 'width:min(320px,calc(100vw - 28px))', 'max-height:calc(100vh - 96px)', 'overflow:auto', 'padding:12px',
       `background:${QUIZ_CARD}`, `border:2px solid ${QUIZ_BORDER}`,
       `border-radius:${QUIZ_RADIUS_SM}`, `box-shadow:${QUIZ_SHADOW}`,
       `font-family:${UI_FONT}`, `color:${QUIZ_INK}`, 'box-sizing:border-box',
@@ -324,12 +342,13 @@ export class QuizTopBar {
   private _choiceButton(label: string): HTMLButtonElement {
     const button = document.createElement('button');
     button.type = 'button';
+    button.className = 'quiz-choice-button';
     button.textContent = label;
     button.style.cssText = [
       'flex:1', 'min-height:44px', 'padding:6px 8px', `background:${QUIZ_CARD}`,
-      `border:1px solid ${QUIZ_BORDER}`, `border-radius:${QUIZ_RADIUS_SM}`,
+      `border:2px solid ${QUIZ_BORDER}`, `border-radius:${QUIZ_RADIUS_SM}`,
       `color:${QUIZ_INK_SOFT}`, `font-family:${UI_FONT}`, 'font-size:12px',
-      'font-weight:800', 'cursor:pointer', 'touch-action:manipulation',
+      'font-weight:800', 'cursor:pointer', 'touch-action:manipulation', 'box-sizing:border-box',
     ].join(';');
     return button;
   }
@@ -405,13 +424,21 @@ export class QuizTopBar {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.role = 'switch';
+    btn.className = 'quiz-toggle';
+    btn.setAttribute('aria-label', t('quiz.filterBasic'));
     btn.setAttribute('aria-checked', String(checked));
     btn.style.cssText = [
-      'position:relative', 'width:44px', 'height:26px', 'flex:none', 'padding:0',
-      `border:2px solid ${QUIZ_BORDER}`, `border-radius:999px`,
-      `background:${checked ? QUIZ_ACCENT : QUIZ_CARD}`,
-      'cursor:pointer', 'touch-action:manipulation',
-      'transition:background 180ms ease',
+      'position:relative', 'width:52px', 'height:44px', 'flex:none', 'padding:0',
+      'border:0', 'border-radius:999px', 'background:transparent',
+      'cursor:pointer', 'touch-action:manipulation', 'display:inline-flex',
+      'align-items:center', 'justify-content:center',
+    ].join(';');
+    const track = document.createElement('span');
+    track.className = 'quiz-toggle-track';
+    track.style.cssText = [
+      'position:relative', 'width:44px', 'height:26px', `border:2px solid ${QUIZ_BORDER}`,
+      'border-radius:999px', `background:${checked ? QUIZ_ACCENT : QUIZ_CARD}`,
+      'transition:background 180ms ease', 'box-sizing:border-box',
     ].join(';');
     const thumb = document.createElement('span');
     thumb.style.cssText = [
@@ -421,12 +448,13 @@ export class QuizTopBar {
       checked ? `transform:translateY(-50%) translateX(20px)` : '',
       'box-shadow:0 2px 4px rgba(0,0,0,0.3)',
     ].join(';');
-    btn.appendChild(thumb);
+    track.appendChild(thumb);
+    btn.appendChild(track);
     btn.addEventListener('click', (event) => {
       event.preventDefault();
       const next = btn.getAttribute('aria-checked') !== 'true';
       btn.setAttribute('aria-checked', String(next));
-      btn.style.background = next ? QUIZ_ACCENT : QUIZ_CARD;
+      track.style.background = next ? QUIZ_ACCENT : QUIZ_CARD;
       thumb.style.transform = next ? 'translateY(-50%) translateX(20px)' : 'translateY(-50%)';
       onToggle(next);
     });

@@ -33,10 +33,20 @@ function mkEntity(id: string): GameEntity {
 
 describe('Composite attach/detach', () => {
   it('attach returns attachment linking parent and child', () => {
-    const created: { length: number; stiffness: number; pointA?: { x: number; y: number } }[] = [];
+    const created: {
+      length: number;
+      stiffness: number;
+      pointA?: { x: number; y: number };
+      pointB?: { x: number; y: number };
+    }[] = [];
     const phys = {
       createConstraint: (_a: unknown, _b: unknown, length: number, stiffness: number, opts: unknown) => {
-        const c = { length, stiffness, pointA: (opts as { pointA?: { x: number; y: number } }).pointA };
+        const c = {
+          length,
+          stiffness,
+          pointA: (opts as { pointA?: { x: number; y: number } }).pointA,
+          pointB: (opts as { pointB?: { x: number; y: number } }).pointB,
+        };
         created.push(c);
         return c as never;
       },
@@ -51,6 +61,7 @@ describe('Composite attach/detach', () => {
     expect(created[0].length).toBe(0);
     expect(created[0].stiffness).toBe(1);
     expect(created[0].pointA).toEqual({ x: 10, y: 0 });
+    expect(created[0].pointB).toEqual({ x: 0, y: 0 });
   });
 
   it('detach calls physics.removeConstraint', () => {

@@ -35,7 +35,7 @@ export const objectEntries: DictEntry[] = [
     size: { width: 8, height: 80 },
     appearance: { renderer: 'rope' },
     physics: { shape: 'box', density: 0.002, friction: 0.6, restitution: 0 },
-    tags: tags(['cloth'], ['flammable', 'cuttable']),
+    tags: tags(['cloth'], ['flammable', 'cuttable', 'breakable']),
     behaviors: [],
     description: { zh: '可被切断的绳索。', en: 'A cuttable cord.' },
   },

@@ -28,7 +28,10 @@ export class EntityManager implements EntityQuery {
     const e = this.byId.get(id);
     if (!e) return undefined;
     this.byId.delete(id);
-    // bodyId 反查需遍历（实体抽象不暴露 body.id；调用方持有引用时直接传）
+    // Entity 抽象不暴露 body.id，只能按实体引用清理反查索引。
+    for (const [bodyId, bodyEntity] of this.byBodyId) {
+      if (bodyEntity === e) this.byBodyId.delete(bodyId);
+    }
     return e;
   }
 

@@ -9,6 +9,7 @@ import { GoalSystem, type ProgressCallbacks, type LevelRef } from '@/core/game/G
 import type { Entity, EntityQuery } from '@/core/entity/Entity';
 import type { LevelData } from '@/core/types/level';
 import { TagSet } from '@/core/rules/TagSet';
+import { EffectResultLog } from '@/core/game/EffectResultLog';
 
 function fakeEntity(id: string, typeId: string, x: number, y: number, adjectives?: string[]): Entity {
   return {
@@ -388,5 +389,43 @@ describe('GoalSystem', () => {
 
     goal.evaluate();
     expect(completed).toEqual(['state-challenge']);
+  });
+
+  it('requires a recorded destruction result instead of an absent target snapshot', () => {
+    const npc = fakeEntity('npc-destroy', 'human', 100, 100);
+    const entities: Entity[] = [npc];
+    const em: EntityQuery = { all: () => entities, get: (id) => entities.find((e) => e.id === id) };
+    const level = {
+      id: 'destroy-test',
+      challenges: [{
+        id: 'destroy-challenge', giverNpcId: 'npc-destroy', kind: 'shard' as const,
+        puzzle: {
+          conditions: [{
+            kind: 'object-destroyed' as const,
+            typeId: 'barrel',
+            sourceTypeId: 'bullet',
+            region: { minX: 0, minY: 0, maxX: 200, maxY: 200 },
+          }],
+        },
+        reward: { type: 'shard' as const, count: 1 }, dialog: [{ zh: '', en: '' }],
+      }],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc-destroy', level);
+    const resultLog = new EffectResultLog();
+    const completed: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: () => {}, onStarite: () => {}, onChallengeComplete: (id) => completed.push(id), onWin: () => {},
+    }, resultLog);
+
+    goal.evaluate();
+    expect(completed).toEqual([]);
+    resultLog.record({
+      kind: 'destroy', ruleId: 'projectile-breaks-breakable', sourceId: 'bullet1', sourceTypeId: 'bullet',
+      targetId: 'barrel1', targetTypeId: 'barrel', targetX: 80, targetY: 100,
+    });
+    goal.evaluate();
+    expect(completed).toEqual(['destroy-challenge']);
+    goal.evaluate();
+    expect(completed).toEqual(['destroy-challenge']);
   });
 });

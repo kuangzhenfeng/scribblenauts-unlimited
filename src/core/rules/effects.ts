@@ -32,6 +32,19 @@ export interface EffectDeps {
   destroyEntity: (e: Entity) => void;
   /** 施加冲量（桥接物理层） */
   applyImpulse: (e: Entity, dir: [number, number], mag: number) => void;
+  /** 记录已经完成的 effect 结果，供挑战系统查询 */
+  onEffectResult?: (result: EffectResult) => void;
+}
+
+export interface EffectResult {
+  kind: 'destroy';
+  ruleId: string;
+  sourceId: string;
+  sourceTypeId: string;
+  targetId: string;
+  targetTypeId: string;
+  targetX: number;
+  targetY: number;
 }
 
 /** effect 处理器：按 kind 分发 */
@@ -76,7 +89,7 @@ function removeFlag(e: Entity, flags: FlagTag[]): void {
   for (const f of flags) e.tags.removeFlag(f);
 }
 
-function damage(e: Entity, amount: number, deps: EffectDeps): void {
+function damage(e: Entity, amount: number, deps: EffectDeps, ctx?: EffectContext): void {
   if (e.dead || e.drawParams.invincible === true) return;
   e.health = (e.health ?? 100) - amount;
   log.debug('damage', { entity: e.id, amount, health: e.health });
@@ -86,13 +99,29 @@ function damage(e: Entity, amount: number, deps: EffectDeps): void {
     setState(e, 'dead');
     e.state.locomotion = 'dead';
     // 玩家死亡由 respawn 处理，此处不销毁
-    if (!e.isPlayer) deps.destroyEntity(e);
+    if (!e.isPlayer) {
+      if (ctx) recordDestroyResult(ctx, e, deps);
+      deps.destroyEntity(e);
+    }
   }
 }
 
 /** 对实体施加伤害（供 BehaviorSystem 的 attack 直接调用，复用同一逻辑） */
 export function damageEntity(e: Entity, amount: number, deps: EffectDeps): void {
   damage(e, amount, deps);
+}
+
+function recordDestroyResult(ctx: EffectContext, target: Entity, deps: EffectDeps): void {
+  deps.onEffectResult?.({
+    kind: 'destroy',
+    ruleId: ctx.ruleId,
+    sourceId: ctx.a.id,
+    sourceTypeId: ctx.a.typeId,
+    targetId: target.id,
+    targetTypeId: target.typeId,
+    targetX: target.bodyPositionX,
+    targetY: target.bodyPositionY,
+  });
 }
 
 function heal(e: Entity, amount: number): void {
@@ -141,6 +170,7 @@ handlers.set('spawn', (eff, ctx, deps) => {
 handlers.set('destroy', (eff, ctx, deps) => {
   if (eff.kind !== 'destroy') return;
   for (const e of resolveTarget(eff.target, ctx)) {
+    recordDestroyResult(ctx, e, deps);
     e.dead = true;
     setState(e, 'dead');
     e.state.locomotion = 'dead';
@@ -150,7 +180,7 @@ handlers.set('destroy', (eff, ctx, deps) => {
 
 handlers.set('damage', (eff, ctx, deps) => {
   if (eff.kind !== 'damage') return;
-  for (const e of resolveTarget(eff.target, ctx)) damage(e, eff.amount, deps);
+  for (const e of resolveTarget(eff.target, ctx)) damage(e, eff.amount, deps, ctx);
 });
 
 handlers.set('heal', (eff, ctx) => {

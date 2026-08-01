@@ -15,11 +15,14 @@ import { t } from '@/core/i18n/I18n';
 
 export class PauseOverlay {
   private readonly el: HTMLDivElement;
+  private readonly resumeButton: HTMLButtonElement;
   private open = false;
 
   constructor(private readonly onResume: () => void) {
     this.el = document.createElement('div');
     this.el.id = 'pause-overlay';
+    this.el.setAttribute('role', 'dialog');
+    this.el.setAttribute('aria-modal', 'true');
     this.el.style.cssText = [
       'position:fixed',
       'inset:0',
@@ -28,12 +31,13 @@ export class PauseOverlay {
       'z-index:180',
       'display:grid',
       'place-items:center',
-      'background:rgba(10,18,8,0.6)',
+      'background:rgba(20,12,4,0.62)',
       'pointer-events:auto',
-      'animation:confirmFadeIn 0.16s ease',
+      'animation:pauseFadeIn 0.16s ease',
     ].join(';');
 
     const card = document.createElement('div');
+    card.setAttribute('role', 'document');
     card.style.cssText = [
       'position:absolute',
       'top:50%',
@@ -43,15 +47,15 @@ export class PauseOverlay {
       TORN_EDGE,
       `color:${INK}`,
       `font-family:${UI_FONT}`,
-      'padding:30px 36px 26px',
-      'max-width:360px',
+      'padding:28px 30px 26px',
+      'max-width:390px',
       'width:calc(100% - 48px)',
       'display:flex',
       'flex-direction:column',
       'align-items:center',
       'gap:14px',
-      'transform:translate(-50%,-50%) rotate(-0.6deg)',
-      'animation:confirmPop 0.2s ease',
+      'transform:translate(-50%,-50%)',
+      'animation:pausePop 0.2s ease',
     ].join(';');
 
     const icon = document.createElement('div');
@@ -59,28 +63,34 @@ export class PauseOverlay {
     icon.style.cssText = `color:#3d2200;width:48px;height:48px;display:grid;place-items:center`;
 
     const title = document.createElement('div');
+    title.id = 'pause-overlay-title';
+    this.el.setAttribute('aria-labelledby', title.id);
     title.textContent = t('pause.title');
     title.style.cssText = 'font-size:30px;font-weight:900;letter-spacing:0.06em;color:#3d2200';
 
     const hint = document.createElement('div');
+    hint.id = 'pause-overlay-hint';
+    this.el.setAttribute('aria-describedby', hint.id);
     hint.textContent = t('pause.hint');
     hint.style.cssText = 'font-size:14px;opacity:0.7;text-align:center';
 
     const resumeBtn = document.createElement('button');
+    this.resumeButton = resumeBtn;
     resumeBtn.type = 'button';
     resumeBtn.textContent = t('pause.resume');
     resumeBtn.style.cssText = [
       'margin-top:6px',
+      'min-height:44px',
       'padding:11px 28px',
       `font-family:${UI_FONT}`,
       'font-size:17px',
       'font-weight:900',
       'color:#fff8dd',
-      'background:linear-gradient(135deg,#3f9a43,#2f7a33)',
-      'border:2.5px solid #1f4d22',
+      'background:#3f7b3a',
+      'border:1px solid #1f4d22',
       'border-radius:10px',
       'cursor:pointer',
-      'box-shadow:0 4px 0 #1f4d22,0 6px 14px rgba(31,77,34,0.3)',
+      'box-shadow:0 3px 0 #1f4d22',
       'transition:transform 0.12s ease,filter 0.12s ease',
     ].join(';');
     resumeBtn.addEventListener('mouseenter', () => {
@@ -95,16 +105,20 @@ export class PauseOverlay {
     card.append(icon, title, hint, resumeBtn);
     this.el.appendChild(card);
 
-    // 入场动画样式（复用 ConfirmDialog 的 keyframes，若已注入则跳过）
-    if (!document.getElementById('confirm-anim-style')) {
+    // 入场动画样式只服务暂停遮罩，避免与确认对话框共享变换原点。
+    if (!document.getElementById('pause-overlay-style')) {
       const style = document.createElement('style');
-      style.id = 'confirm-anim-style';
+      style.id = 'pause-overlay-style';
       style.textContent = `
-        @keyframes confirmFadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes confirmPop { from{opacity:0;transform:translate(-50%,-50%) rotate(-0.6deg) scale(0.92)} to{opacity:1;transform:translate(-50%,-50%) rotate(-0.6deg) scale(1)} }
+        #pause-overlay button:focus-visible { outline:3px solid #f0bd3c; outline-offset:3px; }
+        @keyframes pauseFadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes pausePop { from{opacity:0;transform:translate(-50%,-50%) scale(.96)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+        @media (prefers-reduced-motion:reduce) { #pause-overlay, #pause-overlay button { animation:none !important; transition:none !important; } }
       `;
       document.head.appendChild(style);
     }
+    this.el.style.animation = 'pauseFadeIn 0.16s ease';
+    card.style.animation = 'pausePop 0.18s ease';
 
     // 点击遮罩空白处（非卡片）继续
     this.el.addEventListener('click', (e) => {
@@ -126,6 +140,7 @@ export class PauseOverlay {
   show(): void {
     this.open = true;
     this.el.style.display = '';
+    this.resumeButton.focus();
   }
 
   hide(): void {

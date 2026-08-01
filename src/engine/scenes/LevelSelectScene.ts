@@ -1,23 +1,42 @@
 /**
- * 选关场景 —— 独立关卡选择界面，纸片风卡片网格。
+ * 选关场景 —— 用纸上路线表达关卡顺序、主题与解锁关系。
  *
- * 由标题页"选择关卡"按钮进入。展示 LevelManager.listLevels() 返回的全部关卡，
- * 按 SaveStore.unlockedLevels 判定解锁状态，按 completedChallenges 判定完成状态。
- * 顺序解锁：首关默认解锁，完成上一关 starite-gate 后解锁下一关。
- * 点击已解锁卡片 → scene.start('WorldScene', { levelId })；返回按钮 → TitleScene。
- * 每张已解锁卡片提供「重置」按钮；顶部提供「重置所有」按钮。
+ * 由标题页“选择关卡”按钮进入。展示 LevelManager.listLevels() 返回的全部关卡，
+ * 按 SaveStore.unlockedLevels 判定解锁状态，按 completedSlots 判定完成状态。
+ * 每个已解锁路线节点都可进入关卡；重置按钮与进入动作保持独立。
  */
 
 import Phaser from 'phaser';
 import { LevelManager } from '@/game/LevelManager';
 import type { LevelData } from '@/core/types/level';
 import { SaveStore } from '@/core/data/save/SaveStore';
-import { UI_FONT, PAPER_BG, INK, TORN_EDGE, PAPER_SHADOW } from '@/ui/paperStyle';
-import { ICON_SNOWFLAKE, ICON_SUN, ICON_FLAME, ICON_LOCK, ICON_STAR, ICON_RESET } from '@/ui/icons';
+import {
+  INK,
+  PAPER_BG,
+  PAPER_BG_ALT,
+  SAFE_BOTTOM,
+  SAFE_LEFT,
+  SAFE_RIGHT,
+  SAFE_TOP,
+  UI_FONT,
+} from '@/ui/paperStyle';
+import {
+  ICON_ARROW_LEFT,
+  ICON_FLAME,
+  ICON_LOCK,
+  ICON_PLAY,
+  ICON_RESET,
+  ICON_SHARD,
+  ICON_SNOWFLAKE,
+  ICON_STAR,
+  ICON_SUN,
+} from '@/ui/icons';
 import { confirmDialog } from '@/ui/ConfirmDialog';
 import { t, getLang, type Lang } from '@/core/i18n/I18n';
 
-/** 主题 → 卡片配色 + 图标 + 双语名 */
+const LEVEL_SELECT_STYLE_ID = 'level-select-ui-style';
+
+/** 主题 → 路线配色 + 图标 + 双语名 */
 const THEME_META: Record<string, { color: string; icon: string; zh: string; en: string }> = {
   jungle: { color: '#3dac4a', icon: ICON_STAR, zh: '丛林草地', en: 'Jungle Meadow' },
   cave: { color: '#5a5a5a', icon: ICON_LOCK, zh: '洞穴探险', en: 'Cave Adventure' },
@@ -47,7 +66,9 @@ function levelTitleOf(levelId: string, theme: string): string {
 
 export class LevelSelectScene extends Phaser.Scene {
   private overlay!: HTMLDivElement;
-  private grid!: HTMLDivElement;
+  private route!: HTMLOListElement;
+  private progressSummary!: HTMLDivElement;
+  private difficultySummary!: HTMLDivElement;
   private readonly save = new SaveStore();
 
   constructor() {
@@ -55,121 +76,39 @@ export class LevelSelectScene extends Phaser.Scene {
   }
 
   async create(): Promise<void> {
-    // 程序化背景：暖色渐变纸面
-    const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor('#f7f1e3');
-
-    // Phaser 4 不自动调用 scene.shutdown()，须显式绑到 SHUTDOWN 事件，
-    // 否则切场景时 DOM 浮层残留不清理（对齐 Phaser 生命周期标准用法）
+    this.cameras.main.setBackgroundColor('#dfe9e2');
     this.events.once('shutdown', this.shutdown, this);
+    this._ensureStyle();
 
     this.overlay = document.createElement('div');
-    this.overlay.style.cssText = [
-      'position:fixed',
-      'inset:0',
-      'pointer-events:none',
-      'z-index:100',
-      'display:flex',
-      'flex-direction:column',
-      'align-items:center',
-      'padding:32px 24px 24px',
-      'box-sizing:border-box',
-      'overflow-y:auto',
-    ].join(';');
+    this.overlay.id = 'level-select-overlay';
 
-    // 标题
-    const title = document.createElement('div');
-    title.textContent = t('levelSelect.title');
-    title.style.cssText = [
-      `font-family:${UI_FONT}`,
-      'font-size:clamp(34px,5vw,52px)',
-      'font-weight:900',
-      `color:${INK}`,
-      'letter-spacing:0.1em',
-      'text-shadow:2px 2px 0 rgba(60,40,20,0.18)',
-      'margin-bottom:8px',
-    ].join(';');
-    this.overlay.appendChild(title);
+    const shell = document.createElement('main');
+    shell.className = 'level-select-shell';
 
-    // 副标题提示
-    const hint = document.createElement('div');
-    hint.textContent = t('levelSelect.hint');
-    hint.style.cssText = [
-      `font-family:${UI_FONT}`,
-      'font-size:clamp(14px,1.6vw,18px)',
-      'color:#5a554c',
-      'margin-bottom:28px',
-    ].join(';');
-    this.overlay.appendChild(hint);
+    const nav = document.createElement('div');
+    nav.className = 'level-select-nav';
 
-    // 卡片网格容器
-    this.grid = document.createElement('div');
-    this.grid.style.cssText = [
-      'display:grid',
-      'grid-template-columns:repeat(auto-fill,minmax(240px,1fr))',
-      'gap:22px',
-      'width:100%',
-      'max-width:1080px',
-      'pointer-events:none',
-    ].join(';');
-    this.overlay.appendChild(this.grid);
-
-    // 返回按钮
     const back = document.createElement('button');
     back.type = 'button';
-    back.textContent = `◂ ${t('common.back')}`;
-    back.style.cssText = [
-      'position:fixed',
-      'top:22px',
-      'left:24px',
-      `font-family:${UI_FONT}`,
-      'font-size:18px',
-      'font-weight:900',
-      `color:${INK}`,
-      `background:${PAPER_BG}`,
-      'border:2px solid rgba(43,43,43,0.4)',
-      'border-radius:999px',
-      'padding:8px 20px',
-      'cursor:pointer',
-      'pointer-events:auto',
-      `box-shadow:${PAPER_SHADOW}`,
-      'transition:transform 0.16s ease',
-    ].join(';');
-    back.addEventListener('mouseenter', () => { back.style.transform = 'translateX(-2px)'; });
-    back.addEventListener('mouseleave', () => { back.style.transform = ''; });
-    back.addEventListener('click', (ev) => {
-      ev.stopPropagation();
+    back.className = 'level-select-nav-button';
+    back.innerHTML = `${ICON_ARROW_LEFT}<span></span>`;
+    back.querySelector('span')!.textContent = t('common.back');
+    back.setAttribute('aria-label', t('common.back'));
+    back.addEventListener('click', (event) => {
+      event.stopPropagation();
       this._backToTitle();
     });
-    this.overlay.appendChild(back);
+    nav.appendChild(back);
 
-    // 重置所有按钮（右上角）
     const resetAll = document.createElement('button');
     resetAll.type = 'button';
-    resetAll.innerHTML = `${ICON_RESET}<span style="margin-left:6px">${t('levelSelect.resetAll')}</span>`;
-    resetAll.style.cssText = [
-      'position:fixed',
-      'top:22px',
-      'right:24px',
-      'display:flex',
-      'align-items:center',
-      `font-family:${UI_FONT}`,
-      'font-size:16px',
-      'font-weight:900',
-      'color:#5a1a04',
-      `background:${PAPER_BG}`,
-      'border:2px solid #b8360a',
-      'border-radius:999px',
-      'padding:8px 18px',
-      'cursor:pointer',
-      'pointer-events:auto',
-      `box-shadow:${PAPER_SHADOW}`,
-      'transition:transform 0.16s ease,filter 0.16s ease',
-    ].join(';');
-    resetAll.addEventListener('mouseenter', () => { resetAll.style.transform = 'translateY(-2px)'; resetAll.style.filter = 'brightness(1.06)'; });
-    resetAll.addEventListener('mouseleave', () => { resetAll.style.transform = ''; resetAll.style.filter = ''; });
-    resetAll.addEventListener('click', async (ev) => {
-      ev.stopPropagation();
+    resetAll.className = 'level-select-reset-all';
+    resetAll.innerHTML = `${ICON_RESET}<span></span>`;
+    resetAll.querySelector('span')!.textContent = t('levelSelect.resetAll');
+    resetAll.setAttribute('aria-label', t('levelSelect.resetAll'));
+    resetAll.addEventListener('click', async (event) => {
+      event.stopPropagation();
       const ok = await confirmDialog({
         title: t('levelSelect.resetAllConfirmTitle'),
         message: t('levelSelect.resetAllConfirmMsg'),
@@ -179,131 +118,409 @@ export class LevelSelectScene extends Phaser.Scene {
       await this.save.resetAll();
       await this.renderCards();
     });
-    this.overlay.appendChild(resetAll);
+    nav.appendChild(resetAll);
+    shell.appendChild(nav);
 
+    const heading = document.createElement('header');
+    heading.className = 'level-select-heading';
+    const title = document.createElement('h1');
+    title.textContent = t('levelSelect.title');
+    heading.appendChild(title);
+    const hint = document.createElement('p');
+    hint.textContent = t('levelSelect.hint');
+    heading.appendChild(hint);
+    shell.appendChild(heading);
+
+    const summary = document.createElement('div');
+    summary.className = 'level-select-summary';
+    this.progressSummary = document.createElement('div');
+    this.progressSummary.className = 'level-select-progress-summary';
+    this.difficultySummary = document.createElement('div');
+    this.difficultySummary.className = 'level-select-difficulty-summary';
+    summary.append(this.progressSummary, this.difficultySummary);
+    shell.appendChild(summary);
+
+    this.route = document.createElement('ol');
+    this.route.className = 'level-select-route';
+    shell.appendChild(this.route);
+
+    this.overlay.appendChild(shell);
     document.body.appendChild(this.overlay);
-    void width;
-    void height;
-
-    // 首次渲染卡片
     await this.renderCards();
   }
 
-  /** 读取最新存档并渲染全部关卡卡片（重置后局部刷新复用） */
+  private _ensureStyle(): void {
+    if (document.getElementById(LEVEL_SELECT_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = LEVEL_SELECT_STYLE_ID;
+    style.textContent = `
+      #level-select-overlay {
+        position:fixed;
+        inset:0;
+        z-index:100;
+        pointer-events:none;
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+        background:#dfe9e2;
+        color:${INK};
+        font-family:${UI_FONT};
+      }
+      #level-select-overlay *, #level-select-overlay *::before, #level-select-overlay *::after { box-sizing:border-box; }
+      .level-select-shell {
+        width:min(1160px,100%);
+        min-height:100%;
+        margin:0 auto;
+        padding:${SAFE_TOP} ${SAFE_RIGHT} ${SAFE_BOTTOM};
+        pointer-events:auto;
+      }
+      .level-select-nav {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:14px;
+        min-height:56px;
+      }
+      .level-select-nav-button,
+      .level-select-reset-all,
+      .level-entry,
+      .level-reset-button {
+        appearance:none;
+        -webkit-tap-highlight-color:transparent;
+        font:inherit;
+        cursor:pointer;
+        transition:transform .16s ease,filter .16s ease,background-color .16s ease,box-shadow .16s ease;
+      }
+      .level-select-nav-button,
+      .level-select-reset-all {
+        min-height:46px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+        padding:9px 14px;
+        border-radius:9px;
+        font-size:15px;
+        font-weight:900;
+      }
+      .level-select-nav-button {
+        color:${INK};
+        background:${PAPER_BG};
+        border:2px solid ${INK};
+        box-shadow:0 3px 0 rgba(43,43,43,.54);
+      }
+      .level-select-reset-all {
+        color:#7e3018;
+        background:${PAPER_BG};
+        border:2px solid #a34b2c;
+        box-shadow:0 3px 0 rgba(126,48,24,.36);
+      }
+      .level-select-heading { padding:24px 4px 8px; }
+      .level-select-heading h1 {
+        margin:0;
+        font-size:42px;
+        line-height:1.05;
+        font-weight:950;
+        letter-spacing:.02em;
+        text-wrap:balance;
+      }
+      .level-select-heading p {
+        max-width:68ch;
+        margin:10px 0 0;
+        color:#4f6257;
+        font-size:15px;
+        line-height:1.5;
+      }
+      .level-select-summary {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:18px;
+        flex-wrap:wrap;
+        margin-top:18px;
+        padding:13px 4px;
+        border-top:2px solid rgba(62,91,72,.42);
+        border-bottom:2px solid rgba(62,91,72,.42);
+      }
+      .level-select-progress-summary,
+      .level-select-difficulty-summary {
+        display:flex;
+        align-items:center;
+        gap:16px;
+        flex-wrap:wrap;
+      }
+      .level-select-summary-metric {
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        min-height:28px;
+        color:#385343;
+        font-size:14px;
+        font-weight:900;
+      }
+      .level-select-summary-metric strong { color:${INK}; font-size:18px; line-height:1; }
+      .level-select-difficulty-summary { justify-content:flex-end; color:#4f6257; font-size:13px; font-weight:850; }
+      .level-select-route { position:relative; margin:28px 0 0; padding:0; list-style:none; }
+      .level-route-item { display:grid; grid-template-columns:76px minmax(0,1fr); gap:18px; position:relative; min-height:132px; }
+      .level-node-column { display:flex; flex-direction:column; align-items:center; min-height:100%; }
+      .level-node {
+        position:relative;
+        z-index:1;
+        width:54px;
+        height:54px;
+        display:grid;
+        place-items:center;
+        flex:none;
+        margin-top:17px;
+        color:#436050;
+        background:#d5e0d8;
+        border:2px solid #6f8878;
+        border-radius:50%;
+        font-size:18px;
+        font-weight:950;
+      }
+      .level-node svg { width:20px; height:20px; }
+      .level-route-connector { width:3px; flex:1; min-height:30px; margin:8px 0 0; background:#9db6a5; border-radius:999px; }
+      .level-route-connector[data-open="false"] { opacity:.42; }
+      .level-entry-frame { display:grid; grid-template-columns:minmax(0,1fr) 50px; align-items:center; gap:10px; min-width:0; padding-bottom:16px; }
+      .level-entry {
+        width:100%;
+        min-height:116px;
+        display:flex;
+        flex-direction:column;
+        gap:11px;
+        padding:16px 18px 15px;
+        text-align:left;
+        color:${INK};
+        background:rgba(247,241,227,.82);
+        border:2px solid rgba(43,43,43,.24);
+        border-radius:10px;
+      }
+      .level-route-item[data-current="true"] .level-entry { background:${PAPER_BG}; border-color:${INK}; box-shadow:5px 5px 0 var(--level-color); }
+      .level-entry:disabled { cursor:not-allowed; filter:saturate(.58); opacity:.68; }
+      .level-entry-top,
+      .level-entry-body,
+      .level-entry-theme,
+      .level-entry-status,
+      .level-entry-progress,
+      .level-entry-action { display:flex; align-items:center; }
+      .level-entry-top { justify-content:space-between; gap:14px; }
+      .level-entry-theme { min-width:0; gap:8px; color:var(--level-color); font-size:13px; font-weight:950; letter-spacing:.03em; }
+      .level-entry-theme svg { width:20px; height:20px; flex:none; }
+      .level-entry-theme span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .level-entry-status { gap:5px; flex:none; color:#52685a; font-size:13px; font-weight:900; }
+      .level-entry-status svg { width:17px; height:17px; }
+      .level-entry-body { justify-content:space-between; gap:16px; min-width:0; }
+      .level-entry-info { min-width:0; flex:1; display:flex; flex-direction:column; gap:8px; }
+      .level-entry-number { color:#64776a; font-size:12px; font-weight:900; }
+      .level-entry-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:23px; font-weight:950; letter-spacing:.02em; }
+      .level-entry-progress { gap:8px; min-width:170px; color:#52685a; font-size:12px; font-weight:900; }
+      .level-progress-track { height:7px; flex:1; min-width:70px; overflow:hidden; background:#d9dfd8; border-radius:999px; }
+      .level-progress-fill { height:100%; background:var(--level-color); border-radius:inherit; }
+      .level-entry-action {
+        justify-content:center;
+        gap:7px;
+        flex:none;
+        min-width:124px;
+        min-height:42px;
+        padding:8px 12px;
+        color:#2f6242;
+        background:#e4eee6;
+        border:2px solid #5d866b;
+        border-radius:8px;
+        font-size:14px;
+        font-weight:950;
+      }
+      .level-entry-action svg { width:17px; height:17px; }
+      .level-reset-button {
+        width:46px;
+        height:46px;
+        display:grid;
+        place-items:center;
+        padding:10px;
+        color:#7e3018;
+        background:${PAPER_BG};
+        border:2px solid #a34b2c;
+        border-radius:9px;
+      }
+      .level-reset-button:hover, .level-reset-button:focus-visible { background:${PAPER_BG_ALT}; }
+      .level-select-nav-button:hover,
+      .level-select-reset-all:hover,
+      .level-entry:hover:not(:disabled) { transform:translateY(-2px); filter:brightness(1.03); }
+      .level-select-nav-button:active,
+      .level-select-reset-all:active,
+      .level-entry:active:not(:disabled),
+      .level-reset-button:active { transform:translateY(2px); }
+      .level-select-nav-button:focus-visible,
+      .level-select-reset-all:focus-visible,
+      .level-entry:focus-visible,
+      .level-reset-button:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+      @media (max-width:720px) {
+        .level-select-shell { padding-left:${SAFE_LEFT}; padding-right:${SAFE_RIGHT}; }
+        .level-select-nav { align-items:flex-start; }
+        .level-select-nav-button, .level-select-reset-all { min-height:44px; padding-inline:11px; }
+        .level-select-nav-button span, .level-select-reset-all span { max-width:16vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .level-select-heading { padding-top:18px; }
+        .level-select-heading h1 { font-size:32px; }
+        .level-select-heading p { font-size:14px; }
+        .level-select-summary { align-items:flex-start; gap:10px; }
+        .level-select-progress-summary, .level-select-difficulty-summary { gap:10px; }
+        .level-select-difficulty-summary { width:100%; justify-content:flex-start; }
+        .level-route-item { grid-template-columns:48px minmax(0,1fr); gap:11px; min-height:0; }
+        .level-node { width:42px; height:42px; margin-top:18px; font-size:15px; }
+        .level-node svg { width:17px; height:17px; }
+        .level-entry-frame { grid-template-columns:minmax(0,1fr) 46px; gap:8px; padding-bottom:13px; }
+        .level-entry { min-height:0; padding:14px 13px; gap:10px; }
+        .level-entry-top { align-items:flex-start; flex-direction:column; gap:5px; }
+        .level-entry-body { align-items:stretch; flex-direction:column; gap:11px; }
+        .level-entry-title { font-size:20px; }
+        .level-entry-progress { min-width:0; }
+        .level-entry-action { width:100%; min-height:44px; }
+        .level-reset-button { width:44px; height:44px; padding:9px; }
+      }
+      @media (prefers-reduced-motion:reduce) {
+        .level-select-nav-button, .level-select-reset-all, .level-entry, .level-reset-button { transition:none; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  /** 读取最新存档并渲染路线（重置后复用） */
   private async renderCards(): Promise<void> {
     const data = await this.save.load();
     const completedSlots = new Set(data.completedSlots);
     const { tier, standard } = data.difficultySetting;
     const levels = LevelManager.listLevels();
 
-    this.grid.innerHTML = '';
+    this._renderSummary(data, levels, completedSlots, tier, standard);
+    this.route.innerHTML = '';
+
+    const state = levels.map((lvl) => {
+      const slots = lvl.challengeSlots ?? 3;
+      const completedCount = Array.from({ length: slots }, (_, i) => `${lvl.id}:${tier}:${standard}:${i}`)
+        .filter((sid) => completedSlots.has(sid)).length;
+      return {
+        slots,
+        completedCount,
+        isCompleted: completedCount === slots,
+        isUnlocked: data.unlockedLevels.includes(lvl.id),
+      };
+    });
+    const currentIndex = state.findIndex((item) => item.isUnlocked && !item.isCompleted);
 
     levels.forEach((lvl, idx) => {
-      // 完成判定：该关该难度全部 slot 已完成
-      const slots = lvl.challengeSlots ?? 3;
-      const allDone = Array.from({ length: slots }, (_, i) => `${lvl.id}:${tier}:${standard}:${i}`)
-        .every((sid) => completedSlots.has(sid));
-      const isCompleted = allDone;
-      const isUnlocked = data.unlockedLevels.includes(lvl.id);
-
+      const levelState = state[idx];
       const meta = THEME_META[lvl.theme] ?? THEME_META.jungle;
       const cardTitle = levelTitleOf(lvl.id, lvl.theme);
+      const nextUnlocked = state[idx + 1]?.isUnlocked ?? false;
+      const isCurrent = currentIndex >= 0
+        ? idx === currentIndex
+        : levelState.isUnlocked && idx === state.findIndex((item) => item.isUnlocked);
 
-      const card = document.createElement('div');
-      card.style.cssText = [
-        'position:relative',
-        `background:${PAPER_BG}`,
-        `box-shadow:${PAPER_SHADOW}`,
-        TORN_EDGE,
-        'border-radius:14px',
-        'padding:0',
-        'display:flex',
-        'flex-direction:column',
-        'overflow:hidden',
-        `cursor:${isUnlocked ? 'pointer' : 'not-allowed'}`,
-        `opacity:${isUnlocked ? '1' : '0.62'}`,
-        'pointer-events:auto',
-        'transition:transform 0.2s ease,box-shadow 0.2s ease',
-        'transform:rotate(' + ((idx % 2 === 0 ? -0.6 : 0.5) + 'deg') + ')',
-      ].join(';');
+      const item = document.createElement('li');
+      item.className = 'level-route-item';
+      item.dataset.current = String(isCurrent);
+      item.dataset.unlocked = String(levelState.isUnlocked);
+      item.dataset.completed = String(levelState.isCompleted);
+      item.style.setProperty('--level-color', meta.color);
 
-      // 主题色条
-      const band = document.createElement('div');
-      band.style.cssText = [
-        `background:linear-gradient(135deg,${meta.color},${meta.color}cc)`,
-        'height:10px',
-        'width:100%',
-      ].join(';');
-      card.appendChild(band);
-
-      // 卡片主体
-      const body = document.createElement('div');
-      body.style.cssText = [
-        'padding:18px 20px 20px',
-        'display:flex',
-        'flex-direction:column',
-        'gap:10px',
-        'align-items:center',
-      ].join(';');
-
-      // 序号 + 主题图标
-      const iconRow = document.createElement('div');
-      iconRow.style.cssText = ['display:flex', 'align-items:center', 'gap:10px', `color:${meta.color === '#b0d4e8' ? '#3a6b8a' : meta.color}`].join(';');
-      iconRow.innerHTML = `<span style="font-family:${UI_FONT};font-size:14px;color:#5a554c;font-weight:900">${t('levelSelect.levelN', { n: idx + 1 })}</span>${meta.icon}`;
-      body.appendChild(iconRow);
-
-      // 关卡名
-      const nameEl = document.createElement('div');
-      nameEl.textContent = cardTitle;
-      nameEl.style.cssText = [
-        `font-family:${UI_FONT}`,
-        'font-size:clamp(22px,2.4vw,30px)',
-        'font-weight:900',
-        `color:${INK}`,
-        'letter-spacing:0.06em',
-        'text-align:center',
-      ].join(';');
-      body.appendChild(nameEl);
-
-      // 状态
-      const status = document.createElement('div');
-      status.style.cssText = ['margin-top:4px', 'min-height:26px', 'display:flex', 'align-items:center', 'justify-content:center', 'gap:6px', `font-family:${UI_FONT}`, 'font-size:15px'].join(';');
-      if (!isUnlocked) {
-        status.innerHTML = `${ICON_LOCK}<span style="color:#5a554c;font-weight:900">${t('levelSelect.locked')}</span>`;
-      } else if (isCompleted) {
-        status.innerHTML = `${ICON_STAR}<span style="color:#9a5a00;font-weight:900">${t('levelSelect.completed')}</span>`;
-      } else {
-        status.innerHTML = `<span style="color:#286a32;font-weight:900">${t('levelSelect.go')}</span>`;
+      const nodeColumn = document.createElement('span');
+      nodeColumn.className = 'level-node-column';
+      const node = document.createElement('span');
+      node.className = 'level-node';
+      node.style.color = levelState.isUnlocked ? meta.color : '#66756b';
+      node.style.borderColor = levelState.isUnlocked ? meta.color : '#819086';
+      node.innerHTML = levelState.isUnlocked ? String(idx + 1) : ICON_LOCK;
+      node.setAttribute('aria-hidden', 'true');
+      nodeColumn.appendChild(node);
+      if (idx < levels.length - 1) {
+        const connector = document.createElement('span');
+        connector.className = 'level-route-connector';
+        connector.dataset.open = String(nextUnlocked);
+        connector.setAttribute('aria-hidden', 'true');
+        nodeColumn.appendChild(connector);
       }
-      body.appendChild(status);
+      item.appendChild(nodeColumn);
 
-      card.appendChild(body);
+      const frame = document.createElement('span');
+      frame.className = 'level-entry-frame';
 
-      // 卡片右下角重置按钮（全部关卡都显示，可清空本关进度重玩）
+      const entry = document.createElement('button');
+      entry.type = 'button';
+      entry.className = 'level-entry';
+      entry.disabled = !levelState.isUnlocked;
+      entry.setAttribute('aria-label', `${cardTitle} · ${levelState.isUnlocked ? t('levelSelect.enter') : t('levelSelect.locked')}`);
+      entry.addEventListener('click', (event) => {
+        event.stopPropagation();
+        void this._enterLevel(lvl.id);
+      });
+
+      const top = document.createElement('span');
+      top.className = 'level-entry-top';
+      const theme = document.createElement('span');
+      theme.className = 'level-entry-theme';
+      theme.innerHTML = `${meta.icon}<span></span>`;
+      theme.querySelector('span')!.textContent = meta[getLang()];
+      top.appendChild(theme);
+
+      const status = document.createElement('span');
+      status.className = 'level-entry-status';
+      if (!levelState.isUnlocked) {
+        status.innerHTML = `${ICON_LOCK}<span></span>`;
+        status.querySelector('span')!.textContent = t('levelSelect.locked');
+      } else if (levelState.isCompleted) {
+        status.innerHTML = `${ICON_STAR}<span></span>`;
+        status.querySelector('span')!.textContent = t('levelSelect.completed');
+      } else {
+        status.textContent = t('levelSelect.enter');
+      }
+      top.appendChild(status);
+      entry.appendChild(top);
+
+      const body = document.createElement('span');
+      body.className = 'level-entry-body';
+      const info = document.createElement('span');
+      info.className = 'level-entry-info';
+      const number = document.createElement('span');
+      number.className = 'level-entry-number';
+      number.textContent = t('levelSelect.levelN', { n: idx + 1 });
+      const title = document.createElement('span');
+      title.className = 'level-entry-title';
+      title.textContent = cardTitle;
+      const progress = document.createElement('span');
+      progress.className = 'level-entry-progress';
+      progress.setAttribute('role', 'progressbar');
+      progress.setAttribute('aria-valuemin', '0');
+      progress.setAttribute('aria-valuemax', String(levelState.slots));
+      progress.setAttribute('aria-valuenow', String(levelState.completedCount));
+      progress.setAttribute('aria-label', `${t('levelSelect.completed')} ${levelState.completedCount}/${levelState.slots}`);
+      const progressTrack = document.createElement('span');
+      progressTrack.className = 'level-progress-track';
+      const progressFill = document.createElement('span');
+      progressFill.className = 'level-progress-fill';
+      progressFill.style.width = `${Math.round((levelState.completedCount / levelState.slots) * 100)}%`;
+      progressTrack.appendChild(progressFill);
+      const progressText = document.createElement('span');
+      progressText.textContent = `${levelState.completedCount}/${levelState.slots}`;
+      progress.append(progressTrack, progressText);
+      info.append(number, title, progress);
+
+      const enterLabel = document.createElement('span');
+      enterLabel.className = 'level-entry-action';
+      enterLabel.innerHTML = `${ICON_PLAY}<span></span>`;
+      enterLabel.querySelector('span')!.textContent = t('levelSelect.enter');
+      body.append(info, enterLabel);
+      entry.appendChild(body);
+      frame.appendChild(entry);
+
+      // 重置按钮仍对全部关卡提供，可清空本关当前难度的挑战进度。
       const resetBtn = document.createElement('button');
       resetBtn.type = 'button';
+      resetBtn.className = 'level-reset-button';
       resetBtn.title = t('levelSelect.resetBtnAria');
+      resetBtn.setAttribute('aria-label', `${t('levelSelect.resetBtnAria')}：${cardTitle}`);
       resetBtn.innerHTML = ICON_RESET;
-      resetBtn.style.cssText = [
-        'position:absolute',
-        'right:10px',
-        'bottom:8px',
-        'width:32px',
-        'height:32px',
-        'display:grid',
-        'place-items:center',
-        'color:rgba(90,26,4,0.75)',
-        `background:${PAPER_BG}`,
-        'border:2px solid rgba(184,54,10,0.5)',
-        'border-radius:50%',
-        'cursor:pointer',
-        'z-index:2',
-        'transition:transform 0.14s ease,filter 0.14s ease',
-      ].join(';');
-      resetBtn.addEventListener('mouseenter', () => { resetBtn.style.transform = 'scale(1.15)'; resetBtn.style.filter = 'brightness(1.1)'; });
-      resetBtn.addEventListener('mouseleave', () => { resetBtn.style.transform = ''; resetBtn.style.filter = ''; });
-      resetBtn.addEventListener('click', async (ev) => {
-        ev.stopPropagation();
+      resetBtn.addEventListener('click', async (event) => {
+        event.stopPropagation();
         const ok = await confirmDialog({
           title: t('levelSelect.resetConfirmTitle', { name: cardTitle }),
           message: t('levelSelect.resetConfirmMsg'),
@@ -313,24 +530,44 @@ export class LevelSelectScene extends Phaser.Scene {
         await this.resetLevel(lvl);
         await this.renderCards();
       });
-      card.appendChild(resetBtn);
-
-      card.addEventListener('mouseenter', () => {
-        card.style.transform = 'scale(1.03) rotate(0deg)';
-        card.style.boxShadow = '0 14px 32px rgba(60,40,20,0.32)';
-      });
-      card.addEventListener('mouseleave', () => {
-        card.style.transform = 'rotate(' + ((idx % 2 === 0 ? -0.6 : 0.5) + 'deg') + ')';
-        card.style.boxShadow = PAPER_SHADOW;
-      });
-      card.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        if (!isUnlocked) return;
-        void this._enterLevel(lvl.id);
-      });
-
-      this.grid.appendChild(card);
+      frame.appendChild(resetBtn);
+      item.appendChild(frame);
+      this.route.appendChild(item);
     });
+  }
+
+  private _renderSummary(
+    data: Awaited<ReturnType<SaveStore['load']>>,
+    levels: LevelData[],
+    completedSlots: Set<string>,
+    tier: number,
+    standard: string,
+  ): void {
+    const totalSlots = levels.reduce((sum, level) => sum + (level.challengeSlots ?? 3), 0);
+    const completedCount = levels.reduce((sum, level) => {
+      const slots = level.challengeSlots ?? 3;
+      return sum + Array.from({ length: slots }, (_, i) => `${level.id}:${tier}:${standard}:${i}`)
+        .filter((sid) => completedSlots.has(sid)).length;
+    }, 0);
+    this.progressSummary.innerHTML = '';
+    this.progressSummary.append(
+      this._summaryMetric(ICON_STAR, t('levelSelect.completed'), `${completedCount}/${totalSlots}`),
+      this._summaryMetric(ICON_STAR, 'Starite', String(data.starites)),
+      this._summaryMetric(ICON_SHARD, getLang() === 'zh' ? '碎片' : 'Shards', String(data.shards)),
+    );
+
+    const tierLabel = tier === 1 ? t('levelSelect.tier1') : tier === 2 ? t('levelSelect.tier2') : t('levelSelect.tier3');
+    const standardLabel = standard === 'cefr' ? t('levelSelect.stdCefr') : t('levelSelect.stdFrequency');
+    this.difficultySummary.textContent = `${t('levelSelect.difficulty')} · ${tierLabel} · ${standardLabel}`;
+  }
+
+  private _summaryMetric(icon: string, label: string, value: string): HTMLSpanElement {
+    const metric = document.createElement('span');
+    metric.className = 'level-select-summary-metric';
+    metric.innerHTML = `${icon}<span></span><strong></strong>`;
+    metric.querySelector('span')!.textContent = label;
+    metric.querySelector('strong')!.textContent = value;
+    return metric;
   }
 
   /**
