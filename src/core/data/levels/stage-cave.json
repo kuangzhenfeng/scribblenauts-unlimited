@@ -50,6 +50,18 @@
       "y": 240,
       "w": 220,
       "h": 24
+    },
+    {
+      "x": -650,
+      "y": 260,
+      "w": 140,
+      "h": 24
+    },
+    {
+      "x": 520,
+      "y": 120,
+      "w": 160,
+      "h": 24
     }
   ],
   "spawns": [
@@ -88,6 +100,24 @@
       "x": -100,
       "y": 570,
       "layer": 0
+    },
+    {
+      "typeId": "lantern",
+      "x": -550,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "chest",
+      "x": 550,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "bat",
+      "x": 500,
+      "y": 200,
+      "layer": 0
     }
   ],
   "npcs": [
@@ -124,6 +154,18 @@
         "shirtColor": "#c9932b",
         "pantsColor": "#6b4226",
         "hat": "straw"
+      }
+    },
+    {
+      "id": "npc-sentinel",
+      "typeId": "human",
+      "x": 550,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#566573",
+        "pantsColor": "#273746",
+        "hat": "miner"
       }
     }
   ],
@@ -167,11 +209,61 @@
       "kind": "mushroom",
       "x": 380,
       "y": 570
+    },
+    {
+      "kind": "crystal",
+      "x": 650,
+      "y": 560,
+      "scale": 0.9
+    },
+    {
+      "kind": "lantern",
+      "x": -650,
+      "y": 240,
+      "scale": 0.8
     }
   ],
   "starite": {
     "x": 600,
     "y": 300
   },
-  "challengeSlots": 3
+  "authoredChallenges": [
+    {
+      "id": "cave-miner-lights",
+      "giverNpcId": "npc-miner",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "lantern", "count": 2, "near": { "npcId": "npc-miner", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "torch", "region": { "minX": -700, "minY": 430, "maxX": -250, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "矿工：两盏灯照亮矿口后，再插一支火把指路。", "en": "Miner: Light the mine entrance with two lanterns, then place a torch as a guide." } ]
+    },
+    {
+      "id": "cave-cartographer-map",
+      "giverNpcId": "npc-cartographer",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "compass-tool", "near": { "npcId": "npc-cartographer", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "rope", "count": 2, "region": { "minX": -500, "minY": 430, "maxX": 120, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "制图师：给我指南针，再把两段绳索放在裂谷边。", "en": "Cartographer: Bring a compass, then place two ropes beside the chasm." } ]
+    },
+    {
+      "id": "cave-treasurer-cache",
+      "giverNpcId": "npc-treasurer",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "coin", "count": 3, "near": { "npcId": "npc-treasurer", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "chest", "region": { "minX": 420, "minY": 430, "maxX": 700, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "司库：凑齐三枚硬币，再把宝箱送到高台。", "en": "Treasurer: Gather three coins, then move the chest to the high ledge." } ]
+    },
+    {
+      "id": "cave-sentinel-gate",
+      "giverNpcId": "npc-sentinel",
+      "kind": "starite-gate",
+      "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "npc-state", "npcId": "npc-sentinel", "states": [ "normal" ] }, { "kind": "object-present", "typeId": "shield", "near": { "npcId": "npc-sentinel", "radius": 180 } } ] } ] },
+      "stages": [ { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-sentinel", "radius": 180 } }, { "kind": "object-present", "typeId": "light", "near": { "npcId": "npc-sentinel", "radius": 180 } } ] } ] } ],
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [ { "zh": "守卫：先举盾守住洞口，再点亮通往星星的路。", "en": "Sentinel: Raise a shield at the entrance, then light the way to the Starite." } ]
+    }
+  ],
+  "challengeSlots": 4
 }

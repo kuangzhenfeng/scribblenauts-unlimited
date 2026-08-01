@@ -115,6 +115,13 @@ export type RuleMatcher =
 /** effect 作用目标 */
 export type EffectTarget = 'a' | 'b' | 'self' | 'both';
 
+/** 冲量方向：固定向量或根据碰撞双方位置计算的相对方向。 */
+export type ImpulseDirection =
+  | [number, number]
+  | 'away-from-source'
+  | 'towards-source'
+  | 'upward';
+
 /** 生成位置 */
 export type SpawnLocation = 'a' | 'b' | 'contact' | 'center-a';
 
@@ -135,7 +142,7 @@ export type RuleEffect =
   | { kind: 'transform'; target: EffectTarget; toTypeId: string }
   | { kind: 'add-flag'; target: EffectTarget; flags: FlagTag[] }
   | { kind: 'remove-flag'; target: EffectTarget; flags: FlagTag[] }
-  | { kind: 'apply-impulse'; target: EffectTarget; dir: [number, number]; mag: number };
+  | { kind: 'apply-impulse'; target: EffectTarget; dir: ImpulseDirection; mag: number };
 
 /** 声明式规则 */
 export interface Rule {

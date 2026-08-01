@@ -1,7 +1,7 @@
 /**
  * 笔记本 UI —— Maxwell 的魔法笔记本，玩家输入入口。
  *
- * 涂鸦纸片质感：纸色撕边面板 + 手写字体 + 墨迹斑。
+ * 涂鸦纸片质感：平整纸色面板 + 手写字体 + 墨迹斑。
  * 接入 IME 合成态、自动补全、候选菜单、双语分词解析。
  * 单候选直接生成；多候选弹菜单选择。
  */
@@ -19,7 +19,10 @@ import { t } from '@/core/i18n/I18n';
 
 export interface NotebookCallbacks {
   /** 用户确定生成某个候选 */
-  onSpawn: (candidate: ParseCandidate, screenX: number, screenY: number) => void;
+  /** 返回 false 表示主线程拒绝生成，不记录到 Magic Backpack。 */
+  onSpawn: (candidate: ParseCandidate, screenX: number, screenY: number) => void | boolean;
+  /** 主线程确认生成成功后记录到 Magic Backpack；不接线时不影响既有玩法。 */
+  onObjectSpawned?: (candidate: ParseCandidate) => void;
   /** 纯形容词模式：对选中实体施加形容词（可选，未接线则不启用该模式） */
   onApplyAdjectives?: (entityId: string, adjectives: ParsedAdjective[]) => void;
   /** 当前选中实体 id（供纯形容词模式取目标；动态取值） */
@@ -216,7 +219,8 @@ export class Notebook {
       noun: candidate.noun.entryId,
       adj: candidate.adjectives.map((a) => a.adjId),
     });
-    this.cb.onSpawn(candidate, sx, sy);
+    const accepted = this.cb.onSpawn(candidate, sx, sy);
+    if (accepted !== false) this.cb.onObjectSpawned?.(candidate);
     this.hide();
   }
 

@@ -25,6 +25,10 @@ const ATTACK_RANGE = 40;
 const ATTACK_DAMAGE = 10;
 /** attack 冷却毫秒 */
 const ATTACK_COOLDOWN = 1000;
+/** 中毒持续伤害间隔 */
+const POISON_TICK_INTERVAL = 1000;
+/** 睡眠状态最长持续时间 */
+const SLEEP_DURATION = 3000;
 /** wander 方向持续时长（毫秒） */
 const WANDER_MIN = 800;
 const WANDER_MAX = 2000;
@@ -45,29 +49,34 @@ export class BehaviorSystem {
   update(): void {
     const player = this.entities.getPlayer() as GameEntity | undefined;
     const dialogEid = this.dialogActiveEntityId();
+    const now = this.now();
     for (const e of this.entities.all()) {
       const ge = e as GameEntity;
       const tags = ge.tags;
-      // 飞行：施加向上的力抵消重力并悬浮
-      if (tags.behavior.has('flying')) {
+      this.updateTimedStates(ge, now);
+
+      if (tags.hasState('dead') && !ge.dead) {
+        ge.dead = true;
+        ge.state.locomotion = 'dead';
+      }
+      if (tags.hasState('poisoned') && !ge.dead && this.shouldTick(ge, 'poison-tick', now, POISON_TICK_INTERVAL)) {
+        damageEntity(ge, 8, this.deps);
+      }
+
+      // 冻结、石化、睡眠和死亡都会锁定移动；玩家仍由 PlayerController 处理。
+      if (ge.isPlayer && !ge.dead) continue;
+      const kinds = this.behaviorKinds(ge);
+      if (this.isMovementLocked(ge, kinds)) {
+        this.stopMovement(ge);
+        continue;
+      }
+
+      if (kinds.size === 0) continue;
+      // 飞行：施加向上的力抵消重力并悬浮。形容词标签与 BehaviorSpec 共用此分支。
+      if (kinds.has('fly')) {
         const mass = (ge.body as { mass: number }).mass;
         ge.applyImpulse([0, -1], mass * FLY_LIFT);
       }
-      // 带电状态自衰减（2s 后消失，避免永久链）
-      if (tags.hasState('electrified')) {
-        const timers = ge.stateTimers ?? (ge.stateTimers = new Map());
-        const t = timers.get('electrified-expire');
-        if (t === undefined) {
-          timers.set('electrified-expire', this.now() + 2000);
-        } else if (this.now() > t) {
-          tags.removeState('electrified');
-          ge.state.stateLayer.delete('state:electrified');
-          timers.delete('electrified-expire');
-        }
-      }
-      // 冻结/死亡/玩家不跑 AI
-      if (tags.hasState('frozen') || ge.dead || ge.isPlayer) continue;
-      if (!ge.behaviors || ge.behaviors.length === 0) continue;
       // 对话中的 NPC 暂停 AI：清零水平速度 + 进入 idle，气泡稳定可读
       if (dialogEid !== undefined && ge.id === dialogEid) {
         const bodyVel = (ge.body as { velocity: { x: number; y: number } }).velocity;
@@ -75,15 +84,14 @@ export class BehaviorSystem {
         ge.state.locomotion = 'idle';
         continue;
       }
-      this.steer(ge, player);
+      this.steer(ge, player, kinds);
     }
   }
 
-  private steer(e: GameEntity, player: GameEntity | undefined): void {
-    const kinds = e.behaviors!.map((b) => b.kind);
+  private steer(e: GameEntity, player: GameEntity | undefined, kinds: Set<string>): void {
     const bodyVel = (e.body as { velocity: { x: number; y: number } }).velocity;
     // attack
-    if (kinds.includes('attack') && player) {
+    if (kinds.has('attack') && player) {
       const dx = player.bodyPositionX - e.bodyPositionX;
       const dy = player.bodyPositionY - e.bodyPositionY;
       if (dx * dx + dy * dy <= ATTACK_RANGE * ATTACK_RANGE) {
@@ -97,19 +105,19 @@ export class BehaviorSystem {
     }
     // 转向优先级：flee > follow > wander
     let dir = 0;
-    if (kinds.includes('flee') && player) {
+    if (kinds.has('flee') && player) {
       const dx = player.bodyPositionX - e.bodyPositionX;
       dir = dx === 0 ? (Math.random() > 0.5 ? 1 : -1) : dx > 0 ? -1 : 1;
-    } else if (kinds.includes('follow') && player) {
+    } else if (kinds.has('follow') && player) {
       const dx = player.bodyPositionX - e.bodyPositionX;
       // 保留死区避免原地抖动；follow 无距离上限（超出范围由 flee/wander 各自分支处理）
       dir = Math.abs(dx) > FOLLOW_RANGE * 0.3 ? (dx > 0 ? 1 : -1) : 0;
-    } else if (kinds.includes('wander')) {
+    } else if (kinds.has('wander')) {
       dir = this.wanderDir(e);
     }
     // 根据行为类型确定正确的 locomotion 状态（飞行/游泳不回落到 walk/idle）
-    const isFly = kinds.includes('fly');
-    const moveState = isFly ? 'fly' : kinds.includes('swim') ? 'swim' : 'walk';
+    const isFly = kinds.has('fly');
+    const moveState = isFly ? 'fly' : kinds.has('swim') ? 'swim' : 'walk';
     const restState = moveState === 'walk' ? 'idle' : moveState;
     // 飞行生物每帧直接控制 Y 速度（缓慢上下浮动），抵消重力累积
     const vy = isFly ? Math.sin(this.now() * 0.002) * 0.2 : bodyVel.y;
@@ -121,6 +129,68 @@ export class BehaviorSystem {
       e.setBodyVelocity(0, vy);
       e.state.locomotion = restState;
     }
+  }
+
+  /** BehaviorSpec 与 TagSet 行为标签的规范化视图。 */
+  private behaviorKinds(e: GameEntity): Set<string> {
+    const kinds = new Set<string>();
+    for (const behavior of e.behaviors ?? []) kinds.add(normalizeBehaviorKind(behavior.kind));
+    for (const behavior of e.tags.behavior) kinds.add(normalizeBehaviorKind(behavior));
+    return kinds;
+  }
+
+  /** 处理有明确运行时意义的状态计时。 */
+  private updateTimedStates(e: GameEntity, now: number): void {
+    const tags = e.tags;
+    const timers = e.stateTimers ?? (e.stateTimers = new Map());
+
+    if (tags.hasState('electrified')) {
+      const t = timers.get('electrified-expire');
+      if (t === undefined) timers.set('electrified-expire', now + 2000);
+      else if (now > t) {
+        tags.removeState('electrified');
+        e.state.stateLayer.delete('state:electrified');
+        timers.delete('electrified-expire');
+      }
+    }
+
+    if (tags.hasState('sleeping')) {
+      const t = timers.get('sleeping-expire');
+      if (t === undefined) timers.set('sleeping-expire', now + SLEEP_DURATION);
+      else if (now > t) {
+        tags.removeState('sleeping');
+        e.state.stateLayer.delete('state:sleeping');
+        timers.delete('sleeping-expire');
+      }
+    } else {
+      timers.delete('sleeping-expire');
+    }
+  }
+
+  private shouldTick(e: GameEntity, key: string, now: number, interval: number): boolean {
+    const timers = e.stateTimers ?? (e.stateTimers = new Map());
+    const next = timers.get(key);
+    if (next === undefined) {
+      timers.set(key, now + interval);
+      return false;
+    }
+    if (now < next) return false;
+    timers.set(key, now + interval);
+    return true;
+  }
+
+  private isMovementLocked(e: GameEntity, kinds: Set<string>): boolean {
+    return e.dead
+      || kinds.has('sleep')
+      || e.tags.hasState('frozen')
+      || e.tags.hasState('petrified')
+      || e.tags.hasState('sleeping');
+  }
+
+  private stopMovement(e: GameEntity): void {
+    const bodyVel = (e.body as { velocity: { x: number; y: number } }).velocity;
+    e.setBodyVelocity(0, e.dead ? 0 : bodyVel.y);
+    e.state.locomotion = e.dead ? 'dead' : 'idle';
   }
 
   private wanderDir(e: GameEntity): number {
@@ -149,5 +219,16 @@ export class BehaviorSystem {
       mem.set('wanderUntil', this.now() + dur);
     }
     return (mem.get('wanderDir') as number) ?? 0;
+  }
+}
+
+/** 将词条中的动作名和 TagSet 的进行时标签统一到 BehaviorSystem 内部动作名。 */
+function normalizeBehaviorKind(kind: string): string {
+  switch (kind) {
+    case 'walking': return 'walk';
+    case 'flying': return 'fly';
+    case 'swimming': return 'swim';
+    case 'sleeping': return 'sleep';
+    default: return kind;
   }
 }

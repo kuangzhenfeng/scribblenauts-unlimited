@@ -16,6 +16,7 @@ import type { Physics } from '@/engine/physics/Physics';
 import type { DifficultyTier, DifficultyStandard } from '@/core/types/question';
 import { getEntry } from '@/core/data/dictionary/Dictionary';
 import { pickChallenges } from '@/core/data/questions/QuestionPicker';
+import { randomizeLevelContent } from '@/game/LevelRandomizer';
 import { log } from '@/util/log';
 import type { GameEntity } from '@/game/Entity';
 
@@ -58,7 +59,7 @@ export class LevelManager {
    * → 按难度抽题装配 challenges。
    * keepPlayerId 由 WorldScene 传入以跨关卡保留玩家。
    * tier/standard 为难度档与标准，由选关界面传入；缺省回退基础档+等级标准。
-   * seedSalt 为题目随机种子盐（如日期），同盐+同关+同难度 → 同题序。
+   * seedSalt 为题目与关卡布局随机种子盐；同盐+同关 → 同一套布局与题序。
    * filterBasic 过滤 A1 基础题，缺省 false。
    */
   load(
@@ -76,22 +77,25 @@ export class LevelManager {
     this.entities.clear(keepPlayerId);
     this.physics.clearDynamic(keepBodies);
     this.npcEntities.clear();
-    this.current = data;
-    this.buildTerrain(data);
-    this.build(data);
+
+    // 题目与关卡内容共用存档种子：每个存档都有独立布局，刷新种子即可重抽整套内容。
+    const seedSalt = opts?.seedSalt ?? '';
+    const runtimeLevel = randomizeLevelContent(data, seedSalt);
+    this.current = runtimeLevel;
+    this.buildTerrain(runtimeLevel);
+    this.build(runtimeLevel);
     if (player) {
-      player.setBodyPosition(data.playerStart.x, data.playerStart.y);
+      player.setBodyPosition(runtimeLevel.playerStart.x, runtimeLevel.playerStart.y);
       player.setBodyVelocity(0, 0);
     }
     // 题目随机化：按难度抽题装配运行时 challenges
     const tier = opts?.tier ?? 1;
     const standard = opts?.standard ?? 'cefr';
-    const seedSalt = opts?.seedSalt ?? '';
     const filterBasic = opts?.filterBasic ?? false;
-    const { challenges } = pickChallenges(data, tier, standard, seedSalt, filterBasic);
-    data.challenges = challenges;
-    log.info('level loaded', { levelId, theme: data.theme, tier, standard, slots: challenges.length });
-    return data;
+    const { challenges } = pickChallenges(runtimeLevel, tier, standard, seedSalt, filterBasic);
+    runtimeLevel.challenges = challenges;
+    log.info('level loaded', { levelId, theme: runtimeLevel.theme, tier, standard, slots: challenges.length, layout: 'seeded-random' });
+    return runtimeLevel;
   }
 
   get currentLevel(): LevelData | undefined {

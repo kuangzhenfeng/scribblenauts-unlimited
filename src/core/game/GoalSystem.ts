@@ -4,12 +4,13 @@
  * Starite 计数：完整 Starite 或 10 碎片换 1 Starite。
  * 达阈值解除石化诅咒 = 通关。
  *
- * 与旧项目差异：PuzzleCondition 只实现首期 4 种（删除 entity-at/npc-state/counter 占位）。
+ * PuzzleCondition 同时支持首期四种兼容条件、数量/区域筛选、NPC 状态与有序阶段。
  * 依赖 EntityQuery 抽象（core 层），不耦合 EntityManager 具体实现。
  */
 
 import type { LevelData, PuzzleCondition } from '@/core/types/level';
 import type { Entity, EntityQuery } from '@/core/entity/Entity';
+import type { BehaviorTag, StateTag } from '@/core/types/rules';
 import { log } from '@/util/log';
 import { L } from '@/core/i18n/I18n';
 
@@ -32,6 +33,8 @@ export class GoalSystem {
   private shards = 0;
   private starites = 0;
   private won = false;
+  /** 有序条件的阶段游标只属于本次运行，挑战完成后不会再次评估。 */
+  private readonly sequenceProgress = new Map<string, number>();
 
   constructor(
     private readonly entities: EntityQuery,
@@ -52,7 +55,7 @@ export class GoalSystem {
     if (!lvl?.challenges) return;
     for (const ch of lvl.challenges) {
       if (this.level.isChallengeDone(ch.id)) continue;
-      if (this.allConditionsMet(ch.puzzle.conditions)) {
+      if (this.challengeMet(ch)) {
         this.completeChallenge(ch);
       }
     }
@@ -86,65 +89,116 @@ export class GoalSystem {
   restore(starites: number, shards: number, completed: string[]): void {
     this.starites = starites;
     this.shards = shards;
+    this.sequenceProgress.clear();
     for (const id of completed) this.level.markChallengeDone(id);
     if (starites >= WIN_STARITE) this.won = true;
   }
 
-  private allConditionsMet(conditions: PuzzleCondition[]): boolean {
-    for (const c of conditions) {
-      if (!this.conditionMet(c)) return false;
+  private challengeMet(ch: NonNullable<LevelData['challenges']>[number]): boolean {
+    const stages = [ch.puzzle, ...(ch.stages ?? [])];
+    const stageKey = `challenge:${ch.id}`;
+    let stage = this.sequenceProgress.get(stageKey) ?? 0;
+    while (stage < stages.length && this.allConditionsMet(stages[stage].conditions, `${stageKey}:${stage}`)) {
+      stage += 1;
     }
-    return true;
+    this.sequenceProgress.set(stageKey, stage);
+    return stage >= stages.length;
   }
 
-  private conditionMet(c: PuzzleCondition): boolean {
+  private allConditionsMet(conditions: PuzzleCondition[], progressKey: string): boolean {
+    return conditions.every((c, index) => this.conditionMet(c, `${progressKey}:${index}`));
+  }
+
+  private conditionMet(c: PuzzleCondition, progressKey: string): boolean {
     switch (c.kind) {
       case 'object-present':
-        return this.hasObjectNear(c.typeId, c.adjectives, c.near.npcId, c.near.radius);
+        return this.countMatchingEntities(c.typeId, c.adjectives, c.near, undefined) >= normalizeCount(c.count, 1);
       case 'object-destroyed':
-        return !this.hasEntityOfType(c.typeId);
+        return this.countMatchingEntities(c.typeId, undefined, undefined, c.region) === 0;
+      case 'counter':
+        return this.countMatchingEntities(c.typeId, c.adjectives, c.near, c.region) >= normalizeCount(c.count, 0);
+      case 'entity-at':
+        return this.countMatchingEntities(c.typeId, c.adjectives, undefined, c.region) >= normalizeCount(c.count, 1);
+      case 'npc-state':
+        return this.npcHasState(c.npcId, c.states, c.mode);
+      case 'sequence': {
+        let stage = this.sequenceProgress.get(progressKey) ?? 0;
+        while (stage < c.conditions.length && this.conditionMet(c.conditions[stage], `${progressKey}:${stage}`)) {
+          stage += 1;
+        }
+        this.sequenceProgress.set(progressKey, stage);
+        return stage >= c.conditions.length;
+      }
       case 'all-of':
-        return c.conditions.every((sub) => this.conditionMet(sub));
+        return this.allConditionsMet(c.conditions, `${progressKey}:all`);
       case 'any-of':
-        return c.conditions.some((sub) => this.conditionMet(sub));
+        return c.conditions.some((sub, index) => this.conditionMet(sub, `${progressKey}:any:${index}`));
       default:
         return false;
     }
   }
 
-  private hasObjectNear(
+  private countMatchingEntities(
     typeId: string,
     adjectives: string[] | undefined,
-    npcId: string,
-    radius: number,
-  ): boolean {
-    const npcEntityId = this.level.npcEntityId(npcId);
-    if (!npcEntityId) return false;
-    const npc = this.entities.get(npcEntityId);
-    if (!npc) return false;
-    const nx = npc.bodyPositionX;
-    const ny = npc.bodyPositionY;
-    const r2 = radius * radius;
+    near: { npcId: string; radius: number } | undefined,
+    region: { minX: number; minY: number; maxX: number; maxY: number } | undefined,
+  ): number {
+    let nearPoint: { x: number; y: number; r2: number } | undefined;
+    if (near) {
+      const npcEntityId = this.level.npcEntityId(near.npcId);
+      if (!npcEntityId) return 0;
+      const npc = this.entities.get(npcEntityId);
+      if (!npc) return 0;
+      nearPoint = { x: npc.bodyPositionX, y: npc.bodyPositionY, r2: near.radius * near.radius };
+    }
+    let count = 0;
     for (const e of this.entities.all()) {
       if (e.typeId !== typeId) continue;
+      if (e.dead) continue;
       // 形容词校验：实体 appliedAdjectives 须为题目要求 adjectives 的超集
       if (adjectives && adjectives.length > 0) {
         const applied = e.appliedAdjectives;
         if (!applied || !adjectives.every((a) => applied.has(a))) continue;
       }
-      const dx = e.bodyPositionX - nx;
-      const dy = e.bodyPositionY - ny;
-      if (dx * dx + dy * dy <= r2) return true;
+      if (nearPoint) {
+        const dx = e.bodyPositionX - nearPoint.x;
+        const dy = e.bodyPositionY - nearPoint.y;
+        if (dx * dx + dy * dy > nearPoint.r2) continue;
+      }
+      if (region && !insideRegion(e.bodyPositionX, e.bodyPositionY, region)) continue;
+      count += 1;
     }
-    return false;
+    return count;
   }
 
-  private hasEntityOfType(typeId: string): boolean {
-    for (const e of this.entities.all()) {
-      if (e.typeId === typeId) return true;
-    }
-    return false;
+  private npcHasState(npcId: string, states: string[], mode: 'all' | 'any' = 'all'): boolean {
+    if (states.length === 0) return false;
+    const entityId = this.level.npcEntityId(npcId);
+    if (!entityId) return false;
+    const entity = this.entities.get(entityId);
+    if (!entity) return false;
+    const hasState = (state: string): boolean => {
+      if (state === 'dead') return entity.dead === true || entity.tags?.hasState('dead') === true;
+      if (state === entity.state.locomotion) return true;
+      if (entity.state.stateLayer.has(state) || entity.state.stateLayer.has(`state:${state}`)) return true;
+      return entity.tags?.state.has(state as StateTag) === true || entity.tags?.behavior.has(state as BehaviorTag) === true;
+    };
+    return mode === 'any' ? states.some(hasState) : states.every(hasState);
   }
+}
+
+function normalizeCount(value: number | undefined, fallback: number): number {
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  return Math.max(0, Math.floor(value));
+}
+
+function insideRegion(
+  x: number,
+  y: number,
+  region: { minX: number; minY: number; maxX: number; maxY: number },
+): boolean {
+  return x >= region.minX && x <= region.maxX && y >= region.minY && y <= region.maxY;
 }
 
 /** 占位：LevelRef 由 game 层实现，提供当前关卡/挑战完成集合/NPC 实体 id 映射 */

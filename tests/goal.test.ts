@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { GoalSystem, type ProgressCallbacks, type LevelRef } from '@/core/game/GoalSystem';
 import type { Entity, EntityQuery } from '@/core/entity/Entity';
 import type { LevelData } from '@/core/types/level';
+import { TagSet } from '@/core/rules/TagSet';
 
 function fakeEntity(id: string, typeId: string, x: number, y: number, adjectives?: string[]): Entity {
   return {
@@ -19,7 +20,7 @@ function fakeEntity(id: string, typeId: string, x: number, y: number, adjectives
     layer: 1,
     critical: false,
     lastTouchedAt: 0,
-    tags: undefined as never,
+    tags: new TagSet(),
     appliedAdjectives: adjectives ? new Set(adjectives) : undefined,
     get bodyPositionX() { return x; },
     get bodyPositionY() { return y; },
@@ -312,5 +313,80 @@ describe('GoalSystem', () => {
     });
     goal.evaluate();
     expect(events).toHaveLength(0);
+  });
+
+  it('supports counted objects constrained by an NPC radius', () => {
+    const npc = fakeEntity('npc-count', 'human', 100, 100);
+    const apple1 = fakeEntity('apple-1', 'apple', 110, 100);
+    const apple2 = fakeEntity('apple-2', 'apple', 125, 100);
+    const farApple = fakeEntity('apple-far', 'apple', 300, 100);
+    const entities: Entity[] = [npc, apple1, apple2, farApple];
+    const em: EntityQuery = { all: () => entities, get: (id) => entities.find((e) => e.id === id) };
+    const level = {
+      id: 'count-test',
+      challenges: [{
+        id: 'count-challenge', giverNpcId: 'npc-count', kind: 'shard' as const,
+        puzzle: { conditions: [{ kind: 'counter' as const, typeId: 'apple', count: 2, near: { npcId: 'npc-count', radius: 50 } }] },
+        reward: { type: 'shard' as const, count: 1 }, dialog: [{ zh: '', en: '' }],
+      }],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc-count', level);
+    const completed: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: () => {}, onStarite: () => {}, onChallengeComplete: (id) => completed.push(id), onWin: () => {},
+    });
+
+    goal.evaluate();
+    expect(completed).toEqual(['count-challenge']);
+  });
+
+  it('advances authored challenge stages in order', () => {
+    const npc = fakeEntity('npc-sequence', 'human', 100, 100);
+    const key = fakeEntity('key-1', 'key', 110, 100);
+    const entities: Entity[] = [npc, key];
+    const em: EntityQuery = { all: () => entities, get: (id) => entities.find((e) => e.id === id) };
+    const level = {
+      id: 'sequence-test',
+      challenges: [{
+        id: 'sequence-challenge', giverNpcId: 'npc-sequence', kind: 'shard' as const,
+        puzzle: { conditions: [{ kind: 'object-present' as const, typeId: 'key', near: { npcId: 'npc-sequence', radius: 50 } }] },
+        stages: [{ conditions: [{ kind: 'entity-at' as const, typeId: 'chest', region: { minX: 80, minY: 80, maxX: 140, maxY: 140 } }] }],
+        reward: { type: 'shard' as const, count: 1 }, dialog: [{ zh: '', en: '' }],
+      }],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc-sequence', level);
+    const completed: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: () => {}, onStarite: () => {}, onChallengeComplete: (id) => completed.push(id), onWin: () => {},
+    });
+
+    goal.evaluate();
+    expect(completed).toHaveLength(0);
+    entities.push(fakeEntity('chest-1', 'chest', 120, 100));
+    goal.evaluate();
+    expect(completed).toEqual(['sequence-challenge']);
+  });
+
+  it('matches NPC state tags for state-sensitive goals', () => {
+    const npc = fakeEntity('npc-state', 'human', 100, 100);
+    npc.tags.addState('petrified');
+    const entities: Entity[] = [npc];
+    const em: EntityQuery = { all: () => entities, get: (id) => entities.find((e) => e.id === id) };
+    const level = {
+      id: 'state-test',
+      challenges: [{
+        id: 'state-challenge', giverNpcId: 'npc-state', kind: 'shard' as const,
+        puzzle: { conditions: [{ kind: 'npc-state' as const, npcId: 'npc-state', states: ['petrified'] }] },
+        reward: { type: 'shard' as const, count: 1 }, dialog: [{ zh: '', en: '' }],
+      }],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc-state', level);
+    const completed: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: () => {}, onStarite: () => {}, onChallengeComplete: (id) => completed.push(id), onWin: () => {},
+    });
+
+    goal.evaluate();
+    expect(completed).toEqual(['state-challenge']);
   });
 });

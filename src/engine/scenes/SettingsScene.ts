@@ -5,7 +5,7 @@
  * 难度档位与定义方式、清除存档。设置项遵循 YAGNI：只纳入真正有意义的配置。
  * 音乐在本页持续播放（MusicDirector 全局单例），拖动滑块可实时听到变化。
  *
- * 设计：多张撕纸便签卡叠放（音频/控制/难度/数据），每卡独立纸片质感 +
+ * 设计：多张纸张便签卡叠放（音频/控制/难度/数据），每卡独立纸片质感 +
  * 手放感轻微旋转；统一组件词汇（toggle / 分段组 / 难度档位卡片），状态不
  * 仅靠颜色（toggle 拨片位移 + 背景变化）；滑块带填充进度条与自定义 thumb；
  * 入场错落淡入，尊重 prefers-reduced-motion。
@@ -46,10 +46,6 @@ import { CEFR_WORD_COUNTS, FREQ_WORD_COUNTS } from '@/core/data/questions/word-m
 import { CEFR_QUESTION_COUNTS, FREQ_QUESTION_COUNTS } from '@/core/data/questions/bank';
 import { generateSeed } from '@/util/rng';
 
-/** 撕纸 clip-path 值（与 paperStyle.TORN_EDGE 同步，CSS 无法引用 JS 常量） */
-const TORN_EDGE_CSS =
-  'polygon(0% 4%,3% 0%,8% 3%,14% 1%,20% 4%,28% 0%,36% 3%,44% 1%,52% 4%,60% 0%,68% 3%,76% 1%,84% 4%,92% 0%,97% 3%,100% 1%,99% 96%,96% 100%,90% 97%,84% 99%,78% 96%,70% 100%,62% 97%,54% 99%,46% 96%,38% 100%,30% 97%,22% 99%,14% 96%,8% 100%,3% 97%,0% 99%)';
-
 export class SettingsScene extends Phaser.Scene {
   private overlay!: HTMLDivElement;
   /** 静音开关时的滑块禁用态管理 */
@@ -74,11 +70,10 @@ export class SettingsScene extends Phaser.Scene {
     const style = document.createElement('style');
     style.id = 'settings-style';
     style.textContent = `
-      /* —— 卡片：撕纸便签 —— */
+      /* —— 卡片：平整纸张便签 —— */
       .set-card{
         position:relative;background:#f7f1e3;color:#2b2b2b;font-family:${UI_FONT};
         box-shadow:0 8px 20px rgba(60,40,20,0.25);
-        clip-path:${TORN_EDGE_CSS};
         border-radius:14px;padding:22px 26px 20px;width:100%;
         max-width:640px;box-sizing:border-box;pointer-events:auto;
         animation:setCardIn .34s cubic-bezier(.22,1,.36,1) both;

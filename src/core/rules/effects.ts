@@ -15,6 +15,7 @@ import type {
   EffectTarget,
   StateTag,
   FlagTag,
+  ImpulseDirection,
 } from '@/core/types/rules';
 import type { Entity, EntityQuery } from '@/core/entity/Entity';
 import type { TagIndex } from './TagIndex';
@@ -76,11 +77,14 @@ function removeFlag(e: Entity, flags: FlagTag[]): void {
 }
 
 function damage(e: Entity, amount: number, deps: EffectDeps): void {
-  if (e.dead) return;
+  if (e.dead || e.drawParams.invincible === true) return;
   e.health = (e.health ?? 100) - amount;
   log.debug('damage', { entity: e.id, amount, health: e.health });
   if (e.health <= 0) {
+    e.health = 0;
     e.dead = true;
+    setState(e, 'dead');
+    e.state.locomotion = 'dead';
     // 玩家死亡由 respawn 处理，此处不销毁
     if (!e.isPlayer) deps.destroyEntity(e);
   }
@@ -138,6 +142,8 @@ handlers.set('destroy', (eff, ctx, deps) => {
   if (eff.kind !== 'destroy') return;
   for (const e of resolveTarget(eff.target, ctx)) {
     e.dead = true;
+    setState(e, 'dead');
+    e.state.locomotion = 'dead';
     deps.destroyEntity(e);
   }
 });
@@ -174,10 +180,37 @@ handlers.set('remove-flag', (eff, ctx) => {
 
 handlers.set('apply-impulse', (eff, ctx, deps) => {
   if (eff.kind !== 'apply-impulse') return;
-  for (const e of resolveTarget(eff.target, ctx)) {
-    deps.applyImpulse(e, eff.dir, eff.mag);
+  const targets = resolveTarget(eff.target, ctx);
+  for (const e of targets) {
+    deps.applyImpulse(e, resolveImpulseDirection(eff.dir, e, ctx, targets.length > 1), eff.mag);
   }
 });
+
+/** 将声明式相对方向解析为物理层可消费的单位向量。 */
+function resolveImpulseDirection(
+  direction: ImpulseDirection,
+  target: Entity,
+  ctx: EffectContext,
+  multipleTargets: boolean,
+): [number, number] {
+  if (Array.isArray(direction)) return direction;
+  if (direction === 'upward') return [0, -1];
+  // both 目标没有唯一来源，采用稳定的向上击退，避免同一 effect 对双方方向相反。
+  if (multipleTargets) return direction === 'away-from-source' ? [0, -1] : [0, 1];
+  const source = target === ctx.a ? ctx.b : ctx.a;
+  if (!source) return direction === 'away-from-source' ? [1, 0] : [-1, 0];
+  let dx = target.bodyPositionX - source.bodyPositionX;
+  let dy = target.bodyPositionY - source.bodyPositionY;
+  const length = Math.hypot(dx, dy);
+  if (length === 0) {
+    dx = 1;
+    dy = 0;
+  } else {
+    dx /= length;
+    dy /= length;
+  }
+  return direction === 'away-from-source' ? [dx, dy] : [-dx, -dy];
+}
 
 export function executeEffect(eff: RuleEffect, ctx: EffectContext, deps: EffectDeps): void {
   const h = handlers.get(eff.kind);

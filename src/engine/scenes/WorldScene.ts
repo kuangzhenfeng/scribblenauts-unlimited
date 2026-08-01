@@ -32,6 +32,11 @@ import { ProgressPanel } from '@/ui/ProgressPanel';
 import { SpeechBubble } from '@/ui/SpeechBubble';
 import { ObjectEditorUi } from '@/ui/ObjectEditorUi';
 import { ObjectActionPanel } from '@/ui/ObjectActionPanel';
+import { BackpackPanel } from '@/ui/BackpackPanel';
+import { ObjectLibrary } from '@/game/ObjectLibrary';
+import { WorldMapOverlay, type WorldMapNode } from '@/ui/WorldMapOverlay';
+import { MeritBoard, type MeritChallenge } from '@/ui/MeritBoard';
+import { StariteVision, type StariteCollectible } from '@/ui/StariteVision';
 import { PauseOverlay } from '@/ui/PauseOverlay';
 import { TouchControls } from '@/ui/TouchControls';
 import { SaveStore } from '@/core/data/save/SaveStore';
@@ -45,7 +50,7 @@ import { log } from '@/util/log';
 import { music, type MusicMood } from '@/audio/MusicDirector';
 import { sfx } from '@/audio/SoundEffects';
 import { loadSettings } from '@/core/data/settings/SettingsStore';
-import { ICON_PENCIL, ICON_ROTATE } from '@/ui/icons';
+import { ICON_BACKPACK, ICON_MAP, ICON_PENCIL, ICON_ROTATE, ICON_TROPHY } from '@/ui/icons';
 import { UI_FONT } from '@/ui/paperStyle';
 import type { GameEntity } from '@/game/Entity';
 import type { ParseCandidate, ParsedAdjective } from '@/core/lex/InputParser';
@@ -86,6 +91,13 @@ export class WorldScene extends Phaser.Scene {
   private bubble!: SpeechBubble;
   private objectEditorUi!: ObjectEditorUi;
   private objectActionPanel!: ObjectActionPanel;
+  private objectLibrary!: ObjectLibrary;
+  private objectEditor!: ObjectEditor;
+  private backpackPanel!: BackpackPanel;
+  private worldMapOverlay!: WorldMapOverlay;
+  private meritBoard!: MeritBoard;
+  private stariteVision!: StariteVision;
+  private utilityButtons: HTMLButtonElement[] = [];
   private pauseOverlay!: PauseOverlay;
   /** 游戏是否处于暂停态（窗口失焦或 ESC 触发） */
   private paused = false;
@@ -124,6 +136,7 @@ export class WorldScene extends Phaser.Scene {
     this.tagIndex = new TagIndex();
     this.camera = new Camera(this.cameras.main);
     this.save = new SaveStore();
+    this.objectLibrary = new ObjectLibrary(this.save);
     this.environment = new Environment(this);
 
     // effect 依赖
@@ -169,7 +182,8 @@ export class WorldScene extends Phaser.Scene {
     this.hud = new Hud();
     this.progress = new ProgressPanel();
     this.bubble = new SpeechBubble();
-    this.objectEditorUi = new ObjectEditorUi(new ObjectEditor(this.save));
+    this.objectEditor = new ObjectEditor(this.save);
+    this.objectEditorUi = new ObjectEditorUi(this.objectEditor);
 
     // 进度回调
     const cb: ProgressCallbacks = {
@@ -189,11 +203,23 @@ export class WorldScene extends Phaser.Scene {
           this.spawnFx.playStariteFly(fromX, fromY, () => sfx.play('starite'));
         }
         this.progress.toast(`完成！${dialogZh}`);
+        this.meritBoard?.setCompleted(this.level.completedArray());
+        const completedChallenge = this.level.currentLevel?.challenges?.find((challenge) => challenge.id === challengeId);
+        if (completedChallenge?.kind === 'starite-gate') {
+          const currentIndex = LevelManager.LEVEL_ORDER.indexOf(this.level.currentLevel?.id ?? '');
+          const nextLevelId = currentIndex >= 0 ? LevelManager.LEVEL_ORDER[currentIndex + 1] : undefined;
+          if (nextLevelId) {
+            void this.save.unlockLevel(nextLevelId).then((data) => {
+              this.worldMapOverlay?.update(this.worldMapNodes(), data.unlockedLevels, this.level.currentLevel?.id);
+            });
+          }
+        }
         setTimeout(() => this.progress.render(this.goal.stariteCount, this.goal.shardCount, this.level.completedArray()), 2400);
       },
       onWin: () => this.progress.toast('通关！Lily 解除石化'),
       onProgress: async (starites, shards, completed) => {
         await this.save.updateProgress(starites, shards, completed);
+        this.meritBoard?.setCompleted(completed);
       },
     };
 
@@ -222,6 +248,7 @@ export class WorldScene extends Phaser.Scene {
     music.start(themeToMood(this.level.currentLevel?.theme ?? 'meadow'));
     // 初始化顶栏挑战节点
     this.progress.setLevel(this.level.currentLevel!.challenges ?? []);
+    this.setupRichUi(saveData);
 
     // 玩家（首关生成后 spawnPlayer）
     const lvl = this.level.currentLevel!;
@@ -303,6 +330,7 @@ export class WorldScene extends Phaser.Scene {
     });
     nbBtn.addEventListener('click', () => notebook.toggle());
     document.body.appendChild(nbBtn);
+    this.utilityButtons.push(nbBtn);
 
     if (kb) {
       kb.on('keydown-ENTER', (e: KeyboardEvent) => {
@@ -416,6 +444,151 @@ export class WorldScene extends Phaser.Scene {
     log.info('WorldScene resize', { width, height });
   }
 
+  /** 装配原版核心辅助功能：魔法背包、世界地图、Merit Board 与 Starite Vision。 */
+  private setupRichUi(saveData: Awaited<ReturnType<SaveStore['load']>>): void {
+    const currentLevel = this.level.currentLevel!;
+    this.backpackPanel = new BackpackPanel(this.objectLibrary, {
+      onSpawn: (typeId) => void this.spawnFromLibrary(typeId),
+      onEdit: (typeId) => this.objectEditorUi.openForEntity({ typeId }),
+      onDuplicate: async (typeId) => {
+        const result = await this.objectEditor.duplicate(typeId);
+        if ('error' in result) this.progress.toast(result.error);
+        await this.backpackPanel.refresh();
+      },
+      onDelete: async (typeId) => {
+        await this.objectLibrary.removeCustomObject(typeId);
+        await this.backpackPanel.refresh();
+      },
+    });
+    this.worldMapOverlay = new WorldMapOverlay({
+      nodes: this.worldMapNodes(),
+      unlockedLevels: saveData.unlockedLevels,
+      currentLevelId: currentLevel.id,
+      onEnter: (node) => this.enterLevelFromMap(node),
+    });
+    this.meritBoard = new MeritBoard({
+      challenges: this.meritChallenges(),
+      completedChallengeIds: this.level.completedArray(),
+      levelTitle: currentLevel.id,
+    });
+    this.stariteVision = new StariteVision({
+      collectibles: this.stariteCollectibles(),
+      onSelect: (target) => this.camera.snapTo(target.x, target.y, WORLD_CAMERA_FOCUS_OFFSET_Y),
+    });
+    const visionPanel = this.stariteVision.element.querySelector<HTMLElement>('.starite-vision__panel');
+    if (visionPanel) visionPanel.style.top = '68px';
+
+    this.addUtilityButton('backpack-btn', '打开魔法背包（B）', ICON_BACKPACK, 68, () => void this.backpackPanel.toggle());
+    this.addUtilityButton('world-map-btn', '打开世界地图（M）', ICON_MAP, 122, () => this.worldMapOverlay.show());
+    this.addUtilityButton('merit-board-btn', '打开挑战面板（J）', ICON_TROPHY, 176, () => this.meritBoard.show());
+
+    const keyboard = this.input.keyboard;
+    if (keyboard) {
+      const shortcutAllowed = (): boolean => {
+        const active = document.activeElement;
+        return !(active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || active instanceof HTMLSelectElement);
+      };
+      keyboard.on('keydown-B', () => { if (shortcutAllowed()) void this.backpackPanel.toggle(); });
+      keyboard.on('keydown-M', () => { if (shortcutAllowed()) this.worldMapOverlay.show(); });
+      keyboard.on('keydown-J', () => { if (shortcutAllowed()) this.meritBoard.show(); });
+      keyboard.on('keydown-V', () => { if (shortcutAllowed()) this.stariteVision.toggle(); });
+    }
+  }
+
+  private addUtilityButton(
+    id: string,
+    title: string,
+    icon: string,
+    rightOffset: number,
+    onClick: () => void,
+  ): void {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = id;
+    button.title = title;
+    button.setAttribute('aria-label', title);
+    button.style.cssText = [
+      'position:fixed',
+      `top:max(14px,env(safe-area-inset-top))`,
+      `right:max(${rightOffset}px,calc(env(safe-area-inset-right) + ${rightOffset - 14}px))`,
+      'z-index:51',
+      'width:46px',
+      'height:46px',
+      'background:#f4c54f',
+      'border:2px solid #6a3d08',
+      'border-radius:10px',
+      'display:flex',
+      'align-items:center',
+      'justify-content:center',
+      'cursor:pointer',
+      'box-shadow:0 2px 0 #6a3d08,0 4px 10px rgba(48,34,18,0.2),inset 0 1px 0 rgba(255,255,255,0.48)',
+      'transition:transform 0.12s ease,box-shadow 0.12s ease',
+      'user-select:none',
+    ].join(';');
+    button.innerHTML = icon;
+    button.addEventListener('mouseenter', () => { button.style.transform = 'scale(1.08)'; });
+    button.addEventListener('mouseleave', () => { button.style.transform = 'scale(1)'; });
+    button.addEventListener('click', onClick);
+    document.body.appendChild(button);
+    this.utilityButtons.push(button);
+  }
+
+  private async spawnFromLibrary(typeId: string): Promise<void> {
+    const candidate = await this.objectLibrary.getSpawnCandidate(typeId);
+    if (!candidate) {
+      this.progress.toast('背包条目已失效');
+      return;
+    }
+    this.onSpawn(candidate, 0, 0);
+  }
+
+  private worldMapNodes(): WorldMapNode[] {
+    const themeNames: Record<string, string> = {
+      jungle: '丛林草地',
+      cave: '幽暗洞穴',
+      snow: '冰雪荒原',
+      desert: '烈日沙漠',
+      volcano: '熔岩火山',
+    };
+    return LevelManager.listLevels().map((level, index) => ({
+      id: level.id,
+      title: themeNames[level.theme] ?? level.id,
+      subtitle: `${index + 1} / ${LevelManager.LEVEL_ORDER.length}`,
+      x: 12 + index * 19,
+      y: 52 + (index % 2 === 0 ? -13 : 13),
+      accent: index === 0 ? '#3f9a43' : '#a05a00',
+      starites: 0,
+      maxStarites: 1,
+    }));
+  }
+
+  private meritChallenges(): MeritChallenge[] {
+    return (this.level.currentLevel?.challenges ?? []).map((challenge) => ({
+      id: challenge.id,
+      title: challenge.dialog[0]?.zh ?? challenge.id,
+      description: challenge.dialog[0]?.en,
+      hint: challenge.dialog[1]?.zh,
+      reward: challenge.reward,
+    }));
+  }
+
+  private stariteCollectibles(): StariteCollectible[] {
+    const starite = this.level.currentLevel?.starite;
+    if (!starite) return [];
+    return [{
+      id: `${this.level.currentLevel?.id ?? 'level'}:starite`,
+      kind: 'starite',
+      x: starite.x,
+      y: starite.y,
+      label: '本区域 Starite',
+    }];
+  }
+
+  private enterLevelFromMap(node: WorldMapNode): void {
+    this.worldMapOverlay.hide();
+    this.scene.restart({ levelId: node.id });
+  }
+
   /**
    * landscape 偏好下，监听方向变化：竖屏时显示旋转提示，横屏时移除。
    * iOS Safari 非 PWA 不支持 screen.orientation.lock，此遮罩为兜底提示。
@@ -497,14 +670,14 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** 生成物体（笔记本回车）：出现在主角前方约 80px 处 */
-  private onSpawn(candidate: ParseCandidate, _sx: number, _sy: number): void {
+  private onSpawn(candidate: ParseCandidate, _sx: number, _sy: number): boolean {
     const p = this.entities.getPlayer() as GameEntity | undefined;
     const spawnX = p ? p.bodyPositionX + p.state.facing * 80 : 0;
     const spawnY = p ? p.bodyPositionY - 30 : 0;
     const r = this.spawner.spawnCandidate(candidate, spawnX, spawnY);
     if (r.reason) {
       this.progress.toast(r.reason);
-      return;
+      return false;
     }
     if (r.entity?.gameObject) this.phys.attachBody(r.entity.gameObject, r.entity.body);
     // 特效坐标从世界转屏幕
@@ -512,6 +685,8 @@ export class WorldScene extends Phaser.Scene {
     const fxSx = (spawnX - cam.scrollX) * cam.zoom + cam.x;
     const fxSy = (spawnY - cam.scrollY) * cam.zoom + cam.y;
     if (r.entity) this.spawnFx.playSpawn(r.entity, fxSx, fxSy);
+    void this.objectLibrary.recordSpawn(candidate.noun.entryId);
+    return true;
   }
 
   /** 对选中实体施加形容词 */
@@ -589,8 +764,17 @@ export class WorldScene extends Phaser.Scene {
     if (p && this.level.currentLevel) {
       const b = this.level.currentLevel.bounds;
       if (p.bodyPositionY > b.maxY + 200) {
-        p.setBodyPosition(this.player.respawnPoint.x, this.player.respawnPoint.y);
-        p.setBodyVelocity(0, 0);
+        this.player.respawn();
+      } else if (p.dead) {
+        const timers = p.stateTimers ?? (p.stateTimers = new Map<string, number>());
+        const respawnAt = timers.get('player-respawn-at');
+        if (respawnAt === undefined) timers.set('player-respawn-at', this.time.now + 900);
+        else if (this.time.now >= respawnAt) {
+          timers.delete('player-respawn-at');
+          this.player.respawn();
+        }
+      } else {
+        p.stateTimers?.delete('player-respawn-at');
       }
     }
     // 6) 目标评估
@@ -624,6 +808,12 @@ export class WorldScene extends Phaser.Scene {
         }
         // 切关后刷新顶栏挑战节点为新关卡题目
         this.progress.setLevel(this.level.currentLevel?.challenges ?? []);
+        this.meritBoard.update(this.meritChallenges(), this.level.completedArray());
+        this.meritBoard.setLevelTitle(this.level.currentLevel?.id);
+        this.stariteVision.setCollectibles(this.stariteCollectibles());
+        void this.save.load().then((data) => {
+          this.worldMapOverlay.update(this.worldMapNodes(), data.unlockedLevels, this.level.currentLevel?.id);
+        });
         // 立即 snap 相机到玩家新位置，避免 lerp 造成玩家飞出画面
         this.camera.snapTo(p.bodyPositionX, p.bodyPositionY, WORLD_CAMERA_FOCUS_OFFSET_Y);
       }
@@ -676,6 +866,12 @@ export class WorldScene extends Phaser.Scene {
 
   /** 清理本场景创建的 DOM 浮层，兼容场景重启与切换两种生命周期路径。 */
   private clearUiOverlays(): void {
+    this.backpackPanel?.hide();
+    this.worldMapOverlay?.destroy();
+    this.meritBoard?.destroy();
+    this.stariteVision?.destroy();
+    for (const button of this.utilityButtons) button.remove();
+    this.utilityButtons = [];
     document.getElementById('title-overlay')?.remove();
     for (const id of [
       'hud',
@@ -689,6 +885,10 @@ export class WorldScene extends Phaser.Scene {
       'pause-overlay',
       'touch-controls',
       'notebook-btn',
+      'backpack-panel',
+      'world-map-overlay',
+      'merit-board',
+      'starite-vision',
       'progress-layout-style',
       'speech-bubble-layout-style',
       'world-controls-hint',

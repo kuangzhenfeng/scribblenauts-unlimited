@@ -50,6 +50,18 @@
       "y": 240,
       "w": 240,
       "h": 24
+    },
+    {
+      "x": -650,
+      "y": 120,
+      "w": 160,
+      "h": 24
+    },
+    {
+      "x": 600,
+      "y": 160,
+      "w": 160,
+      "h": 24
     }
   ],
   "spawns": [
@@ -81,6 +93,24 @@
       "typeId": "dragon",
       "x": 400,
       "y": 200,
+      "layer": 0
+    },
+    {
+      "typeId": "coal",
+      "x": -550,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "metal",
+      "x": 550,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "fire",
+      "x": 600,
+      "y": 330,
       "layer": 0
     }
   ],
@@ -117,6 +147,18 @@
       "drawParams": {
         "shirtColor": "#2e4053",
         "pantsColor": "#1a2a3a"
+      }
+    },
+    {
+      "id": "npc-lava-diver",
+      "typeId": "human",
+      "x": 600,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#922b21",
+        "pantsColor": "#641e16",
+        "hat": "miner"
       }
     }
   ],
@@ -167,11 +209,61 @@
       "x": 450,
       "y": 510,
       "scale": 1
+    },
+    {
+      "kind": "stalactite",
+      "x": 700,
+      "y": 20,
+      "scale": 0.8
+    },
+    {
+      "kind": "lantern",
+      "x": 650,
+      "y": 540,
+      "scale": 0.9
     }
   ],
   "starite": {
     "x": 600,
     "y": 300
   },
-  "challengeSlots": 3
+  "authoredChallenges": [
+    {
+      "id": "volcano-blacksmith-forge",
+      "giverNpcId": "npc-blacksmith",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "anvil", "near": { "npcId": "npc-blacksmith", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "metal", "count": 2, "region": { "minX": -500, "minY": 430, "maxX": 100, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "铁匠：先召来铁砧，再送两块金属锻造武器。", "en": "Blacksmith: Bring an anvil, then two pieces of metal for a weapon." } ]
+    },
+    {
+      "id": "volcano-firemage-cooling",
+      "giverNpcId": "npc-firemage",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "water", "count": 2, "near": { "npcId": "npc-firemage", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-firemage", "radius": 180 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "火焰法师：两份水先降温，再用冰封住裂口。", "en": "Fire Mage: Cool the vent with two waters, then seal it with ice." } ]
+    },
+    {
+      "id": "volcano-scientist-sample",
+      "giverNpcId": "npc-volcanologist",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "goggles", "near": { "npcId": "npc-volcanologist", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "crystal", "region": { "minX": 200, "minY": 430, "maxX": 700, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "火山学家：戴上护目镜，再把水晶样本送到安全台。", "en": "Volcanologist: Put on goggles, then bring a crystal sample to the safe platform." } ]
+    },
+    {
+      "id": "volcano-diver-gate",
+      "giverNpcId": "npc-lava-diver",
+      "kind": "starite-gate",
+      "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "npc-state", "npcId": "npc-lava-diver", "states": [ "normal" ] }, { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-lava-diver", "radius": 180 } } ] } ] },
+      "stages": [ { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-lava-diver", "radius": 180 } }, { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-lava-diver", "radius": 180 } } ] } ] } ],
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [ { "zh": "熔岩潜水员：用绳索固定自己，再带来冰或水压住熔岩。", "en": "Lava Diver: Secure yourself with rope, then bring ice or water to suppress the lava." } ]
+    }
+  ],
+  "challengeSlots": 4
 }

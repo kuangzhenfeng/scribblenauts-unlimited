@@ -50,6 +50,18 @@
       "y": 250,
       "w": 160,
       "h": 24
+    },
+    {
+      "x": -650,
+      "y": 140,
+      "w": 160,
+      "h": 24
+    },
+    {
+      "x": 600,
+      "y": 170,
+      "w": 140,
+      "h": 24
     }
   ],
   "spawns": [
@@ -88,6 +100,24 @@
       "x": 350,
       "y": 330,
       "layer": 0
+    },
+    {
+      "typeId": "iceberg",
+      "x": 600,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "sleigh",
+      "x": -600,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "fish",
+      "x": 20,
+      "y": 330,
+      "layer": 0
     }
   ],
   "npcs": [
@@ -123,6 +153,18 @@
       "drawParams": {
         "shirtColor": "#e8f0f5",
         "pantsColor": "#244b63"
+      }
+    },
+    {
+      "id": "npc-snowguide",
+      "typeId": "human",
+      "x": 600,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#5499c7",
+        "pantsColor": "#1b4f72",
+        "hat": "straw"
       }
     }
   ],
@@ -176,11 +218,60 @@
       "kind": "fence",
       "x": 500,
       "y": 560
+    },
+    {
+      "kind": "stalactite",
+      "x": 700,
+      "y": 20,
+      "scale": 0.8
+    },
+    {
+      "kind": "lantern",
+      "x": 650,
+      "y": 540,
+      "scale": 0.9
     }
   ],
   "starite": {
     "x": 600,
     "y": 300
   },
-  "challengeSlots": 3
+  "authoredChallenges": [
+    {
+      "id": "snow-frostborn-hearth",
+      "giverNpcId": "npc-frostborn",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "fire", "count": 2, "near": { "npcId": "npc-frostborn", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "wood", "region": { "minX": -500, "minY": 430, "maxX": -50, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "冰原居民：两团火暖身后，再把木头放到火堆旁。", "en": "Frostborn: Warm us with two fires, then place wood beside the hearth." } ]
+    },
+    {
+      "id": "snow-traveler-ride",
+      "giverNpcId": "npc-traveler",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "sleigh", "near": { "npcId": "npc-traveler", "radius": 220 } } ] },
+      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "snow", "count": 2, "region": { "minX": -300, "minY": 430, "maxX": 500, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "旅行者：准备雪橇，再堆两团雪做路标。", "en": "Traveler: Prepare a sleigh, then pile up two snow markers." } ]
+    },
+    {
+      "id": "snow-icesage-crystal",
+      "giverNpcId": "npc-icesage",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-icesage", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "npc-state", "npcId": "npc-icesage", "states": [ "normal" ] } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "冰霜贤者：水晶归位后，保持祭坛安静。", "en": "Ice Sage: Once the crystal is in place, keep the altar calm." } ]
+    },
+    {
+      "id": "snow-guide-fishing",
+      "giverNpcId": "npc-snowguide",
+      "kind": "starite-gate",
+      "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "fishingrod", "near": { "npcId": "npc-snowguide", "radius": 180 } }, { "kind": "object-present", "typeId": "fish", "near": { "npcId": "npc-snowguide", "radius": 180 } } ] } ] },
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [ { "zh": "雪地向导：先准备鱼竿，再把鱼送到冰洞。", "en": "Snow Guide: Prepare a fishing rod, then bring a fish to the ice cave." } ]
+    }
+  ],
+  "challengeSlots": 4
 }

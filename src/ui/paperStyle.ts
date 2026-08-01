@@ -3,7 +3,7 @@
  *
  * UI 无衬线字体回退链（拉丁自托管 Inter + CJK 系统无衬线）：
  * Inter Variable 覆盖全字重，-apple-system/PingFang SC/微软雅黑/Noto Sans CJK 兜底 CJK。
- * 纸色面板 + 撕纸 clip-path 边缘 + 暖影 + 手放感轻微旋转。
+ * 纸色面板 + 统一圆角 + 暖影 + 手放感轻微旋转。
  * 去掉 backdrop-filter:blur（玻璃感是现代风与纸片冲突）。
  */
 
@@ -31,11 +31,13 @@ export const SAFE_BOTTOM = 'max(14px,env(safe-area-inset-bottom))';
 export const SAFE_LEFT = 'max(14px,env(safe-area-inset-left))';
 export const SAFE_RIGHT = 'max(14px,env(safe-area-inset-right))';
 
-/** 撕纸边缘 clip-path（不规则锯齿） */
-export const TORN_EDGE =
-  'clip-path:polygon(0% 4%,3% 0%,8% 3%,14% 1%,20% 4%,28% 0%,36% 3%,44% 1%,52% 4%,60% 0%,68% 3%,76% 1%,84% 4%,92% 0%,97% 3%,100% 1%,99% 96%,96% 100%,90% 97%,84% 99%,78% 96%,70% 100%,62% 97%,54% 99%,46% 96%,38% 100%,30% 97%,22% 99%,14% 96%,8% 100%,3% 97%,0% 99%)';
+/**
+ * 保留原有导出名以兼容现有 UI 组件；现在统一输出圆角样式。
+ * 这样可以一次性切换历史组件的纸张边缘，而不改变组件装配接口。
+ */
+export const TORN_EDGE = 'border-radius:14px';
 
-/** 纸色面板通用样式（撕边 + 暖影 + 手放感旋转） */
+/** 纸色面板通用样式（圆角 + 暖影 + 手放感旋转） */
 export function paperPanel(extra: string[] = [], rotate = -0.4): string {
   return [
     'position:fixed',

@@ -11,6 +11,7 @@ import { TagIndex } from '@/core/rules/TagIndex';
 import { RuleEngine } from '@/core/rules/RuleEngine';
 import { rules } from '@/core/data/dictionary/rules/rules';
 import type { Entity } from '@/core/entity/Entity';
+import type { EffectDeps } from '@/core/rules/effects';
 
 let fakeNow = 0;
 
@@ -50,7 +51,7 @@ function mockEntity(id: string, typeId: string, tags: TagSet): Entity {
 const tagIndex = new TagIndex();
 
 /** 构造 EffectDeps（依赖注入） */
-function makeDeps(entities: { all: () => Entity[] } = { all: () => [] }) {
+function makeDeps(entities: { all: () => Entity[] } = { all: () => [] }): EffectDeps {
   return {
     entities: { all: entities.all, get: () => undefined },
     tagIndex,
@@ -175,5 +176,97 @@ describe('rule: burning tick damages self', () => {
     engine.update(700); // 超过 intervalMs=600
     expect(b.health).toBeLessThan(100);
     tagIndex.detach(b, b.tags);
+  });
+});
+
+describe('rule: projectile impact', () => {
+  it('damages and knocks a creature away from the projectile', () => {
+    const impulses: Array<{ entity: Entity; dir: [number, number]; mag: number }> = [];
+    const deps = makeDeps();
+    deps.applyImpulse = (entity: Entity, dir: [number, number], mag: number) => {
+      impulses.push({ entity, dir, mag });
+    };
+    const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, deps);
+    for (const r of rules) if (r.id === 'projectile-hit-creature') engine.register(r);
+    const a = mockEntity('projectile1', 'arrow', ts({ flags: ['projectile', 'weapon'] }));
+    const b = mockEntity('target1', 'dog', ts({ material: ['flesh'], category: 'creature' }));
+    a.setBodyPosition(0, 0);
+    b.setBodyPosition(20, 0);
+    tagIndex.attach(a, a.tags);
+    tagIndex.attach(b, b.tags);
+    engine.enqueueCollision({ a, b, phase: 'start' });
+    engine.update(16);
+    expect(b.health).toBe(65);
+    expect(impulses).toHaveLength(1);
+    expect(impulses[0].entity).toBe(b);
+    expect(impulses[0].dir[0]).toBeGreaterThan(0);
+    tagIndex.detach(a, a.tags);
+    tagIndex.detach(b, b.tags);
+  });
+
+  it('keeps rule cooldown throttling intact across repeated contacts', () => {
+    fakeNow = 0;
+    const impulses: Array<{ entity: Entity; dir: [number, number]; mag: number }> = [];
+    const deps = makeDeps();
+    deps.applyImpulse = (entity, dir, mag) => impulses.push({ entity, dir, mag });
+    const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, deps);
+    for (const r of rules) if (r.id === 'projectile-hit-creature') engine.register(r);
+    const a = mockEntity('projectile-cooldown', 'arrow', ts({ flags: ['projectile'] }));
+    const b = mockEntity('target-cooldown', 'dog', ts({ material: ['flesh'], category: 'creature' }));
+    a.setBodyPosition(0, 0);
+    b.setBodyPosition(20, 0);
+    engine.enqueueCollision({ a, b, phase: 'start' });
+    engine.enqueueCollision({ a, b, phase: 'start' });
+    engine.update(16);
+    expect(impulses).toHaveLength(1);
+    fakeNow = 400;
+    engine.enqueueCollision({ a, b, phase: 'start' });
+    engine.update(16);
+    expect(impulses).toHaveLength(2);
+  });
+});
+
+describe('rule: poison and antidote', () => {
+  it('poison contact applies a damaging poisoned state', () => {
+    const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, makeDeps());
+    for (const r of rules) if (r.id === 'poison-infect-creature') engine.register(r);
+    const poison = mockEntity('poison1', 'poison', ts({}));
+    const target = mockEntity('target2', 'human', ts({ material: ['flesh'], category: 'creature' }));
+    engine.enqueueCollision({ a: poison, b: target, phase: 'start' });
+    engine.update(16);
+    expect(target.tags.hasState('poisoned')).toBe(true);
+    expect(target.health).toBe(90);
+  });
+
+  it('potion cures poison and restores health', () => {
+    const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, makeDeps());
+    for (const r of rules) if (r.id === 'potion-cures-poison') engine.register(r);
+    const potion = mockEntity('potion1', 'potion', ts({}));
+    const target = mockEntity('target3', 'human', ts({ material: ['flesh'], state: ['poisoned'], category: 'creature' }));
+    target.health = 40;
+    engine.enqueueCollision({ a: potion, b: target, phase: 'start' });
+    engine.update(16);
+    expect(target.tags.hasState('poisoned')).toBe(false);
+    expect(target.health).toBe(75);
+    expect(potion.dead).toBe(true);
+  });
+});
+
+describe('effect: lethal damage', () => {
+  it('marks the entity dead and switches its locomotion state', () => {
+    const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, makeDeps());
+    engine.register({
+      id: 'test-lethal-damage',
+      trigger: { kind: 'collision' },
+      match: { kind: 'pair', a: { flags: ['weapon'] }, b: { category: ['creature'] } },
+      effect: { kind: 'damage', target: 'b', amount: 120 },
+    });
+    const weapon = mockEntity('weapon1', 'sword', ts({ flags: ['weapon'] }));
+    const target = mockEntity('target4', 'human', ts({ material: ['flesh'], category: 'creature' }));
+    engine.enqueueCollision({ a: weapon, b: target, phase: 'start' });
+    engine.update(16);
+    expect(target.dead).toBe(true);
+    expect(target.tags.hasState('dead')).toBe(true);
+    expect(target.state.locomotion).toBe('dead');
   });
 });

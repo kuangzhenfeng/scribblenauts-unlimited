@@ -4,8 +4,8 @@
  * overworld 多主题区域经 transitions 连通自由探索；
  * 自包含关卡经入口传送进入，解多谜题得 1 完整 Starite，完成/放弃返回。
  *
- * 与旧项目的差异：PuzzleCondition 只声明并实现首期能用到的 4 种
- * （object-present / object-destroyed / all-of / any-of），删除 entity-at / npc-state / counter。
+ * PuzzleCondition 保留首期四种条件的兼容写法，并补充数量、区域、实体状态
+ * 与有序序列条件，供 authored challenge 表达更接近原版的多阶段谜题。
  */
 
 export interface AABB {
@@ -46,12 +46,14 @@ export interface Challenge {
   giverNpcId: string;
   kind: 'shard' | 'starite-gate' | 'side';
   puzzle: PuzzleSpec;
+  /** 可选的有序阶段；阶段完成后才会检查下一阶段。 */
+  stages?: PuzzleSpec[];
   reward: { type: 'shard' | 'starite'; count: number };
   dialog: { zh: string; en: string }[];
 }
 
 /**
- * 谜题条件 DSL（只声明并实现首期 4 种）。
+ * 谜题条件 DSL。
  * object-present 的 adjectives 为可选：有值时需校验实体被施加的形容词 id 集合
  * 是 condition.adjectives 的超集（如"红色的鸟"要求实体带 red）。
  */
@@ -62,8 +64,38 @@ export type PuzzleCondition =
       /** 题目要求的形容词 id 列表，可空；校验 entity.appliedAdjectives 超集 */
       adjectives?: string[];
       near: { npcId: string; radius: number };
+      /** 至少需要满足的实体数量，缺省为 1。 */
+      count?: number;
     }
-  | { kind: 'object-destroyed'; typeId: string }
+  | { kind: 'object-destroyed'; typeId: string; region?: AABB }
+  | {
+      kind: 'counter';
+      typeId: string;
+      /** 匹配实体至少达到的数量。 */
+      count: number;
+      adjectives?: string[];
+      near?: { npcId: string; radius: number };
+      region?: AABB;
+    }
+  | {
+      kind: 'entity-at';
+      typeId: string;
+      region: AABB;
+      adjectives?: string[];
+      count?: number;
+    }
+  | {
+      kind: 'npc-state';
+      npcId: string;
+      /** 可匹配 tags.state、tags.behavior、stateLayer 或 locomotion。 */
+      states: string[];
+      mode?: 'all' | 'any';
+    }
+  | {
+      kind: 'sequence';
+      /** 按数组顺序逐步完成；已完成阶段在当前 GoalSystem 生命周期内保留。 */
+      conditions: PuzzleCondition[];
+    }
   | { kind: 'all-of'; conditions: PuzzleCondition[] }
   | { kind: 'any-of'; conditions: PuzzleCondition[] };
 
@@ -87,6 +119,8 @@ export interface LevelData {
    * 为可选字段以兼容"题目随机化"后关卡 JSON 不再内联 challenges 的形态。
    */
   challenges?: Challenge[];
+  /** 不被运行时随机题目覆盖的 authored 挑战模板；QuestionPicker 会优先装配。 */
+  authoredChallenges?: Challenge[];
   /** 每关要抽取的题目数（slot 数），由关卡 JSON 声明；缺省按全部 NPC 配题 */
   challengeSlots?: number;
   transitions?: { toLevelId: string; at: AABB }[];

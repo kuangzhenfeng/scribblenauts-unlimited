@@ -1,8 +1,8 @@
 /**
  * 题目挑选器 —— 关卡加载时按难度从题库随机抽题并装配为运行时 Challenge。
  *
- * 流程：按 tier+standard 过滤题库 → 种子洗牌（同 seed 可复现） → 取 challengeSlots 道
- * → 随机分配给本关 NPC → 装配为 Challenge（id 用 slot 语义，puzzle 用 object-present + typeId + adjectives）。
+ * 流程：先保留关卡 authoredChallenges，再按 tier+standard 过滤题库 → 种子洗牌
+ * → 用随机题补足 challengeSlots → 分配给本关 NPC → 装配为运行时 Challenge。
  *
  * 种子来源：levelId + tier + standard + 当日日期。同一玩家同一天同关同难度
  * 题目固定，跨天或换难度则变化；既保证"每次进入都不同"的体感，又可复现调试。
@@ -63,10 +63,27 @@ export function pickChallenges(
   seedSalt: string,
   filterBasic = false,
 ): PickResult {
-  const slots = level.challengeSlots ?? Math.min(level.npcs.length, 3);
+  const requestedSlots = level.challengeSlots ?? Math.min(level.npcs.length, 3);
+  const slots = normalizeSlots(requestedSlots);
+  // 没有 NPC 时无法建立 near 条件；此前 slots>0 会在 npcPool[i % 0] 处产生 undefined。
+  if (slots === 0 || level.npcs.length === 0) {
+    return { challenges: [], npcSlots: [] };
+  }
+
+  const authored = (level.authoredChallenges ?? [])
+    .filter((ch) => level.npcs.some((npc) => npc.id === ch.giverNpcId))
+    .slice(0, slots)
+    .map((challenge, slot) => ({
+      ...challenge,
+      // authored id 只作为模板名；运行时统一使用存档可识别的难度槽 id。
+      id: slotId(level.id, tier, standard, slot),
+    }));
+  const authoredCount = authored.length;
   const pool = questionsByDifficulty(tier, standard);
-  const filtered = filterBasic ? pool.filter((q) => !isBasicQuestion(q)) : pool;
-  if (filtered.length === 0) {
+  const filtered = (filterBasic ? pool.filter((q) => !isBasicQuestion(q)) : pool).filter(isUsableQuestion);
+  // authored 关卡仍可独立运行；题库为空时只返回已写作挑战，不生成 undefined 题目。
+  const generatedSlots = filtered.length === 0 ? 0 : slots - authoredCount;
+  if (generatedSlots > 0 && filtered.length === 0 && authoredCount === 0) {
     return { challenges: [], npcSlots: [] };
   }
 
@@ -77,35 +94,52 @@ export function pickChallenges(
 
   // 取 slots 道，题库不足则循环补足（保证 slot 满）
   const picked = [];
-  for (let i = 0; i < slots; i++) {
+  for (let i = 0; i < generatedSlots; i++) {
     picked.push(shuffled[i % shuffled.length]);
   }
 
   // NPC 分配：本关 npc 列表洗牌后按 slot 顺序取
   const npcPool = shuffle([...level.npcs], rng);
   const npcSlots: { slot: number; giverNpcId: string }[] = [];
-  const challenges: Challenge[] = picked.map((q, i) => {
-    const npc = npcPool[i % npcPool.length];
-    npcSlots.push({ slot: i, giverNpcId: npc.id });
+  const challenges: Challenge[] = authored.map((challenge, i) => {
+    npcSlots.push({ slot: i, giverNpcId: challenge.giverNpcId });
+    return challenge;
+  });
+  picked.forEach((q, i) => {
+    const slot = authoredCount + i;
+    const npc = npcPool[slot % npcPool.length];
+    npcSlots.push({ slot, giverNpcId: npc.id });
     const role = roleOf(npc.id);
     // 谜题条件装配：多答案题（answers 长度>1）→ any-of，每个 answer 一个
     // object-present；否则单答案 object-present（typeId + adjectives）。
     const conditions = buildConditions(q, npc.id);
-    return {
-      id: slotId(level.id, tier, standard, i),
+    challenges.push({
+      id: slotId(level.id, tier, standard, slot),
       giverNpcId: npc.id,
-      kind: i === slots - 1 ? 'starite-gate' : 'shard',
+      kind: slot === slots - 1 ? 'starite-gate' : 'shard',
       puzzle: { conditions },
-      reward: i === slots - 1 ? { type: 'starite' as const, count: 1 } : { type: 'shard' as const, count: 4 },
+      reward: slot === slots - 1 ? { type: 'starite' as const, count: 1 } : { type: 'shard' as const, count: 4 },
       // 角色名前缀双语：中文用全角冒号，英文用半角冒号；运行期由 L() 取当前语言
       dialog: [
         { zh: `${role.zh}：${q.prompt.zh}`, en: `${role.en}: ${q.prompt.en}` },
         q.hint ?? { zh: '', en: '' },
       ],
-    };
+    });
   });
 
   return { challenges, npcSlots };
+}
+
+function normalizeSlots(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+}
+
+function isUsableQuestion(q: Question): boolean {
+  if (q.answers !== undefined) {
+    return q.answers.length > 0 && q.answers.every((answer) => answer.typeId.length > 0);
+  }
+  return typeof q.typeId === 'string' && q.typeId.length > 0;
 }
 
 /** 按 Question 装配谜题条件：多答案题 → any-of，单答案题 → object-present */

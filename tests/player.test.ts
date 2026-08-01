@@ -9,6 +9,7 @@ import { PlayerController } from '@/game/PlayerController';
 import type { EntityManager } from '@/game/EntityManager';
 import type { Physics } from '@/engine/physics/Physics';
 import type { GameEntity } from '@/game/Entity';
+import { TagSet } from '@/core/rules/TagSet';
 
 // sfx.play 在 node 环境会触发 AudioContext 初始化失败，mock 掉音效模块
 vi.mock('@/audio/SoundEffects', () => ({
@@ -16,6 +17,8 @@ vi.mock('@/audio/SoundEffects', () => ({
 }));
 
 function mkPlayer(x: number, y: number): GameEntity {
+  let px = x;
+  let py = y;
   return {
     id: 'p1',
     typeId: 'human',
@@ -27,11 +30,11 @@ function mkPlayer(x: number, y: number): GameEntity {
     lastTouchedAt: 0,
     isPlayer: true,
     tags: {} as never,
-    body: { id: 1, position: { x, y }, angle: 0, velocity: { x: 0, y: 0 } } as never,
-    bodyPositionX: x,
-    bodyPositionY: y,
+    body: { id: 1, position: { get x() { return px; }, get y() { return py; } }, angle: 0, velocity: { x: 0, y: 0 } } as never,
+    get bodyPositionX() { return px; },
+    get bodyPositionY() { return py; },
     bodyAngle: 0,
-    setBodyPosition() {},
+    setBodyPosition(nextX: number, nextY: number) { px = nextX; py = nextY; },
     setBodyVelocity(vx: number, vy: number) {
       // 记录到 body.velocity 供断言
       (this as unknown as { body: { velocity: { x: number; y: number } } }).body.velocity = { x: vx, y: vy };
@@ -43,6 +46,8 @@ function mkPlayer(x: number, y: number): GameEntity {
 function mkStubPhysics(bodiesAt: { id: number; x: number; y: number }[]): Physics {
   return {
     pointQuery: (x: number, y: number) => bodiesAt.filter((b) => b.x === x && b.y === y) as never,
+    createConstraint: () => ({}) as never,
+    removeConstraint: () => undefined,
   } as unknown as Physics;
 }
 
@@ -126,5 +131,66 @@ describe('PlayerController virtual input', () => {
     const pc = new PlayerController(em, phys);
     // 无持物/未骑乘 → triggerInteract 走 tryPickUpNearby（前方无物体，静默返回，不应抛异常）
     expect(() => pc.triggerInteract()).not.toThrow();
+  });
+
+  it('triggerInteract mounts a nearby rideable entity and toggles dismount', () => {
+    const { player } = groundedPlayer();
+    const rideable = {
+      ...mkPlayer(140, 100),
+      id: 'car1',
+      typeId: 'car',
+      isPlayer: false,
+      tags: TagSet.fromRaw({
+        material: new Set(['metal']),
+        temperature: 'normal',
+        state: new Set(['normal']),
+        behavior: new Set(),
+        flags: new Set(['rideable']),
+        category: 'vehicle',
+      }),
+    } as unknown as GameEntity;
+    const em = {
+      getPlayer: () => player,
+      all: () => [player, rideable],
+      get: (id: string) => id === rideable.id ? rideable : undefined,
+      getByBody: (id: number) => id === 1 ? rideable : undefined,
+    } as unknown as EntityManager;
+    const phys = mkStubPhysics([{ id: 1, x: 140, y: 100 }]);
+    const pc = new PlayerController(em, phys);
+    pc.triggerInteract();
+    expect(player.hidden).toBe(true);
+    pc.setVirtualMove(1);
+    pc.update();
+    const vel = (rideable as unknown as { body: { velocity: { x: number } } }).body.velocity;
+    expect(vel.x).toBeGreaterThan(0);
+    pc.triggerInteract();
+    expect(player.hidden).toBe(false);
+  });
+
+  it('applyDamage marks the player dead and respawn restores a clean state', () => {
+    const { player, em, phys } = groundedPlayer();
+    player.tags = TagSet.fromRaw({
+      material: new Set(['flesh']),
+      temperature: 'normal',
+      state: new Set(['poisoned']),
+      behavior: new Set(),
+      flags: new Set(),
+      category: 'creature',
+    });
+    player.health = 100;
+    player.maxHealth = 100;
+    const pc = new PlayerController(em, phys);
+    pc.setRespawnPoint(20, 30);
+    pc.applyDamage(120);
+    expect(player.dead).toBe(true);
+    expect(player.health).toBe(0);
+    expect(player.state.locomotion).toBe('dead');
+    pc.respawn();
+    expect(player.dead).toBe(false);
+    expect(player.health).toBe(100);
+    expect(player.tags.hasState('poisoned')).toBe(false);
+    expect(player.bodyPositionX).toBe(20);
+    expect(player.bodyPositionY).toBe(30);
+    expect(player.state.locomotion).toBe('idle');
   });
 });

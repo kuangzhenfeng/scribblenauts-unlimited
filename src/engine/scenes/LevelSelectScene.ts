@@ -204,6 +204,7 @@ export class LevelSelectScene extends Phaser.Scene {
       const allDone = Array.from({ length: slots }, (_, i) => `${lvl.id}:${tier}:${standard}:${i}`)
         .every((sid) => completedSlots.has(sid));
       const isCompleted = allDone;
+      const isUnlocked = data.unlockedLevels.includes(lvl.id);
 
       const meta = THEME_META[lvl.theme] ?? THEME_META.jungle;
       const cardTitle = levelTitleOf(lvl.id, lvl.theme);
@@ -219,7 +220,8 @@ export class LevelSelectScene extends Phaser.Scene {
         'display:flex',
         'flex-direction:column',
         'overflow:hidden',
-        'cursor:pointer',
+        `cursor:${isUnlocked ? 'pointer' : 'not-allowed'}`,
+        `opacity:${isUnlocked ? '1' : '0.62'}`,
         'pointer-events:auto',
         'transition:transform 0.2s ease,box-shadow 0.2s ease',
         'transform:rotate(' + ((idx % 2 === 0 ? -0.6 : 0.5) + 'deg') + ')',
@@ -266,7 +268,9 @@ export class LevelSelectScene extends Phaser.Scene {
       // 状态
       const status = document.createElement('div');
       status.style.cssText = ['margin-top:4px', 'min-height:26px', 'display:flex', 'align-items:center', 'justify-content:center', 'gap:6px', `font-family:${UI_FONT}`, 'font-size:15px'].join(';');
-      if (isCompleted) {
+      if (!isUnlocked) {
+        status.innerHTML = `${ICON_LOCK}<span style="color:#5a554c;font-weight:900">${t('levelSelect.locked')}</span>`;
+      } else if (isCompleted) {
         status.innerHTML = `${ICON_STAR}<span style="color:#9a5a00;font-weight:900">${t('levelSelect.completed')}</span>`;
       } else {
         status.innerHTML = `<span style="color:#286a32;font-weight:900">${t('levelSelect.go')}</span>`;
@@ -321,6 +325,7 @@ export class LevelSelectScene extends Phaser.Scene {
       });
       card.addEventListener('click', (ev) => {
         ev.stopPropagation();
+        if (!isUnlocked) return;
         void this._enterLevel(lvl.id);
       });
 
@@ -339,16 +344,28 @@ export class LevelSelectScene extends Phaser.Scene {
     const removeIds = new Set(
       Array.from({ length: slots }, (_, i) => `${lvl.id}:${tier}:${standard}:${i}`),
     );
-    const remaining = data.completedSlots.filter((id: string) => !removeIds.has(id));
-
-    // 重算 starites/shards：按 slot id 解析 reward（最后一个 slot=starite，其余=shard×4）
+    // 重算 starites/shards：同时识别 authored challenge id 与随机题 slot id。
+    const authoredRewards = new Map<string, { type: 'shard' | 'starite'; count: number }>();
+    for (const level of LevelManager.listLevels()) {
+      for (const challenge of level.authoredChallenges ?? []) authoredRewards.set(challenge.id, challenge.reward);
+    }
+    const resetLevelIds = new Set(removeIds);
+    for (const challenge of lvl.authoredChallenges ?? []) resetLevelIds.add(challenge.id);
+    const filteredRemaining = data.completedSlots.filter((id: string) => !resetLevelIds.has(id));
     let shards = 0;
     let starites = 0;
-    for (const sid of remaining) {
+    for (const sid of filteredRemaining) {
+      const authoredReward = authoredRewards.get(sid);
+      if (authoredReward) {
+        if (authoredReward.type === 'starite') starites += authoredReward.count;
+        else shards += authoredReward.count;
+        while (shards >= 10) { shards -= 10; starites += 1; }
+        continue;
+      }
       const parts = sid.split(':');
       const slotIdx = Number(parts[parts.length - 1]);
-      const totalSlots = Number(parts[3]) ?? 3;
-      const isGate = slotIdx === totalSlots - 1;
+      const sourceLevel = LevelManager.listLevels().find((level) => level.id === parts[0]);
+      const isGate = slotIdx === (sourceLevel?.challengeSlots ?? 3) - 1;
       if (isGate) {
         starites += 1;
       } else {
@@ -357,7 +374,7 @@ export class LevelSelectScene extends Phaser.Scene {
       }
     }
 
-    await this.save.updateProgress(starites, shards, remaining);
+    await this.save.updateProgress(starites, shards, filteredRemaining);
   }
 
   private async _enterLevel(levelId: string): Promise<void> {

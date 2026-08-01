@@ -79,6 +79,7 @@ export const rules: Rule[] = [
       { kind: 'remove-state', target: 'b', state: 'burning' },
       { kind: 'set-temperature', target: 'b', temp: 'normal' },
       { kind: 'apply-state', target: 'b', state: 'wet' },
+      { kind: 'apply-state', target: 'b', state: 'charred' },
     ],
     cooldownMs: 200,
   },
@@ -122,7 +123,10 @@ export const rules: Rule[] = [
       a: { flags: ['weapon'] },
       b: { category: ['creature'], notState: ['dead', 'petrified'] },
     },
-    effect: [{ kind: 'damage', target: 'b', amount: 25 }],
+    effect: [
+      { kind: 'damage', target: 'b', amount: 25 },
+      { kind: 'apply-impulse', target: 'b', dir: 'away-from-source', mag: 0.08 },
+    ],
     cooldownMs: 500,
   },
 
@@ -131,8 +135,95 @@ export const rules: Rule[] = [
     id: 'burning-tick',
     trigger: { kind: 'tick', intervalMs: 600 },
     match: { kind: 'self', a: { state: ['burning'] } },
-    effect: [{ kind: 'damage', target: 'self', amount: 12 }],
+    effect: [
+      { kind: 'damage', target: 'self', amount: 12 },
+      { kind: 'apply-state', target: 'self', state: 'charred' },
+    ],
     cooldownMs: 0,
     chainTag: 'fire-spread',
+  },
+
+  // 9. 投射物 × 生物 → 穿透伤害与击退
+  {
+    id: 'projectile-hit-creature',
+    trigger: { kind: 'collision' },
+    match: {
+      kind: 'pair',
+      a: { flags: ['projectile'] },
+      b: { category: ['creature'], notState: ['dead', 'petrified'] },
+    },
+    effect: [
+      { kind: 'damage', target: 'b', amount: 35 },
+      { kind: 'apply-impulse', target: 'b', dir: 'away-from-source', mag: 0.12 },
+    ],
+    cooldownMs: 350,
+    priority: 5,
+  },
+
+  // 10. 投射物 × 可破坏物 → 一次性破坏并消耗投射物
+  {
+    id: 'projectile-breaks-breakable',
+    trigger: { kind: 'collision' },
+    match: {
+      kind: 'pair',
+      a: { flags: ['projectile'] },
+      b: { flags: ['breakable'], notState: ['dead'] },
+    },
+    effect: [
+      { kind: 'destroy', target: 'b' },
+      { kind: 'destroy', target: 'a' },
+    ],
+    cooldownMs: 0,
+    priority: 4,
+  },
+
+  // 11. 毒液 × 生物 → 中毒并造成初始伤害
+  {
+    id: 'poison-infect-creature',
+    trigger: { kind: 'collision' },
+    match: {
+      kind: 'pair',
+      a: { typeIds: ['poison'] },
+      b: { category: ['creature'], notState: ['dead', 'petrified'] },
+    },
+    effect: [
+      { kind: 'apply-state', target: 'b', state: 'poisoned' },
+      { kind: 'damage', target: 'b', amount: 10 },
+    ],
+    cooldownMs: 700,
+  },
+
+  // 12. 药水 × 中毒生物 → 解毒、治疗并消耗药水
+  {
+    id: 'potion-cures-poison',
+    trigger: { kind: 'collision' },
+    match: {
+      kind: 'pair',
+      a: { typeIds: ['potion'] },
+      b: { category: ['creature'], state: ['poisoned'] },
+    },
+    effect: [
+      { kind: 'remove-state', target: 'b', state: 'poisoned' },
+      { kind: 'heal', target: 'b', amount: 35 },
+      { kind: 'destroy', target: 'a' },
+    ],
+    cooldownMs: 0,
+    priority: 6,
+  },
+
+  // 13. 热源 × 冻结实体 → 解冻
+  {
+    id: 'hot-thaw-frozen',
+    trigger: { kind: 'contact' },
+    match: {
+      kind: 'pair',
+      a: { temperature: ['hot'] },
+      b: { state: ['frozen'] },
+    },
+    effect: [
+      { kind: 'remove-state', target: 'b', state: 'frozen' },
+      { kind: 'set-temperature', target: 'b', temp: 'normal' },
+    ],
+    cooldownMs: 300,
   },
 ];

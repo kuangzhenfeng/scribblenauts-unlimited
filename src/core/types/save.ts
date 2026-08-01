@@ -19,6 +19,20 @@ export interface CustomObjectDef {
   created: number;
 }
 
+/**
+ * Magic Backpack 中的一条使用记录。
+ *
+ * 词典定义与使用记录分离：词典负责“能否生成”，记录负责“最近使用/收藏”。
+ * 这样内置物体、自定义物体都可以共用同一套背包排序与收藏 API。
+ */
+export interface ObjectLibraryRecord {
+  typeId: string;
+  firstUsedAt: number;
+  lastUsedAt: number;
+  useCount: number;
+  favorite: boolean;
+}
+
 export interface SaveData {
   schemaVersion: number;
   starites: number;
@@ -29,6 +43,8 @@ export interface SaveData {
    */
   completedSlots: string[];
   customObjects: CustomObjectDef[];
+  /** Magic Backpack：已召唤物体的最近使用、频次与收藏状态 */
+  library: ObjectLibraryRecord[];
   /** 已解锁关卡 id 列表，首关默认解锁，完成上一关 starite-gate 后追加下一关 */
   unlockedLevels: string[];
   /** 玩家上次选择的难度设置，进关默认复用 */

@@ -50,6 +50,18 @@
       "y": 230,
       "w": 180,
       "h": 24
+    },
+    {
+      "x": -700,
+      "y": 120,
+      "w": 160,
+      "h": 24
+    },
+    {
+      "x": 650,
+      "y": 150,
+      "w": 180,
+      "h": 24
     }
   ],
   "spawns": [
@@ -88,6 +100,24 @@
       "x": 300,
       "y": 330,
       "layer": 0
+    },
+    {
+      "typeId": "camel",
+      "x": 650,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "umbrella",
+      "x": -650,
+      "y": 330,
+      "layer": 0
+    },
+    {
+      "typeId": "water",
+      "x": 50,
+      "y": 330,
+      "layer": 0
     }
   ],
   "npcs": [
@@ -123,6 +153,18 @@
       "drawParams": {
         "shirtColor": "#d4a017",
         "pantsColor": "#8b6914",
+        "hat": "straw"
+      }
+    },
+    {
+      "id": "npc-oasis-keeper",
+      "typeId": "human",
+      "x": 650,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#1f618d",
+        "pantsColor": "#154360",
         "hat": "straw"
       }
     }
@@ -169,11 +211,61 @@
       "kind": "lantern",
       "x": 300,
       "y": 540
+    },
+    {
+      "kind": "bush",
+      "x": 700,
+      "y": 565,
+      "scale": 0.8
+    },
+    {
+      "kind": "ruin-pillar",
+      "x": 700,
+      "y": 510,
+      "scale": 0.8
     }
   ],
   "starite": {
     "x": 700,
     "y": 300
   },
-  "challengeSlots": 3
+  "authoredChallenges": [
+    {
+      "id": "desert-merchant-water",
+      "giverNpcId": "npc-merchant",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "water", "count": 2, "near": { "npcId": "npc-merchant", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "umbrella", "near": { "npcId": "npc-merchant", "radius": 180 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "商人：两瓶水解渴后，再给我一把遮阳伞。", "en": "Merchant: Two waters first, then bring me an umbrella for the sun." } ]
+    },
+    {
+      "id": "desert-nomad-dunes",
+      "giverNpcId": "npc-nomad",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "camel", "near": { "npcId": "npc-nomad", "radius": 220 } } ] },
+      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "sand", "count": 2, "region": { "minX": -200, "minY": 430, "maxX": 500, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "游牧民：找到坐骑后，再收集两堆沙子修复沙丘标记。", "en": "Nomad: Find a mount, then gather two piles of sand for the dune marker." } ]
+    },
+    {
+      "id": "desert-sphinx-riddle",
+      "giverNpcId": "npc-sphinx",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "book", "near": { "npcId": "npc-sphinx", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "crystal", "region": { "minX": 300, "minY": 430, "maxX": 800, "maxY": 600 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "斯芬克斯：用书解开谜题，再把水晶放到祭坛。", "en": "Sphinx: Solve the riddle with a book, then place a crystal on the altar." } ]
+    },
+    {
+      "id": "desert-oasis-gate",
+      "giverNpcId": "npc-oasis-keeper",
+      "kind": "starite-gate",
+      "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "npc-state", "npcId": "npc-oasis-keeper", "states": [ "normal" ] }, { "kind": "object-present", "typeId": "shovel", "near": { "npcId": "npc-oasis-keeper", "radius": 180 } } ] } ] },
+      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "cactus", "count": 2, "region": { "minX": 450, "minY": 430, "maxX": 850, "maxY": 600 } } ] } ],
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [ { "zh": "绿洲守护者：拿起铲子清出水源，再移开两株仙人掌。", "en": "Oasis Keeper: Take a shovel to clear the spring, then move two cacti aside." } ]
+    }
+  ],
+  "challengeSlots": 4
 }

@@ -54,6 +54,18 @@
       "y": 160,
       "w": 180,
       "h": 24
+    },
+    {
+      "x": -1100,
+      "y": 80,
+      "w": 180,
+      "h": 24
+    },
+    {
+      "x": 1450,
+      "y": 120,
+      "w": 240,
+      "h": 24
     }
   ],
   "spawns": [
@@ -146,6 +158,24 @@
       "x": 1500,
       "y": 320,
       "layer": 0
+    },
+    {
+      "typeId": "fox",
+      "x": 1050,
+      "y": 320,
+      "layer": 0
+    },
+    {
+      "typeId": "flower",
+      "x": 1750,
+      "y": 340,
+      "layer": 0
+    },
+    {
+      "typeId": "log",
+      "x": -1150,
+      "y": 180,
+      "layer": 0
     }
   ],
   "npcs": [
@@ -216,6 +246,29 @@
       "drawParams": {
         "shirtColor": "#17202a",
         "pantsColor": "#212f3c"
+      }
+    },
+    {
+      "id": "npc-gardener",
+      "typeId": "human",
+      "x": 1050,
+      "y": 320,
+      "gender": "female",
+      "drawParams": {
+        "shirtColor": "#2e8b57",
+        "pantsColor": "#5b3a29",
+        "hat": "straw"
+      }
+    },
+    {
+      "id": "npc-bridgekeeper",
+      "typeId": "human",
+      "x": 1750,
+      "y": 320,
+      "gender": "male",
+      "drawParams": {
+        "shirtColor": "#34495e",
+        "pantsColor": "#1f2d3d"
       }
     }
   ],
@@ -339,6 +392,24 @@
       "kind": "flower",
       "x": 1750,
       "y": 575
+    },
+    {
+      "kind": "fence",
+      "x": -1050,
+      "y": 560,
+      "scale": 0.9
+    },
+    {
+      "kind": "flower",
+      "x": 1050,
+      "y": 575,
+      "scale": 1.1
+    },
+    {
+      "kind": "bush",
+      "x": 1650,
+      "y": 565,
+      "scale": 1.2
     }
   ],
   "transitions": [
@@ -350,6 +421,93 @@
         "maxX": 2400,
         "maxY": 620
       }
+    }
+  ],
+  "authoredChallenges": [
+    {
+      "id": "meadow-explorer-supply",
+      "giverNpcId": "npc-explorer",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "counter", "typeId": "apple", "count": 2, "near": { "npcId": "npc-explorer", "radius": 180 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "balloon", "region": { "minX": -300, "minY": 430, "maxX": 120, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "探险者：先给我两只苹果，再放一个气球标记营地。", "en": "Explorer: Bring me two apples, then mark camp with a balloon." } ]
+    },
+    {
+      "id": "meadow-fisherman-catch",
+      "giverNpcId": "npc-fisherman",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "fishingrod", "near": { "npcId": "npc-fisherman", "radius": 180 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "counter", "typeId": "fish", "count": 2, "region": { "minX": -1250, "minY": 430, "maxX": -760, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "渔夫：先给我鱼竿，再把两条鱼放到河岸。", "en": "Fisher: Bring a fishing rod, then place two fish by the riverbank." } ]
+    },
+    {
+      "id": "meadow-carpenter-repair",
+      "giverNpcId": "npc-carpenter",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "hammer", "near": { "npcId": "npc-carpenter", "radius": 180 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "counter", "typeId": "wood", "count": 2, "region": { "minX": 1150, "minY": 430, "maxX": 1650, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "木匠：工具到位后，再送来两块木头修桥。", "en": "Carpenter: Once the tool is ready, bring two pieces of wood to repair the bridge." } ]
+    },
+    {
+      "id": "meadow-witch-ritual",
+      "giverNpcId": "npc-witch",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-witch", "radius": 180 } }
+        ]
+      },
+      "stages": [
+        {
+          "conditions": [
+            { "kind": "any-of", "conditions": [
+              { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-witch", "radius": 180 } },
+              { "kind": "object-present", "typeId": "lightning", "near": { "npcId": "npc-witch", "radius": 180 } }
+            ] }
+          ]
+        }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "女巫：水晶只是开始，还需要火焰或闪电完成仪式。", "en": "Witch: The crystal is only the beginning; fire or lightning completes the ritual." } ]
+    },
+    {
+      "id": "meadow-gardener-grove",
+      "giverNpcId": "npc-gardener",
+      "kind": "shard",
+      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "flower", "count": 2, "near": { "npcId": "npc-gardener", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-gardener", "radius": 180 } } ] } ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "园丁：先找两朵花，再用水浇醒这片花圃。", "en": "Gardener: Find two flowers, then water the garden back to life." } ]
+    },
+    {
+      "id": "meadow-bridgekeeper-crossing",
+      "giverNpcId": "npc-bridgekeeper",
+      "kind": "starite-gate",
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "log", "near": { "npcId": "npc-bridgekeeper", "radius": 180 } } ] },
+      "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "box", "region": { "minX": 1550, "minY": 430, "maxX": 2050, "maxY": 600 } } ] } ],
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [ { "zh": "桥卫：先搬来木头，再把箱子放到桥头作为路障。", "en": "Bridgekeeper: Bring a log, then place a box at the bridgehead as a barrier." } ]
     }
   ],
   "challengeSlots": 6

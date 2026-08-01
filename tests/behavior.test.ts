@@ -124,4 +124,54 @@ describe('BehaviorSystem AI', () => {
     expect(dog._vx).toBe(0);
     expect(dog.state.locomotion).toBe('idle');
   });
+
+  it('poisoned creature loses health on the status tick', () => {
+    let now = 1000;
+    const dog = mkEntity('poisoned-dog', -300, [{ kind: 'follow' }]) as Entity & { _vx: number };
+    dog.tags.addState('poisoned');
+    const player = mkPlayer(0);
+    const { bs } = setup([dog, player]);
+    bs.update();
+    expect(dog.health).toBe(100);
+    now = 2501;
+    const em = {
+      all: () => [dog, player],
+      get: (id: string) => id === dog.id ? dog : id === player.id ? player : undefined,
+      getPlayer: () => player,
+    } as unknown as EntityManager;
+    const deps: EffectDeps = {
+      entities: em,
+      tagIndex: { attach() {}, detach() {}, byStateSet: () => new Set(), byFlagSet: () => new Set() } as never,
+      spawn: () => undefined,
+      destroyEntity: (e) => { e.dead = true; },
+      applyImpulse: () => {},
+    };
+    const second = new BehaviorSystem(em, () => now, deps);
+    second.update();
+    expect(dog.health).toBeLessThan(100);
+  });
+
+  it('sleeping and petrified creatures remain still', () => {
+    const dog = mkEntity('sleeping-dog', -300, [{ kind: 'follow' }]) as Entity & { _vx: number };
+    dog.tags.addState('sleeping');
+    const player = mkPlayer(0);
+    const { bs } = setup([dog, player]);
+    bs.update();
+    expect(dog._vx).toBe(0);
+    expect(dog.state.locomotion).toBe('idle');
+    dog.tags.removeState('sleeping');
+    dog.tags.addState('petrified');
+    bs.update();
+    expect(dog._vx).toBe(0);
+    expect(dog.state.locomotion).toBe('idle');
+  });
+
+  it('flying behavior tag drives a creature even without a BehaviorSpec', () => {
+    const bird = mkEntity('flying-bird', -300, []) as Entity & { _vx: number };
+    bird.tags.addBehavior('flying');
+    const player = mkPlayer(0);
+    const { bs } = setup([bird, player]);
+    bs.update();
+    expect(bird.state.locomotion).toBe('fly');
+  });
 });

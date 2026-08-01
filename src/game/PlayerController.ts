@@ -12,6 +12,7 @@ import type Phaser from 'phaser';
 import type { EntityManager } from '@/game/EntityManager';
 import type { Physics } from '@/engine/physics/Physics';
 import type { GameEntity } from '@/game/Entity';
+import type { StateTag } from '@/core/types/rules';
 import { attach, detach, type Attachment } from '@/engine/physics/Composite';
 import { log } from '@/util/log';
 import { sfx } from '@/audio/SoundEffects';
@@ -161,7 +162,8 @@ export class PlayerController {
     for (const b of hits) {
       const e = this.entities.getByBody(b.id) as GameEntity | undefined;
       if (e && !e.isPlayer && e.typeId !== 'human') {
-        this.pickUp(e);
+        if (e.tags.hasFlag('rideable')) this.mount(e);
+        else this.pickUp(e);
         return;
       }
     }
@@ -189,8 +191,9 @@ export class PlayerController {
 
   mount(target: GameEntity): void {
     const p = this.entities.getPlayer() as GameEntity | undefined;
-    if (!p || this.riding) return;
-    if (!target.tags.flags.has('rideable')) return;
+    if (!p || !target || target === p || this.riding || this.heldAttachment) return;
+    if (target.dead || target.tags.hasState('frozen') || target.tags.hasState('petrified')) return;
+    if (!target.tags.hasFlag('rideable')) return;
     this.riding = attach(this.physics, target, p, [0, -10]);
     this.ridingEntity = target;
     p.hidden = true;
@@ -207,6 +210,44 @@ export class PlayerController {
     this.ridingEntity = undefined;
   }
 
+  /** 对玩家施加伤害；死亡只改变实体状态，重生由调用方显式触发。 */
+  applyDamage(amount: number): void {
+    const p = this.entities.getPlayer() as GameEntity | undefined;
+    if (!p || p.dead || amount <= 0) return;
+    if (p.drawParams.invincible === true) return;
+    p.health = Math.max(0, (p.health ?? p.maxHealth ?? 100) - amount);
+    if (p.health > 0) return;
+    this.clearAttachments();
+    p.dead = true;
+    p.state.locomotion = 'dead';
+    p.tags.addState('dead');
+    p.state.stateLayer.add('state:dead');
+    log.info('player died', { id: p.id });
+  }
+
+  /** 将玩家恢复到重生点并清除会阻断控制的临时状态。 */
+  respawn(position = this.lastGroundedPos): void {
+    const p = this.entities.getPlayer() as GameEntity | undefined;
+    if (!p) return;
+    this.clearAttachments();
+    p.setBodyPosition(position.x, position.y);
+    p.setBodyVelocity(0, 0);
+    p.health = p.maxHealth ?? 100;
+    p.dead = false;
+    p.hidden = false;
+    for (const state of TRANSIENT_PLAYER_STATES) {
+      p.tags.removeState(state);
+      p.state.stateLayer.delete(`state:${state}`);
+    }
+    if (!p.tags.hasState('normal')) p.tags.addState('normal');
+    p.tags.setTemperature('normal');
+    p.state.locomotion = 'idle';
+    p.state.facing = this.facing;
+    this.wasGrounded = false;
+    this.lastGroundedPos = { ...position };
+    log.info('player respawned', { id: p.id, x: position.x, y: position.y });
+  }
+
   get respawnPoint(): { x: number; y: number } {
     return this.lastGroundedPos;
   }
@@ -215,4 +256,21 @@ export class PlayerController {
   setRespawnPoint(x: number, y: number): void {
     this.lastGroundedPos = { x, y };
   }
+
+  private clearAttachments(): void {
+    if (this.riding) {
+      detach(this.physics, this.riding);
+      this.riding = undefined;
+      this.ridingEntity = undefined;
+    }
+    if (this.heldAttachment) {
+      detach(this.physics, this.heldAttachment);
+      this.heldAttachment = undefined;
+    }
+  }
 }
+
+const TRANSIENT_PLAYER_STATES: StateTag[] = [
+  'burning', 'frozen', 'wet', 'electrified', 'dead',
+  'petrified', 'poisoned', 'sleeping', 'charred',
+];
