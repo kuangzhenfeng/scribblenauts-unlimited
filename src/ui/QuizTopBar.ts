@@ -25,6 +25,7 @@ import {
 import { ICON_ARROW_LEFT, ICON_RESET, ICON_TROPHY, ICON_STAR, ICON_SETTINGS } from './icons';
 import { t } from '@/core/i18n/I18n';
 import { sfx } from '@/audio/SoundEffects';
+import { loadSettings } from '@/core/data/settings/SettingsStore';
 
 export interface QuizTopBarCallbacks {
   onBack: () => void;
@@ -32,6 +33,7 @@ export interface QuizTopBarCallbacks {
   onDifficulty: (tier: DifficultyTier, standard: DifficultyStandard) => void;
   onLanguage: (lang: Lang) => void;
   onSeedReset: () => void;
+  onFilterBasicChange: (next: boolean) => void;
 }
 
 const TIER_I18N_KEY: Record<DifficultyTier, 'quiz.tierBasic' | 'quiz.tierIntermediate' | 'quiz.tierMaster'> = {
@@ -42,9 +44,11 @@ const STANDARDS: DifficultyStandard[] = ['cefr', 'frequency'];
 
 export class QuizTopBar {
   private readonly el: HTMLDivElement;
+  private readonly backButton: HTMLButtonElement;
   private readonly statsEl: HTMLDivElement;
   private readonly settingsButton: HTMLButtonElement;
-  private readonly popoverEl: HTMLDivElement;
+  private readonly reshuffleButton: HTMLButtonElement;
+  private popoverEl: HTMLDivElement;
   private readonly tierBtns = new Map<DifficultyTier, HTMLButtonElement>();
   private readonly stdBtns = new Map<DifficultyStandard, HTMLButtonElement>();
   private readonly languageBtns = new Map<Lang, HTMLButtonElement>();
@@ -52,6 +56,7 @@ export class QuizTopBar {
   private tier: DifficultyTier;
   private standard: DifficultyStandard;
   private language: Lang;
+  private filterBasic: boolean;
   private readonly outsideListener: (event: PointerEvent) => void;
   private readonly keyListener: (event: KeyboardEvent) => void;
 
@@ -59,6 +64,7 @@ export class QuizTopBar {
     this.tier = tier;
     this.standard = standard;
     this.language = getLang();
+    this.filterBasic = loadSettings().filterBasicQuestions;
     this.cb = cb;
     QuizTopBar.injectStyle();
 
@@ -73,7 +79,8 @@ export class QuizTopBar {
       'box-sizing:border-box',
     ].join(';');
 
-    this.el.appendChild(this._actionButton(ICON_ARROW_LEFT, t('quiz.back'), () => this.cb.onBack()));
+    this.backButton = this._actionButton(ICON_ARROW_LEFT, t('quiz.back'), () => this.cb.onBack());
+    this.el.appendChild(this.backButton);
 
     this.statsEl = document.createElement('div');
     this.statsEl.className = 'quiz-topbar-stats';
@@ -81,7 +88,8 @@ export class QuizTopBar {
 
     this.settingsButton = this._buildSettingsButton();
     this.el.appendChild(this.settingsButton);
-    this.el.appendChild(this._actionButton(ICON_RESET, t('quiz.reshuffle'), () => this.cb.onReshuffle()));
+    this.reshuffleButton = this._actionButton(ICON_RESET, t('quiz.reshuffle'), () => this.cb.onReshuffle());
+    this.el.appendChild(this.reshuffleButton);
 
     this.popoverEl = this._buildPopover();
     document.body.appendChild(this.el);
@@ -112,6 +120,21 @@ export class QuizTopBar {
     this.statsEl.appendChild(this._stat(t('quiz.round', { n: round }), '', QUIZ_CARD, QUIZ_INK));
     this.statsEl.appendChild(this._stat(`${t('quiz.score')} ${score}`, ICON_TROPHY, QUIZ_ACCENT, '#ffffff'));
     this.statsEl.appendChild(this._stat(`${t('quiz.streak')} ×${streak}`, ICON_STAR, QUIZ_YELLOW, QUIZ_INK));
+  }
+
+  /** 切换界面语言时只刷新文案，不重建问答场景与当前回合。 */
+  refreshLocale(round: number, score: number, streak: number): void {
+    this.backButton.querySelector('.quiz-action-label')!.textContent = t('quiz.back');
+    this.backButton.setAttribute('aria-label', t('quiz.back'));
+    this.reshuffleButton.querySelector('.quiz-action-label')!.textContent = t('quiz.reshuffle');
+    this.reshuffleButton.setAttribute('aria-label', t('quiz.reshuffle'));
+
+    this._setPopoverOpen(false);
+    const oldPopover = this.popoverEl;
+    this.popoverEl = this._buildPopover();
+    oldPopover.replaceWith(this.popoverEl);
+    this._syncDifficulty();
+    this.render(round, score, streak);
   }
 
   getHeight(): number {
@@ -251,6 +274,23 @@ export class QuizTopBar {
     }
     popover.appendChild(languageGroup);
 
+    // A1 基础题过滤开关
+    popover.appendChild(this._groupLabel(t('quiz.filterBasic')));
+    const filterBasicRow = document.createElement('div');
+    filterBasicRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    const filterBasicLabel = document.createElement('span');
+    filterBasicLabel.style.cssText = `flex:1;font-size:12px;font-weight:700;color:${QUIZ_INK_SOFT}`;
+    filterBasicLabel.textContent = this.filterBasic ? t('quiz.filterBasicOn') : t('quiz.filterBasicOff');
+    filterBasicRow.appendChild(filterBasicLabel);
+    const filterBasicToggle = this._buildToggle(this.filterBasic, (next) => {
+      this.filterBasic = next;
+      filterBasicLabel.textContent = next ? t('quiz.filterBasicOn') : t('quiz.filterBasicOff');
+      sfx.play('ui');
+      this.cb.onFilterBasicChange(next);
+    });
+    filterBasicRow.appendChild(filterBasicToggle);
+    popover.appendChild(filterBasicRow);
+
     const seedButton = this._choiceButton(t('quiz.resetSeed'));
     seedButton.innerHTML = `${ICON_RESET}<span>${this._escape(t('quiz.resetSeed'))}</span>`;
     seedButton.style.display = 'flex';
@@ -358,6 +398,39 @@ export class QuizTopBar {
     const left = Math.min(window.innerWidth - width - 14, Math.max(14, anchor.right - width));
     this.popoverEl.style.left = `${left}px`;
     this.popoverEl.style.top = `${anchor.bottom + 6}px`;
+  }
+
+  /** toggle 开关组件：拨片位移 + 背景变化（与设置页 toggle 同语义，简易模式无注入样式） */
+  private _buildToggle(checked: boolean, onToggle: (next: boolean) => void): HTMLButtonElement {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.role = 'switch';
+    btn.setAttribute('aria-checked', String(checked));
+    btn.style.cssText = [
+      'position:relative', 'width:44px', 'height:26px', 'flex:none', 'padding:0',
+      `border:2px solid ${QUIZ_BORDER}`, `border-radius:999px`,
+      `background:${checked ? QUIZ_ACCENT : QUIZ_CARD}`,
+      'cursor:pointer', 'touch-action:manipulation',
+      'transition:background 180ms ease',
+    ].join(';');
+    const thumb = document.createElement('span');
+    thumb.style.cssText = [
+      'position:absolute', 'top:50%', 'left:2px', 'width:18px', 'height:18px',
+      `border-radius:50%`, `background:${QUIZ_CARD}`, `transform:translateY(-50%)`,
+      `transition:transform 200ms cubic-bezier(.22,1,.36,1)`,
+      checked ? `transform:translateY(-50%) translateX(20px)` : '',
+      'box-shadow:0 2px 4px rgba(0,0,0,0.3)',
+    ].join(';');
+    btn.appendChild(thumb);
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      const next = btn.getAttribute('aria-checked') !== 'true';
+      btn.setAttribute('aria-checked', String(next));
+      btn.style.background = next ? QUIZ_ACCENT : QUIZ_CARD;
+      thumb.style.transform = next ? 'translateY(-50%) translateX(20px)' : 'translateY(-50%)';
+      onToggle(next);
+    });
+    return btn;
   }
 
   private _escape(value: string): string {

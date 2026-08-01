@@ -28,6 +28,8 @@ export interface SettingsData {
   orientation: OrientationPref;
   /** 触屏虚拟控制显隐 */
   touchControls: TouchControlsPref;
+  /** 过滤 A1 基础题：开启后排除答案全为 CEFR A1 级词汇的题目（默认开启） */
+  filterBasicQuestions: boolean;
   /** 简易问答模式历史最高分（累计答对题数） */
   quizHighScore: number;
 }
@@ -41,6 +43,7 @@ const DEFAULTS: SettingsData = {
   muted: false,
   orientation: 'auto',
   touchControls: 'auto',
+  filterBasicQuestions: true,
   quizHighScore: 0,
 };
 
@@ -57,6 +60,7 @@ export function loadSettings(): SettingsData {
       muted: Boolean(parsed.muted ?? DEFAULTS.muted),
       orientation: normalizeOrientation(parsed.orientation),
       touchControls: normalizeTouchControls(parsed.touchControls),
+      filterBasicQuestions: normalizeBoolean(parsed.filterBasicQuestions, DEFAULTS.filterBasicQuestions),
       quizHighScore: normalizeHighScore(parsed.quizHighScore),
     };
   } catch {
@@ -93,6 +97,11 @@ function normalizeOrientation(v: unknown): OrientationPref {
 /** 规范化触屏控制偏好，非法值回退默认 */
 function normalizeTouchControls(v: unknown): TouchControlsPref {
   return v === 'on' || v === 'off' ? v : 'auto';
+}
+
+/** 规范化布尔偏好，非布尔值回退默认 */
+function normalizeBoolean(v: unknown, def: boolean): boolean {
+  return typeof v === 'boolean' ? v : def;
 }
 
 /** 规范化最高分，非负整数，非法值回退 0 */

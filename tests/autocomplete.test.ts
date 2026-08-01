@@ -35,6 +35,18 @@ describe('Autocomplete', () => {
     keyboard.destroy();
   });
 
+  it('keeps a typed space visible in the quiz keyboard input', () => {
+    const keyboard = new QuizKeyboard({ onPick: vi.fn() });
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+
+    const display = document.querySelector<HTMLDivElement>('#quiz-keyboard > div:first-child > div:first-child');
+    expect(display?.textContent).toBe('a ');
+    expect(display?.style.whiteSpace).toBe('pre');
+
+    keyboard.destroy();
+  });
+
   it('shows glassy as the material adjective for gla', () => {
     const autocomplete = new Autocomplete({ onPick: vi.fn() });
 

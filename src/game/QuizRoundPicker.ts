@@ -12,6 +12,7 @@
 
 import type { Question, DifficultyTier, DifficultyStandard } from '@/core/types/question';
 import { questionsByDifficulty } from '@/core/data/questions/bank';
+import { isBasicQuestion } from '@/core/data/questions/a1-vocabulary';
 import { allEntries } from '@/core/data/dictionary/Dictionary';
 import type { DictEntry } from '@/core/types/dictionary';
 import { hashString, mulberry32, shuffle } from '@/util/rng';
@@ -62,12 +63,14 @@ export class QuizRoundPicker {
     tier: DifficultyTier,
     standard: DifficultyStandard,
     seedSalt: string,
+    filterBasic = false,
   ) {
     this.tier = tier;
     this.standard = standard;
     this.seedSalt = seedSalt;
     const base = questionsByDifficulty(tier, standard);
     this.pool = base.length > 0 ? [...base] : [];
+    if (filterBasic) this.pool = this.pool.filter((q) => !isBasicQuestion(q));
     this.rng = this._deriveRng();
     this.creatures = creaturePool();
     shuffle(this.pool, this.rng);

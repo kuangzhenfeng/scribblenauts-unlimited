@@ -62,6 +62,9 @@ export class QuizKeyboard {
   private readonly displayEl: HTMLDivElement;
   private readonly candidateEl: HTMLDivElement;
   private readonly keysEl: HTMLDivElement;
+  private spaceButton!: HTMLButtonElement;
+  private clearButton!: HTMLButtonElement;
+  private submitButton!: HTMLButtonElement;
   private buffer = '';
   private candidates: TaggedCompletion[] = [];
   private selectedCandidate = 0;
@@ -130,7 +133,8 @@ export class QuizKeyboard {
       'font-size:17px',
       'font-weight:600',
       'letter-spacing:0.02em',
-      'white-space:nowrap',
+      // 保留形容词与名词之间的空格；仍保持单行并由 overflow/text-overflow 截断。
+      'white-space:pre',
       'overflow:hidden',
       'text-overflow:ellipsis',
       'display:flex',
@@ -244,6 +248,16 @@ export class QuizKeyboard {
     this._refreshCandidates();
   }
 
+  /** 切换界面语言时刷新按键、占位提示与候选提示，保留当前输入缓冲。 */
+  refreshLocale(): void {
+    this.spaceButton.textContent = t('quiz.space');
+    this.spaceButton.setAttribute('aria-label', t('quiz.space'));
+    this._setClearButtonLabel(this.clearButton);
+    this._setSubmitButtonLabel(this.submitButton);
+    this._refreshDisplay();
+    this._refreshCandidates();
+  }
+
   /**
    * 测量键盘实际占据的下屏空间高度（含 `bottom` 安全区间距），供 QuizScene 划分上屏视口用。
    *
@@ -291,14 +305,17 @@ export class QuizKeyboard {
     }
     // 行3：清空 + Z X C V B N M + 退格（清空占 iOS shift 左槽，退格占右槽）
     const row3 = this._makeRow();
-    row3.appendChild(this._makeClearKey());
+    this.clearButton = this._makeClearKey();
+    row3.appendChild(this.clearButton);
     for (const ch of ROWS[2]!) row3.appendChild(this._makeLetterKey(ch));
     row3.appendChild(this._makeBackspaceKey());
     this.keysEl.appendChild(row3);
     // 行4：空格 + 生成（生成占 iOS return 位，用品牌绿）
     const row4 = this._makeRow();
-    row4.appendChild(this._makeSpaceKey());
-    row4.appendChild(this._makeSubmitKey());
+    this.spaceButton = this._makeSpaceKey();
+    this.submitButton = this._makeSubmitKey();
+    row4.appendChild(this.spaceButton);
+    row4.appendChild(this.submitButton);
     this.keysEl.appendChild(row4);
   }
 
@@ -362,7 +379,7 @@ export class QuizKeyboard {
   private _makeClearKey(): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.innerHTML = `${ICON_CLEAR}<span class="quiz-clear-label" style="margin-left:4px;font-weight:700;font-size:12px">${t('quiz.clear')}</span>`;
+    this._setClearButtonLabel(btn);
     btn.setAttribute('aria-label', t('quiz.clear'));
     btn.style.cssText = this._fnKeyStyle(QUIZ_KB_KEY_SPECIAL, QUIZ_KB_KEY_TEXT, 'flex:1.35');
     btn.addEventListener('pointerdown', (e) => {
@@ -408,7 +425,7 @@ export class QuizKeyboard {
   private _makeSubmitKey(): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.innerHTML = `${ICON_CHECK}<span style="margin-left:4px;font-weight:600;font-size:13px">${t('quiz.submit')}</span>`;
+    this._setSubmitButtonLabel(btn);
     btn.setAttribute('aria-label', t('quiz.submit'));
     btn.style.cssText = this._fnKeyStyle(QUIZ_YELLOW, QUIZ_KB_KEY_TEXT, 'flex:2');
     btn.addEventListener('pointerdown', (e) => {
@@ -416,6 +433,16 @@ export class QuizKeyboard {
       this._submit();
     });
     return btn;
+  }
+
+  private _setClearButtonLabel(button: HTMLButtonElement): void {
+    button.innerHTML = `${ICON_CLEAR}<span class="quiz-clear-label" style="margin-left:4px;font-weight:700;font-size:12px">${this._escape(t('quiz.clear'))}</span>`;
+    button.setAttribute('aria-label', t('quiz.clear'));
+  }
+
+  private _setSubmitButtonLabel(button: HTMLButtonElement): void {
+    button.innerHTML = `${ICON_CHECK}<span style="margin-left:4px;font-weight:600;font-size:13px">${this._escape(t('quiz.submit'))}</span>`;
+    button.setAttribute('aria-label', t('quiz.submit'));
   }
 
   // ---- 内部：输入逻辑 ----

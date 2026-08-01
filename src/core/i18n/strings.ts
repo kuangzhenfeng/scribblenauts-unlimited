@@ -57,6 +57,8 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'settings.questionSeedHint': '换种子会重置所有关卡题目进度（保留关卡解锁与自制物体）',
     'settings.refreshSeed': '刷新',
     'settings.seedPh': '输入种子…',
+    'settings.filterBasic': '过滤 A1 基础题',
+    'settings.filterBasicHint': '排除答案全为 CEFR A1 级词汇的题目',
     'settings.data': '数据',
     'settings.dataDesc': '存档与进度管理',
     'settings.clearSave': '清除存档',
@@ -162,6 +164,9 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'quiz.difficulty': '难度设置',
     'quiz.standard': '难度标准',
     'quiz.tier': '难度档',
+    'quiz.filterBasic': '过滤 A1 基础题',
+    'quiz.filterBasicOn': '已开启',
+    'quiz.filterBasicOff': '已关闭',
   },
 
   en: {
@@ -210,6 +215,8 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'settings.questionSeedHint': 'Changing the seed resets all level question progress (unlocks and custom objects are kept)',
     'settings.refreshSeed': 'Refresh',
     'settings.seedPh': 'Enter seed…',
+    'settings.filterBasic': 'Filter A1 Basic Questions',
+    'settings.filterBasicHint': 'Skip questions whose answers are all CEFR A1 vocabulary',
     'settings.data': 'Data',
     'settings.dataDesc': 'Save and progress management',
     'settings.clearSave': 'Clear Save',
@@ -315,5 +322,8 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'quiz.difficulty': 'Difficulty',
     'quiz.standard': 'Standard',
     'quiz.tier': 'Tier',
+    'quiz.filterBasic': 'Filter A1 Basic',
+    'quiz.filterBasicOn': 'On',
+    'quiz.filterBasicOff': 'Off',
   },
 };

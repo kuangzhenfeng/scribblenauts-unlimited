@@ -59,11 +59,12 @@ export class LevelManager {
    * keepPlayerId 由 WorldScene 传入以跨关卡保留玩家。
    * tier/standard 为难度档与标准，由选关界面传入；缺省回退基础档+等级标准。
    * seedSalt 为题目随机种子盐（如日期），同盐+同关+同难度 → 同题序。
+   * filterBasic 过滤 A1 基础题，缺省 false。
    */
   load(
     levelId: string,
     keepPlayerId?: string,
-    opts?: { tier?: DifficultyTier; standard?: DifficultyStandard; seedSalt?: string },
+    opts?: { tier?: DifficultyTier; standard?: DifficultyStandard; seedSalt?: string; filterBasic?: boolean },
   ): LevelData | undefined {
     const data = REGISTRY[levelId];
     if (!data) {
@@ -86,7 +87,8 @@ export class LevelManager {
     const tier = opts?.tier ?? 1;
     const standard = opts?.standard ?? 'cefr';
     const seedSalt = opts?.seedSalt ?? '';
-    const { challenges } = pickChallenges(data, tier, standard, seedSalt);
+    const filterBasic = opts?.filterBasic ?? false;
+    const { challenges } = pickChallenges(data, tier, standard, seedSalt, filterBasic);
     data.challenges = challenges;
     log.info('level loaded', { levelId, theme: data.theme, tier, standard, slots: challenges.length });
     return data;

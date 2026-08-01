@@ -11,6 +11,7 @@
 import type { Challenge, LevelData, PuzzleCondition } from '@/core/types/level';
 import type { DifficultyTier, DifficultyStandard, Question } from '@/core/types/question';
 import { questionsByDifficulty } from './bank';
+import { isBasicQuestion } from './a1-vocabulary';
 import { hashString, mulberry32, shuffle } from '@/util/rng';
 
 /** slot id 格式：{levelId}:{tier}:{standard}:{slotIndex}，供存档去重 */
@@ -53,23 +54,26 @@ export interface PickResult {
  * @param tier 难度档
  * @param standard 难度标准
  * @param seedSalt 种子盐（如日期字符串），同盐+同关+同难度 → 同题序
+ * @param filterBasic 过滤 A1 基础题（答案全为 CEFR A1 级词汇的题目）
  */
 export function pickChallenges(
   level: LevelData,
   tier: DifficultyTier,
   standard: DifficultyStandard,
   seedSalt: string,
+  filterBasic = false,
 ): PickResult {
   const slots = level.challengeSlots ?? Math.min(level.npcs.length, 3);
   const pool = questionsByDifficulty(tier, standard);
-  if (pool.length === 0) {
+  const filtered = filterBasic ? pool.filter((q) => !isBasicQuestion(q)) : pool;
+  if (filtered.length === 0) {
     return { challenges: [], npcSlots: [] };
   }
 
   // 种子：levelId + tier + standard + salt
   const seedStr = `${level.id}:${tier}:${standard}:${seedSalt}`;
   const rng = mulberry32(hashString(seedStr));
-  const shuffled = shuffle([...pool], rng);
+  const shuffled = shuffle([...filtered], rng);
 
   // 取 slots 道，题库不足则循环补足（保证 slot 满）
   const picked = [];

@@ -650,6 +650,9 @@ export class SettingsScene extends Phaser.Scene {
     });
     wrap.appendChild(tierGroup);
 
+    // 过滤 A1 基础题开关
+    wrap.appendChild(this._filterBasicRow(loadSettings()));
+
     // 词库分布：等级档 / 词频两种标准下各档位的单词数
     wrap.appendChild(this._wordDistribution());
     // 题目分布：等级档 / 词频两种标准下各档位的题目数
@@ -856,6 +859,33 @@ export class SettingsScene extends Phaser.Scene {
     await store.updateQuestionSeed(seed);
     await store.clearChallengeProgress();
     sfx.play('ui');
+  }
+
+  /** 过滤 A1 基础题 toggle 行：开启后排除答案全为 CEFR A1 级词汇的题目 */
+  private _filterBasicRow(s: SettingsData): HTMLDivElement {
+    const row = document.createElement('div');
+    row.className = 'set-row';
+    row.style.marginTop = '14px';
+
+    const toggle = this._toggle(s.filterBasicQuestions, (next) => {
+      this._persist({ filterBasicQuestions: next });
+      sfx.play('ui');
+    });
+    toggle.ariaLabel = t('settings.filterBasic');
+
+    const label = document.createElement('div');
+    label.className = 'set-label';
+    label.style.flex = '1';
+    label.textContent = t('settings.filterBasic');
+
+    const hint = document.createElement('span');
+    hint.style.cssText = ['font-size:12px', 'color:#5a554c', 'line-height:1.4', 'flex:none', 'max-width:200px'].join(';');
+    hint.textContent = t('settings.filterBasicHint');
+
+    row.appendChild(toggle);
+    row.appendChild(label);
+    row.appendChild(hint);
+    return row;
   }
 
   // ——— 数据卡 ———

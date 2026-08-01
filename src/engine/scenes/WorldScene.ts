@@ -215,6 +215,7 @@ export class WorldScene extends Phaser.Scene {
       tier: this.diffTier,
       standard: this.diffStandard,
       seedSalt: this.questionSeed,
+      filterBasic: loadSettings().filterBasicQuestions,
     });
     this.camera.clampTo = this.level.currentLevel?.bounds;
     this.environment.build(this.level.currentLevel!);
@@ -612,6 +613,7 @@ export class WorldScene extends Phaser.Scene {
           tier: this.diffTier,
           standard: this.diffStandard,
           seedSalt: this.questionSeed,
+          filterBasic: loadSettings().filterBasicQuestions,
         });
         this.camera.clampTo = this.level.currentLevel?.bounds;
         if (this.level.currentLevel) this.environment.build(this.level.currentLevel);

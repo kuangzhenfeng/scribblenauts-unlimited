@@ -38,7 +38,7 @@ import { SpawnFx } from '@/fx/SpawnFx';
 import { ensureParticleTextures } from '@/fx/particleTexture';
 import { music } from '@/audio/MusicDirector';
 import { sfx } from '@/audio/SoundEffects';
-import { L, t, setLang, type Lang } from '@/core/i18n/I18n';
+import { L, t, type Lang } from '@/core/i18n/I18n';
 import type { GameEntity } from '@/game/Entity';
 import type { LevelData } from '@/core/types/level';
 import type { ParseCandidate } from '@/core/lex/InputParser';
@@ -50,6 +50,12 @@ import { generateSeed, hashString, mulberry32 } from '@/util/rng';
 /** quiz-arena 关卡数据（import.meta.glob 构建期聚合，与 LevelManager 同源） */
 const levelModules = import.meta.glob<{ default: LevelData }>('@/core/data/levels/quiz-arena.json', { eager: true });
 const ARENA: LevelData = Object.values(levelModules)[0]!.default;
+
+/** 为每次进入简易模式创建独立会话种子，避免复用存档中的上一轮题序。 */
+export function createQuizSessionSeed(previousSeed: string): string {
+  const seed = generateSeed();
+  return seed === previousSeed ? `${seed}-quiz` : seed;
+}
 
 /** 提问生物站立位置（世界坐标，上屏中央偏上） */
 const CREATURE_X = 0;
@@ -115,8 +121,10 @@ export class QuizScene extends Phaser.Scene {
   private tier!: DifficultyTier;
   /** 当前难度标准（随任务卡切换变化） */
   private standard!: DifficultyStandard;
-  /** 存档种子（难度切换时重建题池用） */
+  /** 本次简易模式会话种子（难度切换时重建题池用） */
   private questionSeed!: string;
+  /** 显式重置种子后重启场景时复用，避免一次进入生成两次种子 */
+  private pendingQuestionSeed: string | undefined;
   /** resize 节流 */
   private resizeTimer: number | undefined;
 
@@ -148,13 +156,14 @@ export class QuizScene extends Phaser.Scene {
       () => this.time.now,
     );
 
-    // 从存档读取难度 + 种子
+    // 从存档读取难度；简易模式每次进入使用新的会话种子，不改全局存档种子。
     const save = new SaveStore();
     const saveData = await save.load();
     this.tier = saveData.difficultySetting.tier;
     this.standard = saveData.difficultySetting.standard;
-    this.questionSeed = saveData.questionSeed;
-    this.roundPicker = new QuizRoundPicker(this.tier, this.standard, this.questionSeed);
+    this.questionSeed = this.pendingQuestionSeed ?? createQuizSessionSeed(saveData.questionSeed);
+    this.pendingQuestionSeed = undefined;
+    this.roundPicker = new QuizRoundPicker(this.tier, this.standard, this.questionSeed, loadSettings().filterBasicQuestions);
     // 物品落点 RNG：以 questionSeed 派生独立子流，与题序 RNG 解耦（同 seed 同落点序列）
     this.spawnRng = mulberry32(hashString(`quiz-spawn:${this.questionSeed}`));
 
@@ -179,6 +188,7 @@ export class QuizScene extends Phaser.Scene {
       onDifficulty: (tier, standard) => this._onDifficulty(tier, standard),
       onLanguage: (lang) => this._onLanguage(lang),
       onSeedReset: () => this._resetQuestionSeed(),
+      onFilterBasicChange: (next) => this._onFilterBasicChange(next),
     });
     this.topBar.render(0, 0, 0);
     this.questionCard = new QuizQuestionCard();
@@ -233,10 +243,16 @@ export class QuizScene extends Phaser.Scene {
     // 任务卡为 position:fixed 但不自带 top，须按顶栏实测高度钉位，否则落入文档流末尾
     this.questionCard?.setTop(topH);
     const cardH = this.questionCard?.getHeight() ?? 0;
-    // 竖屏时题面悬浮在舞台上；横屏输入台仍需避开题面底部，避免高度不足时相互覆盖。
+    // 竖屏时题面悬浮在舞台上；横屏优先让输入台贴底，只有空间不足时才改为从题面下方滚动。
     const stageTop = topH;
     const keyboardTop = topH + cardH;
-    this.keyboard?.setLandscapeTop(this.scale.width > totalH ? keyboardTop + 6 : undefined);
+    const landscape = this.scale.width > totalH;
+    this.keyboard?.setLandscapeTop(undefined);
+    const naturalKeyboardHeight = this.keyboard?.getHeight() ?? 0;
+    const naturalKeyboardTop = totalH - naturalKeyboardHeight;
+    if (landscape && naturalKeyboardTop < keyboardTop + 6) {
+      this.keyboard?.setLandscapeTop(keyboardTop + 6);
+    }
     const kbH = this.keyboard?.getHeight() ?? 0;
     const minViewH = this.scale.width > totalH ? 0 : 120;
     const viewH = Math.max(minViewH, totalH - stageTop - kbH);
@@ -420,17 +436,49 @@ export class QuizScene extends Phaser.Scene {
       if (ge === this.creatureEntity) continue;
       this._destroyEntity(ge);
     }
-    this.roundPicker = new QuizRoundPicker(tier, standard, this.questionSeed);
+    this.roundPicker = new QuizRoundPicker(tier, standard, this.questionSeed, loadSettings().filterBasicQuestions);
     this.keyboard.clear();
     this._applyViewport();
     this._nextQuestion();
     log.info('quiz difficulty changed', { tier, standard, poolSize: this.roundPicker.hasQuestion });
   }
 
-  /** 语言属于全局设置，写入后重启当前问答场景以刷新全部本地化文案。 */
+  /**
+   * 切换 A1 基础题过滤：持久化设置并重建题池（与切难度同流程）。
+   * 答案全为 CEFR A1 级词汇的题目在开启时被排除。
+   */
+  private async _onFilterBasicChange(next: boolean): Promise<void> {
+    if (this.paused) return;
+    saveSettings({ ...loadSettings(), filterBasicQuestions: next });
+    // 清场上生成物品（creature 除外，由 _nextQuestion 重建）
+    for (const e of this.entities.all()) {
+      const ge = e as GameEntity;
+      if (ge === this.creatureEntity) continue;
+      this._destroyEntity(ge);
+    }
+    this.roundPicker = new QuizRoundPicker(this.tier, this.standard, this.questionSeed, next);
+    this.keyboard.clear();
+    this._applyViewport();
+    this._nextQuestion();
+    log.info('quiz filter basic changed', { filterBasic: next, poolSize: this.roundPicker.hasQuestion });
+  }
+
+  /** 语言属于全局设置，只刷新浮层文案，保留当前题目与回合状态。 */
   private _onLanguage(lang: Lang): void {
-    setLang(lang);
-    this.scene.restart();
+    const question = this.currentQuestion;
+    if (question) {
+      const prompt = L(question.prompt);
+      const hint = question.hint ? L(question.hint) : t('quiz.hint');
+      this.questionCard.refreshLocale(prompt, hint);
+    }
+    this.keyboard.refreshLocale();
+    this.topBar.refreshLocale(
+      this.roundPicker.currentRound,
+      this.roundPicker.currentScore,
+      this.roundPicker.currentStreak,
+    );
+    this._applyViewport();
+    log.info('quiz language changed', { lang, round: this.roundPicker.currentRound });
   }
 
   /** 重置题目随机种子，清理旧题目进度后重新进入问答模式。 */
@@ -440,6 +488,7 @@ export class QuizScene extends Phaser.Scene {
     const seed = generateSeed();
     await store.updateQuestionSeed(seed);
     await store.clearChallengeProgress();
+    this.pendingQuestionSeed = seed;
     log.info('quiz question seed reset');
     this.scene.restart();
   }

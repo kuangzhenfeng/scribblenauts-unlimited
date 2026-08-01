@@ -19,6 +19,7 @@ import { t } from '@/core/i18n/I18n';
 
 export class QuizQuestionCard {
   private readonly el: HTMLDivElement;
+  private readonly taskEl: HTMLElement;
   private readonly promptEl: HTMLDivElement;
   private readonly hintEl: HTMLDivElement;
 
@@ -36,10 +37,10 @@ export class QuizQuestionCard {
       'pointer-events:auto',
     ].join(';');
 
-    const task = document.createElement('strong');
-    task.textContent = t('quiz.task');
-    task.style.cssText = `display:block;margin-bottom:6px;font-size:13px;color:${QUIZ_INK};letter-spacing:.02em`;
-    this.el.appendChild(task);
+    this.taskEl = document.createElement('strong');
+    this.taskEl.textContent = t('quiz.task');
+    this.taskEl.style.cssText = `display:block;margin-bottom:6px;font-size:13px;color:${QUIZ_INK};letter-spacing:.02em`;
+    this.el.appendChild(this.taskEl);
 
     this.promptEl = document.createElement('div');
     this.promptEl.style.cssText = [
@@ -59,6 +60,12 @@ export class QuizQuestionCard {
     this.promptEl.textContent = prompt;
     this.hintEl.textContent = hint;
     this.hintEl.style.display = hint ? 'block' : 'none';
+  }
+
+  /** 切换界面语言时刷新任务标题与当前题面，不改变题目本身。 */
+  refreshLocale(prompt: string, hint: string): void {
+    this.taskEl.textContent = t('quiz.task');
+    this.setQuestion(prompt, hint);
   }
 
   getHeight(): number {
