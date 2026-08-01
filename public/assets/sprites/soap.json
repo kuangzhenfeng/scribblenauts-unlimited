@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "soap_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 28,
+        "h": 20
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 28,
+        "h": 20
+      },
+      "sourceSize": {
+        "w": 28,
+        "h": 20
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "soap.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 28,
+      "h": 20
+    },
+    "scale": "1"
+  }
+}

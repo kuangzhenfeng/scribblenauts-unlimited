@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "pipe_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 60
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 60
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 60
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "pipe.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 16,
+      "h": 60
+    },
+    "scale": "1"
+  }
+}

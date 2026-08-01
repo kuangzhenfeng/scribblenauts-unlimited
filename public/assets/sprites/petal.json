@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "petal_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 24
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 24
+      },
+      "sourceSize": {
+        "w": 24,
+        "h": 24
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "petal.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 24,
+      "h": 24
+    },
+    "scale": "1"
+  }
+}

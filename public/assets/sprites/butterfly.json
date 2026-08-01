@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "butterfly_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 36,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 36,
+        "h": 32
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "butterfly.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 36,
+      "h": 32
+    },
+    "scale": "1"
+  }
+}

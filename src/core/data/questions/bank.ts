@@ -2349,6 +2349,593 @@ const scenarios: Scenario[] = [
       { typeId: 'suitcase' },
     ],
   },
+
+  // ---- 昆虫/生物观察困境（新增词条集群）----
+  {
+    suffix: 'observe-bug',
+    prompt: {
+      zh: '小崽子自然课上要观察昆虫，可满院子一只也寻不见……能帮我唤几只小虫来让他瞧瞧吗？',
+      en: 'My child has a nature lesson on insects, but the yard is empty of them — can you summon a few bugs for him to study?',
+    },
+    hint: { zh: '（想想什么又是虫又是活物，召唤到TA身边）', en: '(think of an insect, summon it near)' },
+    answers: [
+      { typeId: 'butterfly' },
+      { typeId: 'bee' },
+      { typeId: 'ant' },
+      { typeId: 'beetle' },
+      { typeId: 'dragonfly' },
+      { typeId: 'ladybug' },
+    ],
+  },
+
+  // ---- 乐器/演奏困境 ----
+  {
+    suffix: 'music-recital',
+    prompt: {
+      zh: '乐师今夜要登台，可他的乐器箱在路上丢了……能帮我唤样乐器来救场吗？',
+      en: 'The musician takes the stage tonight, but his instrument case was lost on the road — can you summon one to save the show?',
+    },
+    hint: { zh: '（想想什么能奏乐，召唤到TA身边）', en: '(think of an instrument, summon it near)' },
+    answers: [
+      { typeId: 'drum' },
+      { typeId: 'guitar' },
+      { typeId: 'piano' },
+      { typeId: 'violin' },
+      { typeId: 'flute-instrument' },
+      { typeId: 'trumpet' },
+    ],
+  },
+
+  // ---- 餐具/摆桌困境 ----
+  {
+    suffix: 'set-table',
+    prompt: {
+      zh: '客人都入座了，桌上却连副碗筷都没有……能帮我弄样能盛饭摆桌的餐具吗？',
+      en: 'The guests are seated, but there is not a single utensil on the table — can you get me something to set the table with?',
+    },
+    hint: { zh: '（想想什么能盛饭餐具，召唤到TA身边）', en: '(think of tableware, summon it near)' },
+    answers: [
+      { typeId: 'plate' },
+      { typeId: 'bowl' },
+      { typeId: 'spoon' },
+      { typeId: 'fork' },
+      { typeId: 'bottle' },
+    ],
+  },
+
+  // ---- 快餐/垫饥困境 ----
+  {
+    suffix: 'fast-food',
+    prompt: {
+      zh: '赶了一早上的路，饿得前胸贴后背，就想弄口热乎快餐垫垫……能给我弄点吗？',
+      en: 'I have been on the road all morning, starving, and crave a hot quick bite — can you get me some?',
+    },
+    hint: { zh: '（想想什么又是快餐又是能吃的，召唤到TA身边）', en: '(think of fast food, summon it near)' },
+    answers: [
+      { typeId: 'sandwich' },
+      { typeId: 'pizza' },
+      { typeId: 'hamburger' },
+      { typeId: 'hotdog' },
+      { typeId: 'sausage' },
+      { typeId: 'bacon' },
+    ],
+  },
+
+  // ---- 蔬菜/炖汤困境 ----
+  {
+    suffix: 'vegetable-soup',
+    prompt: {
+      zh: '想给病号的娘亲炖锅蔬菜汤，可菜篮子空空如也……能帮我弄点能下锅的菜吗？',
+      en: 'I would brew a vegetable broth for my ailing mother, but the basket is bare — can you get me some vegetables?',
+    },
+    hint: { zh: '（想想什么又是蔬菜又是能吃的，召唤到TA身边）', en: '(think of a vegetable, summon it near)' },
+    answers: [
+      { typeId: 'potato' },
+      { typeId: 'onion' },
+      { typeId: 'garlic' },
+      { typeId: 'cabbage' },
+      { typeId: 'lettuce' },
+      { typeId: 'spinach' },
+    ],
+  },
+
+  // ---- 零食/哄嘴困境 ----
+  {
+    suffix: 'snack-time',
+    prompt: {
+      zh: '小家伙放学回来嚷着要零嘴，不给就闹……能帮我弄点能哄嘴的小吃吗？',
+      en: 'The little one came home from school demanding a snack and will not stop otherwise — can you get me some treats?',
+    },
+    hint: { zh: '（想想什么又是小吃又是能吃的，召唤到TA身边）', en: '(think of a snack, summon it near)' },
+    answers: [
+      { typeId: 'popcorn' },
+      { typeId: 'chips' },
+      { typeId: 'lollipop' },
+      { typeId: 'pancake' },
+      { typeId: 'icecream' },
+      { typeId: 'dumpling' },
+    ],
+  },
+
+  // ---- 园艺/耕作困境 ----
+  {
+    suffix: 'garden-tools',
+    prompt: {
+      zh: '春耕了，园子荒得没处下脚，可手里没家伙……能给我弄样能打理园子的吗？',
+      en: 'Spring tilling is here and the garden is overgrown, but I have no tools — can you get me something to tend it with?',
+    },
+    hint: { zh: '（想想什么能打理园子，召唤到TA身边）', en: '(think of a garden tool, summon it near)' },
+    answers: [
+      { typeId: 'rake' },
+      { typeId: 'hoe' },
+      { typeId: 'pitchfork' },
+      { typeId: 'lawnmower' },
+      { typeId: 'chainsaw' },
+      { typeId: 'shovel' },
+    ],
+  },
+
+  // ---- 修补/固定困境 ----
+  {
+    suffix: 'repair-broken',
+    prompt: {
+      zh: '这桌子散架了，得赶紧修上……能给我弄样能固定修补的吗？',
+      en: 'This table is falling apart and I must fix it at once — can you get me something to mend it with?',
+    },
+    hint: { zh: '（想想什么能固定修补，召唤到TA身边）', en: '(think of a fastener, summon it near)' },
+    answers: [
+      { typeId: 'nail' },
+      { typeId: 'screw' },
+      { typeId: 'glue' },
+      { typeId: 'tape' },
+      { typeId: 'wire' },
+      { typeId: 'hammer' },
+    ],
+  },
+
+  // ---- 育苗/造林困境 ----
+  {
+    suffix: 'tree-nursery',
+    prompt: {
+      zh: '想在荒坡上育苗造林，可连粒种子都没有……能帮我弄点能栽下生根的吗？',
+      en: 'I would raise a nursery on this barren slope, but I lack even a seed — can you get me something to plant and root?',
+    },
+    hint: { zh: '（想想什么能育苗生根，召唤到TA身边）', en: '(think of something to plant, summon it near)' },
+    answers: [
+      { typeId: 'seed' },
+      { typeId: 'acorn' },
+      { typeId: 'pinecone' },
+      { typeId: 'branch' },
+      { typeId: 'root' },
+      { typeId: 'tree' },
+    ],
+  },
+
+  // ---- 急救/送医困境 ----
+  {
+    suffix: 'emergency-ride',
+    prompt: {
+      zh: '有人伤重昏迷，得赶紧送医，可连辆车都没有……能帮我弄样能载伤员的吗？',
+      en: 'Someone is hurt and unconscious — I must get them to a healer at once, but there is no vehicle. Can you get me one?',
+    },
+    hint: { zh: '（想想什么能载伤员送医，召唤到TA身边）', en: '(think of an emergency vehicle, summon it near)' },
+    answers: [
+      { typeId: 'ambulance' },
+      { typeId: 'van' },
+      { typeId: 'taxi' },
+      { typeId: 'car' },
+      { typeId: 'helicopter' },
+    ],
+  },
+
+  // ---- 街头/代步困境 ----
+  {
+    suffix: 'street-cruise',
+    prompt: {
+      zh: '要到街那头去办事，走着太慢……能给我弄样能在街头代步的吗？',
+      en: 'I must run an errand across town and walking is too slow — can you get me something to cruise the streets?',
+    },
+    hint: { zh: '（想想什么能街头代步，召唤到TA身边）', en: '(think of street transport, summon it near)' },
+    answers: [
+      { typeId: 'skateboard' },
+      { typeId: 'scooter' },
+      { typeId: 'bicycle' },
+      { typeId: 'taxi' },
+      { typeId: 'van' },
+    ],
+  },
+
+  // ---- 能源/供能困境 ----
+  {
+    suffix: 'power-source',
+    prompt: {
+      zh: '机关城停电了，什么都动不了……能帮我弄样能给机关供能的吗？',
+      en: 'The clockwork city has gone dark and nothing moves — can you get me something to power it?',
+    },
+    hint: { zh: '（想想什么能给机关供能，召唤到TA身边）', en: '(think of a power source, summon it near)' },
+    answers: [
+      { typeId: 'electricity' },
+      { typeId: 'energy' },
+      { typeId: 'plasma' },
+      { typeId: 'fire' },
+      { typeId: 'light' },
+    ],
+  },
+
+  // ---- 清洁/大扫除困境 ----
+  {
+    suffix: 'clean-house',
+    prompt: {
+      zh: '屋里积了厚厚一层灰，得彻底清扫一番……能给我弄样能打扫的家伙吗？',
+      en: 'The house is layered in dust and needs a thorough sweep — can you get me something to clean with?',
+    },
+    hint: { zh: '（想想什么能打扫除尘，召唤到TA身边）', en: '(think of a cleaning tool, summon it near)' },
+    answers: [
+      { typeId: 'broom' },
+      { typeId: 'mop' },
+      { typeId: 'soap' },
+      { typeId: 'towel' },
+      { typeId: 'water' },
+      { typeId: 'bucket' },
+    ],
+  },
+
+  // ---- 洗漱/梳妆困境 ----
+  {
+    suffix: 'morning-wash',
+    prompt: {
+      zh: '一早醒来要梳洗出门，可盥洗的东西一样没有……能给我弄样能洗漱的吗？',
+      en: 'I woke to wash and groom before going out, but have nothing for it — can you get me something to wash with?',
+    },
+    hint: { zh: '（想想什么能洗漱梳妆，召唤到TA身边）', en: '(think of a wash kit, summon it near)' },
+    answers: [
+      { typeId: 'soap' },
+      { typeId: 'towel' },
+      { typeId: 'toothbrush' },
+      { typeId: 'comb' },
+      { typeId: 'water' },
+    ],
+  },
+
+  // ---- 沙尘/掩护困境 ----
+  {
+    suffix: 'sand-cover',
+    prompt: {
+      zh: '要趁夜撤了，可敌人盯着不放，得弄场风沙掩护着退……能帮我弄样能扬起沙尘的吗？',
+      en: 'I must slip away by night, but the foe watches — I need a sandstorm to cover the retreat. Can you get me something to raise one?',
+    },
+    hint: { zh: '（想想什么能扬起风沙，召唤到TA身边）', en: '(think of something to raise dust, summon it near)' },
+    answers: [
+      { typeId: 'dust' },
+      { typeId: 'storm' },
+      { typeId: 'wind' },
+      { typeId: 'sand' },
+      { typeId: 'tornado' },
+      { typeId: 'smoke' },
+    ],
+  },
+
+  // ---- 储粮/干货困境（新增词条集群）----
+  {
+    suffix: 'pantry-staples',
+    prompt: {
+      zh: '过冬的粮仓还空着一半，总得囤点耐放的干货……能帮我弄点能入仓储粮的吗？',
+      en: 'The winter pantry is half empty — I must stock durable staples. Can you get me something to store away?',
+    },
+    hint: { zh: '（想想什么又是干货又是能吃的，召唤到TA身边）', en: '(think of a dry staple, summon it near)' },
+    answers: [
+      { typeId: 'bean' },
+      { typeId: 'pea' },
+      { typeId: 'nut' },
+      { typeId: 'peanut' },
+      { typeId: 'raisin' },
+      { typeId: 'flour' },
+    ],
+  },
+
+  // ---- 林间花草困境 ----
+  {
+    suffix: 'forest-flora',
+    prompt: {
+      zh: '药师要进山采几味山花野草入药，可他认不全……能帮我唤几株来让他辨认吗？',
+      en: 'The herbalist must gather mountain blooms but cannot tell them apart — can you summon a few for him to identify?',
+    },
+    hint: { zh: '（想想什么又是山野又是花草，召唤到TA身边）', en: '(think of a wild plant, summon it near)' },
+    answers: [
+      { typeId: 'birch' },
+      { typeId: 'maple' },
+      { typeId: 'dandelion' },
+      { typeId: 'poppy' },
+      { typeId: 'lotus' },
+      { typeId: 'petal' },
+    ],
+  },
+
+  // ---- 虫族困境 ----
+  {
+    suffix: 'bug-parade',
+    prompt: {
+      zh: '博物先生要凑一柜子虫子标本，可满山头一只也没逮着……能帮我唤几只来给他凑数吗？',
+      en: 'The naturalist must fill a cabinet of insect specimens but has caught none — can you summon a few for him?',
+    },
+    hint: { zh: '（想想什么又是虫又是活物，召唤到TA身边）', en: '(think of a creeping or flying bug, summon it near)' },
+    answers: [
+      { typeId: 'caterpillar' },
+      { typeId: 'moth' },
+      { typeId: 'mosquito' },
+      { typeId: 'hornet' },
+      { typeId: 'spider' },
+      { typeId: 'wasp' },
+    ],
+  },
+
+  // ---- 水上载具困境 ----
+  {
+    suffix: 'water-craft',
+    prompt: {
+      zh: '想在湖上泛舟赏景，可岸边连条船影都没有……能帮我弄样能下水划行的吗？',
+      en: 'I would drift on the lake, but there is no boat in sight — can you get me something to paddle out on?',
+    },
+    hint: { zh: '（想想什么能下水泛舟，召唤到TA身边）', en: '(think of a watercraft, summon it near)' },
+    answers: [
+      { typeId: 'canoe' },
+      { typeId: 'ferry' },
+      { typeId: 'sailboat' },
+      { typeId: 'ship' },
+    ],
+  },
+
+  // ---- 异象困境 ----
+  {
+    suffix: 'strange-phenomenon',
+    prompt: {
+      zh: '术士要布一场异象阵，缺几样天地间的奇物作引……能帮我弄点能显异象的吗？',
+      en: 'The sorcerer would weave a portent and lacks strange things of earth and sky — can you get me something uncanny?',
+    },
+    hint: { zh: '（想想什么又是天地奇物又是非实体，召唤到TA身边）', en: '(think of an otherworldly phenomenon, summon it near)' },
+    answers: [
+      { typeId: 'bubble' },
+      { typeId: 'gas' },
+      { typeId: 'poison' },
+      { typeId: 'thunder' },
+      { typeId: 'iceberg' },
+      { typeId: 'dust' },
+    ],
+  },
+
+  // ---- 文具困境 ----
+  {
+    suffix: 'desk-supplies',
+    prompt: {
+      zh: '蒙童明日开蒙，书包里连样能写能画的都没有……能给我弄样能书写的文具吗？',
+      en: 'The children start school tomorrow, but their satchels lack even something to write or draw with — can you get me some stationery?',
+    },
+    hint: { zh: '（想想什么能书写绘画，召唤到TA身边）', en: '(think of stationery, summon it near)' },
+    answers: [
+      { typeId: 'pen' },
+      { typeId: 'pencil' },
+      { typeId: 'eraser' },
+      { typeId: 'paint' },
+      { typeId: 'paintbrush' },
+      { typeId: 'map' },
+    ],
+  },
+
+  // ---- 海岸生灵困境 ----
+  {
+    suffix: 'coastal-wildlife',
+    prompt: {
+      zh: '带学童到海边认海物，可退潮后沙滩上空空如也……能帮我唤几样海边的活物来吗？',
+      en: 'I brought the pupils to the shore to study sea life, but the tide left the beach bare — can you summon some coastal creatures?',
+    },
+    hint: { zh: '（想想什么又是海边又是活物，召唤到TA身边）', en: '(think of a coastal creature, summon it near)' },
+    answers: [
+      { typeId: 'seagull' },
+      { typeId: 'crab' },
+      { typeId: 'starfish' },
+      { typeId: 'clam' },
+      { typeId: 'oyster' },
+      { typeId: 'fish' },
+    ],
+  },
+
+  // ---- 佐餐甜调料困境 ----
+  {
+    suffix: 'sweet-condiment',
+    prompt: {
+      zh: '茶点摆好了，可总觉得少了点甜味儿来佐……能帮我弄点能添甜增香的料吗？',
+      en: 'The tea is laid out but it wants for sweetness — can you get me something to sweeten and flavor it?',
+    },
+    hint: { zh: '（想想什么又是甜又是能吃的，召唤到TA身边）', en: '(think of a sweet condiment, summon it near)' },
+    answers: [
+      { typeId: 'cream' },
+      { typeId: 'sugar' },
+      { typeId: 'honey' },
+      { typeId: 'jam' },
+      { typeId: 'butter' },
+    ],
+  },
+
+  // ---- 信号旗帜困境 ----
+  {
+    suffix: 'raise-flag',
+    prompt: {
+      zh: '城头要升旗擂鼓传令，可旗鼓都不知丢哪儿了……能帮我弄样能传令示信的吗？',
+      en: 'The ramparts must raise a flag and sound a drum, but both are missing — can you get me something to signal with?',
+    },
+    hint: { zh: '（想想什么能传令示信，召唤到TA身边）', en: '(think of a signal, summon it near)' },
+    answers: [
+      { typeId: 'flag' },
+      { typeId: 'bell' },
+      { typeId: 'sign' },
+      { typeId: 'torch' },
+      { typeId: 'smoke' },
+    ],
+  },
+
+  // ---- 玩具箱困境 ----
+  {
+    suffix: 'toy-chest',
+    prompt: {
+      zh: '小孙子攒了一箱玩具，可搬家时弄丢了，整日闷闷不乐……能帮我弄样能哄他的玩物吗？',
+      en: 'My grandson lost his whole toy chest in the move and mopes all day — can you get me something to play with?',
+    },
+    hint: { zh: '（想想什么又是玩又是能哄孩子的，召唤到TA身边）', en: '(think of a plaything, summon it near)' },
+    answers: [
+      { typeId: 'toy' },
+      { typeId: 'doll' },
+      { typeId: 'teddy' },
+      { typeId: 'kite' },
+      { typeId: 'ball' },
+      { typeId: 'balloon' },
+    ],
+  },
+
+  // ---- 寄信包裹困境 ----
+  {
+    suffix: 'mail-package',
+    prompt: {
+      zh: '要给远方的亲人寄封家书，可连信封信票都没有……能帮我弄样能寄信的吗？',
+      en: 'I would send a letter home afar, but I lack even an envelope or stamp — can you get me something to mail it with?',
+    },
+    hint: { zh: '（想想什么能寄信包裹，召唤到TA身边）', en: '(think of mailing supplies, summon it near)' },
+    answers: [
+      { typeId: 'envelope' },
+      { typeId: 'stamp' },
+      { typeId: 'paper' },
+      { typeId: 'box' },
+    ],
+  },
+
+  // ---- 寿司海味困境 ----
+  {
+    suffix: 'sushi-platter',
+    prompt: {
+      zh: '远客点名要尝日式料理，可灶上连样海味都没有……能帮我弄点能做寿司拼盘的吗？',
+      en: 'A guest asks for Japanese fare, but the kitchen has no seafood at all — can you get me something for a sushi platter?',
+    },
+    hint: { zh: '（想想什么又是海味又是能吃的，召唤到TA身边）', en: '(think of sushi fare, summon it near)' },
+    answers: [
+      { typeId: 'sushi' },
+      { typeId: 'rice' },
+      { typeId: 'fish' },
+      { typeId: 'shrimp' },
+      { typeId: 'squid' },
+    ],
+  },
+
+  // ---- 货运搬运困境 ----
+  {
+    suffix: 'cargo-move',
+    prompt: {
+      zh: '码头上堆了一山的货，靠人手搬到天亮也搬不完……能帮我弄样能搬货的吗？',
+      en: 'Mountains of freight are piling on the dock — hands alone cannot move it by dawn. Can you get me something to haul it?',
+    },
+    hint: { zh: '（想想什么能搬货起重，召唤到TA身边）', en: '(think of a cargo mover, summon it near)' },
+    answers: [
+      { typeId: 'forklift' },
+      { typeId: 'crane-vehicle' },
+      { typeId: 'wagon' },
+      { typeId: 'cart' },
+      { typeId: 'truck' },
+    ],
+  },
+
+  // ---- 雪坡运动困境 ----
+  {
+    suffix: 'snow-slope',
+    prompt: {
+      zh: '雪坡正好滑一场，可我连副雪具都没有……能帮我弄样能下坡的吗？',
+      en: 'The slope is perfect for snow, but I lack even the gear — can you get me something to descend it?',
+    },
+    hint: { zh: '（想想什么能雪坡滑行，召唤到TA身边）', en: '(think of snow gear, summon it near)' },
+    answers: [
+      { typeId: 'skis' },
+      { typeId: 'sleigh' },
+      { typeId: 'snow' },
+    ],
+  },
+
+  // ---- 上锁固安困境 ----
+  {
+    suffix: 'lock-secure',
+    prompt: {
+      zh: '这屋子夜里老遭贼，得给门加道锁才安心……能帮我弄样能上锁固安的吗？',
+      en: 'Thieves keep breaking in at night — I need a lock to secure the door. Can you get me something to lock it with?',
+    },
+    hint: { zh: '（想想什么能上锁固安，召唤到TA身边）', en: '(think of a lock, summon it near)' },
+    answers: [
+      { typeId: 'lock' },
+      { typeId: 'key' },
+      { typeId: 'chest' },
+      { typeId: 'door' },
+    ],
+  },
+
+  // ---- 管道引水困境 ----
+  {
+    suffix: 'pipe-water',
+    prompt: {
+      zh: '要引水进屋，可连截管子都找不到……能帮我弄样能通水的吗？',
+      en: 'I must run water into the house, but cannot find even a length of pipe — can you get me something to channel it?',
+    },
+    hint: { zh: '（想想什么能通水引流，召唤到TA身边）', en: '(think of a conduit, summon it near)' },
+    answers: [
+      { typeId: 'pipe' },
+      { typeId: 'hose' },
+      { typeId: 'water' },
+      { typeId: 'bucket' },
+    ],
+  },
+
+  // ---- 古生物化石困境 ----
+  {
+    suffix: 'fossil-dig',
+    prompt: {
+      zh: '考古队要挖一具远古巨兽的骨架，可连块能辨识的化石都没有……能帮我弄样能印证古物的吗？',
+      en: 'The dig seeks the bones of a primeval beast, but we have not a fossil to prove it — can you get me something ancient?',
+    },
+    hint: { zh: '（想想什么又是古物又是巨兽，召唤到TA身边）', en: '(think of something ancient, summon it near)' },
+    answers: [
+      { typeId: 'dinosaur' },
+      { typeId: 'bone' },
+      { typeId: 'egg' },
+      { typeId: 'skeleton' },
+    ],
+  },
+
+  // ---- 武士兵器困境 ----
+  {
+    suffix: 'warrior-arms',
+    prompt: {
+      zh: '游侠说要仗剑走天涯，可手里连样趁手的家伙都没有……能帮我弄样能行走江湖的兵器吗？',
+      en: 'The wandering hero would roam the world, but has no weapon to hand — can you get him something to travel with?',
+    },
+    hint: { zh: '（想想什么能行走江湖当兵器，召唤到TA身边）', en: '(think of a hero weapon, summon it near)' },
+    answers: [
+      { typeId: 'machete' },
+      { typeId: 'rifle' },
+      { typeId: 'trident' },
+      { typeId: 'sword' },
+      { typeId: 'spear' },
+    ],
+  },
+
+  // ---- 随身财物困境 ----
+  {
+    suffix: 'lost-wallet',
+    prompt: {
+      zh: '出门才发觉钱包不见了，身无分文连车都坐不了……能帮我弄样能装钱物的吗？',
+      en: 'I stepped out and found my wallet gone — penniless, I cannot even ride. Can you get me something to carry money in?',
+    },
+    hint: { zh: '（想想什么能装钱物随身，召唤到TA身边）', en: '(think of something to carry money, summon it near)' },
+    answers: [
+      { typeId: 'wallet' },
+      { typeId: 'purse' },
+      { typeId: 'coin' },
+      { typeId: 'key' },
+    ],
+  },
 ];
 
 const situationalQuestions: Question[] = scenarios.map((s) => {

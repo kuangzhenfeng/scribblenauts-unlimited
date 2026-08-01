@@ -1,0 +1,35 @@
+{
+  "frames": {
+    "paintbrush_idle": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 44
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 44
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 44
+      }
+    }
+  },
+  "meta": {
+    "app": "gen-atlas.js",
+    "version": "1.0",
+    "image": "paintbrush.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 16,
+      "h": 44
+    },
+    "scale": "1"
+  }
+}
