@@ -1,0 +1,21 @@
+{
+  "id": "stage-arrow-meadow",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-arrow-meadow",
+  "bgm": "stage-arrow-meadow",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-hashtag-foundry", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-ampersand-cavern", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "horse", "x": -520, "y": 320, "layer": 0 }, { "typeId": "car", "x": -160, "y": 320, "layer": 0 }, { "typeId": "bridge", "x": 220, "y": 320, "layer": 0 }, { "typeId": "rope", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-arrow-horse", "typeId": "human", "x": -520, "y": 320, "gender": "male" }, { "id": "npc-arrow-car", "typeId": "human", "x": -120, "y": 320, "gender": "female" }, { "id": "npc-arrow-bridge", "typeId": "human", "x": 280, "y": 320, "gender": "male" }, { "id": "npc-arrow-rope", "typeId": "human", "x": 640, "y": 320, "gender": "female" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "arrow-horse", "giverNpcId": "npc-arrow-horse", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-arrow-horse", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-arrow-horse", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "骑手：马能带人过草地，桥能把路指向远方。", "en": "Rider: A horse crosses the meadow, and a bridge points the way onward." } ] },
+    { "id": "arrow-car", "giverNpcId": "npc-arrow-car", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "car", "near": { "npcId": "npc-arrow-car", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-arrow-car", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "送货员：车负责速度，绳子负责把货固定住。", "en": "Courier: The car brings speed; rope keeps the cargo secure." } ] },
+    { "id": "arrow-bridge", "giverNpcId": "npc-arrow-bridge", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-arrow-bridge", "radius": 260 } }, { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-arrow-bridge", "radius": 260 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "car", "near": { "npcId": "npc-arrow-bridge", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "领路人：桥或马都能过河，再让车把大家带回家。", "en": "Guide: A bridge or horse crosses the river; a car brings everyone home." } ] },
+    { "id": "arrow-rope", "giverNpcId": "npc-arrow-rope", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-arrow-rope", "radius": 520 } }, { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-arrow-rope", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-arrow-rope", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "绳桥师：先系好绳，再搭桥，最后让坐骑带队通过。", "en": "Ropewright: Tie the rope, build the bridge, and let the mount lead the crossing." } ] }
+  ],
+  "challengeSlots": 4
+}

@@ -17,6 +17,7 @@ import { applyAdjectives } from './AdjectiveSystem';
 import { log } from '@/util/log';
 import { sfx } from '@/audio/SoundEffects';
 import type Phaser from 'phaser';
+import { attach } from '@/engine/physics/Composite';
 
 
 export interface SpawnResult {
@@ -24,18 +25,20 @@ export interface SpawnResult {
   reason?: string;
 }
 
-/** 生物默认生命值（按 category 区分） */
+/** 未单独声明生命值时的原版近似类别默认值。具体词条可覆盖。 */
 function defaultHealth(category: string): number {
   switch (category) {
     case 'creature':
-      return 100;
+      return 50;
+    case 'food':
     case 'weapon':
     case 'tool':
-      return 40;
-    case 'food':
-      return 20;
+    case 'object':
+    case 'element':
+    case 'magic':
+      return 10;
     default:
-      return 60;
+      return 10;
   }
 }
 
@@ -68,7 +71,25 @@ export class Spawner {
     }
     if (!entry) return { reason: `未知词条：${candidate.noun.entryId}` };
     const newCandidate: ParseCandidate = { noun: candidate.noun, adjectives: adj, score: candidate.score, raw: candidate.raw };
-    return this.spawnEntry(entry, newCandidate, x, y);
+    const result = this.spawnEntry(entry, newCandidate, x, y);
+    if (result.entity && candidate.noun.entryId.startsWith('custom:')) {
+      const custom = getCustomDef(candidate.noun.entryId);
+      for (const attachment of custom?.attachments ?? []) {
+        const childEntry = getEntry(attachment.childTypeId);
+        if (!childEntry) continue;
+        const child = this.spawnEntry(
+          childEntry,
+          undefined,
+          result.entity.bodyPositionX + attachment.anchor[0],
+          result.entity.bodyPositionY + attachment.anchor[1],
+        ).entity;
+        if (!child) continue;
+        const relation = attach(this.physics, result.entity, child, attachment.anchor);
+        result.entity.compositeAttachments ??= [];
+        result.entity.compositeAttachments.push(relation);
+      }
+    }
+    return result;
   }
 
   /** 超过 60 上限则拒绝生成；critical（NPC/玩家）不计入上限 */
@@ -95,7 +116,7 @@ export class Spawner {
       flags: entry.tags.flags,
       category: entry.category,
     });
-    const hp = defaultHealth(entry.category);
+    const hp = entry.health ?? defaultHealth(entry.category);
     const id = this.nextId();
     const entity = new GameEntity({
       id,
@@ -109,6 +130,7 @@ export class Spawner {
       health: hp,
       maxHealth: hp,
       drawParams: { ...entry.appearance.params },
+      wearable: entry.wearable,
     });
     if (candidate) {
       applyAdjectives(entity, candidate, entry);

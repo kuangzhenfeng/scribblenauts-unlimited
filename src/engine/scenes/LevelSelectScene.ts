@@ -30,6 +30,7 @@ import {
   ICON_SNOWFLAKE,
   ICON_STAR,
   ICON_SUN,
+  ICON_UNLOCK,
 } from '@/ui/icons';
 import { confirmDialog } from '@/ui/ConfirmDialog';
 import { t, getLang, type Lang } from '@/core/i18n/I18n';
@@ -52,6 +53,42 @@ const LEVEL_TITLE: Record<string, { zh: string; en: string }> = {
   'stage-snow': { zh: '雪原秘境', en: 'Snow Realm' },
   'stage-desert': { zh: '沙漠迷城', en: 'Desert Maze' },
   'stage-volcano': { zh: '火山熔炉', en: 'Volcano Forge' },
+  'stage-storybook': { zh: '故事书堡', en: 'Storybook Keep' },
+  'stage-clockwork': { zh: '齿轮站', en: 'Clockwork Station' },
+  'stage-palindromeda': { zh: '回文星窟', en: 'Palindromeda' },
+  'stage-syntax-station': { zh: '句法站', en: 'Syntax Station' },
+  'stage-verdant-grove': { zh: '翡翠林地', en: 'Verdant Grove' },
+  'stage-moonlit-cavern': { zh: '月影洞窟', en: 'Moonlit Cavern' },
+  'stage-frost-fair': { zh: '极光集市', en: 'Frost Fair' },
+  'stage-sand-scriptorium': { zh: '沙海书院', en: 'Sand Scriptorium' },
+  'stage-ember-foundry': { zh: '余烬铸造厂', en: 'Ember Foundry' },
+  'stage-river-market': { zh: '河畔集市', en: 'River Market' },
+  'stage-sky-observatory': { zh: '云端观测站', en: 'Sky Observatory' },
+  'stage-ruined-garden': { zh: '荒园遗迹', en: 'Ruined Garden' },
+  'stage-crystal-archive': { zh: '水晶档案馆', en: 'Crystal Archive' },
+  'stage-aurora-camp': { zh: '极光营地', en: 'Aurora Camp' },
+  'stage-dune-caravan': { zh: '沙丘商队', en: 'Dune Caravan' },
+  'stage-lava-laboratory': { zh: '熔岩实验室', en: 'Lava Laboratory' },
+  'stage-wildwood-theater': { zh: '野林剧场', en: 'Wildwood Theater' },
+  'stage-final-workshop': { zh: '终极工坊', en: 'Final Workshop' },
+  'stage-comma-canopy': { zh: '逗号树冠', en: 'Comma Canopy' },
+  'stage-question-cavern': { zh: '问号洞窟', en: 'Question Cavern' },
+  'stage-exclaim-snowfield': { zh: '惊叹雪原', en: 'Exclaim Snowfield' },
+  'stage-colon-dunes': { zh: '冒号沙丘', en: 'Colon Dunes' },
+  'stage-semicolon-volcano': { zh: '分号火山', en: 'Semicolon Volcano' },
+  'stage-ellipsis-meadow': { zh: '省略号草甸', en: 'Ellipsis Meadow' },
+  'stage-bracket-cave': { zh: '括号洞室', en: 'Bracket Cave' },
+  'stage-quote-snow': { zh: '引号雪谷', en: 'Quote Snow Valley' },
+  'stage-dash-desert': { zh: '破折号荒漠', en: 'Dash Desert' },
+  'stage-slash-volcano': { zh: '斜杠熔流', en: 'Slash Lavaflow' },
+  'stage-parenthesis-grove': { zh: '圆括号林地', en: 'Parenthesis Grove' },
+  'stage-asterisk-archive': { zh: '星号档案洞', en: 'Asterisk Archive' },
+  'stage-plus-snowfield': { zh: '加号冰原', en: 'Plus Icefield' },
+  'stage-equals-desert': { zh: '等号沙海', en: 'Equals Sands' },
+  'stage-hashtag-foundry': { zh: '井号铸场', en: 'Hashtag Foundry' },
+  'stage-arrow-meadow': { zh: '箭头草原', en: 'Arrow Meadow' },
+  'stage-ampersand-cavern': { zh: '与号深窟', en: 'Ampersand Cavern' },
+  'stage-final-mark': { zh: '终止符之门', en: 'Final Mark Gate' },
 };
 
 /** 按当前语言取关卡标题，未命中 id 回退主题名 */
@@ -76,7 +113,7 @@ export class LevelSelectScene extends Phaser.Scene {
   }
 
   async create(): Promise<void> {
-    this.cameras.main.setBackgroundColor('#dfe9e2');
+    this.cameras.main.setBackgroundColor('#d9cfab');
     this.events.once('shutdown', this.shutdown, this);
     this._ensureStyle();
 
@@ -101,6 +138,27 @@ export class LevelSelectScene extends Phaser.Scene {
     });
     nav.appendChild(back);
 
+    const navActions = document.createElement('div');
+    navActions.className = 'level-select-nav-actions';
+
+    const unlockAll = document.createElement('button');
+    unlockAll.type = 'button';
+    unlockAll.className = 'level-select-unlock-all';
+    unlockAll.innerHTML = `${ICON_UNLOCK}<span></span>`;
+    unlockAll.querySelector('span')!.textContent = t('levelSelect.unlockAll');
+    unlockAll.setAttribute('aria-label', t('levelSelect.unlockAll'));
+    unlockAll.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      unlockAll.disabled = true;
+      try {
+        await this.save.unlockAllLevels(LevelManager.listLevels().map((level) => level.id));
+        await this.renderCards();
+      } finally {
+        unlockAll.disabled = false;
+      }
+    });
+    navActions.appendChild(unlockAll);
+
     const resetAll = document.createElement('button');
     resetAll.type = 'button';
     resetAll.className = 'level-select-reset-all';
@@ -118,7 +176,8 @@ export class LevelSelectScene extends Phaser.Scene {
       await this.save.resetAll();
       await this.renderCards();
     });
-    nav.appendChild(resetAll);
+    navActions.appendChild(resetAll);
+    nav.appendChild(navActions);
     shell.appendChild(nav);
 
     const heading = document.createElement('header');
@@ -161,7 +220,11 @@ export class LevelSelectScene extends Phaser.Scene {
         pointer-events:none;
         overflow-y:auto;
         -webkit-overflow-scrolling:touch;
-        background:#dfe9e2;
+        background-color:#d9cfab;
+        background-image:linear-gradient(rgba(246,239,208,.84),rgba(232,218,169,.9)),url('assets/backgrounds/bg-far-jungle.png');
+        background-position:center;
+        background-size:cover;
+        background-attachment:fixed;
         color:${INK};
         font-family:${UI_FONT};
       }
@@ -181,6 +244,7 @@ export class LevelSelectScene extends Phaser.Scene {
         min-height:56px;
       }
       .level-select-nav-button,
+      .level-select-unlock-all,
       .level-select-reset-all,
       .level-entry,
       .level-reset-button {
@@ -191,6 +255,7 @@ export class LevelSelectScene extends Phaser.Scene {
         transition:transform .16s ease,filter .16s ease,background-color .16s ease,box-shadow .16s ease;
       }
       .level-select-nav-button,
+      .level-select-unlock-all,
       .level-select-reset-all {
         min-height:46px;
         display:inline-flex;
@@ -204,15 +269,22 @@ export class LevelSelectScene extends Phaser.Scene {
       }
       .level-select-nav-button {
         color:${INK};
-        background:${PAPER_BG};
-        border:2px solid ${INK};
-        box-shadow:0 3px 0 rgba(43,43,43,.54);
+        background:#f7f1e3;
+        border:2px solid #6a3d08;
+        box-shadow:0 3px 0 rgba(106,61,8,.54);
       }
       .level-select-reset-all {
         color:#7e3018;
         background:${PAPER_BG};
         border:2px solid #a34b2c;
         box-shadow:0 3px 0 rgba(126,48,24,.36);
+      }
+      .level-select-nav-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
+      .level-select-unlock-all {
+        color:#2f6242;
+        background:#e4eee6;
+        border:2px solid #5d866b;
+        box-shadow:0 3px 0 rgba(47,98,66,.3);
       }
       .level-select-heading { padding:24px 4px 8px; }
       .level-select-heading h1 {
@@ -222,11 +294,12 @@ export class LevelSelectScene extends Phaser.Scene {
         font-weight:950;
         letter-spacing:.02em;
         text-wrap:balance;
+        color:#5a3205;
       }
       .level-select-heading p {
         max-width:68ch;
         margin:10px 0 0;
-        color:#4f6257;
+        color:#6b5a35;
         font-size:15px;
         line-height:1.5;
       }
@@ -238,8 +311,8 @@ export class LevelSelectScene extends Phaser.Scene {
         flex-wrap:wrap;
         margin-top:18px;
         padding:13px 4px;
-        border-top:2px solid rgba(62,91,72,.42);
-        border-bottom:2px solid rgba(62,91,72,.42);
+        border-top:2px solid rgba(106,61,8,.54);
+        border-bottom:2px solid rgba(106,61,8,.54);
       }
       .level-select-progress-summary,
       .level-select-difficulty-summary {
@@ -253,12 +326,12 @@ export class LevelSelectScene extends Phaser.Scene {
         align-items:center;
         gap:6px;
         min-height:28px;
-        color:#385343;
+        color:#6a3d08;
         font-size:14px;
         font-weight:900;
       }
-      .level-select-summary-metric strong { color:${INK}; font-size:18px; line-height:1; }
-      .level-select-difficulty-summary { justify-content:flex-end; color:#4f6257; font-size:13px; font-weight:850; }
+      .level-select-summary-metric strong { color:#4e2f06; font-size:18px; line-height:1; }
+      .level-select-difficulty-summary { justify-content:flex-end; color:#6b5a35; font-size:13px; font-weight:850; }
       .level-select-route { position:relative; margin:28px 0 0; padding:0; list-style:none; }
       .level-route-item { display:grid; grid-template-columns:76px minmax(0,1fr); gap:18px; position:relative; min-height:132px; }
       .level-node-column { display:flex; flex-direction:column; align-items:center; min-height:100%; }
@@ -271,15 +344,15 @@ export class LevelSelectScene extends Phaser.Scene {
         place-items:center;
         flex:none;
         margin-top:17px;
-        color:#436050;
-        background:#d5e0d8;
-        border:2px solid #6f8878;
+        color:#6a3d08;
+        background:#f1bd3b;
+        border:2px solid #6a3d08;
         border-radius:50%;
         font-size:18px;
         font-weight:950;
       }
       .level-node svg { width:20px; height:20px; }
-      .level-route-connector { width:3px; flex:1; min-height:30px; margin:8px 0 0; background:#9db6a5; border-radius:999px; }
+      .level-route-connector { width:3px; flex:1; min-height:30px; margin:8px 0 0; background:#b28a32; border-radius:999px; }
       .level-route-connector[data-open="false"] { opacity:.42; }
       .level-entry-frame { display:grid; grid-template-columns:minmax(0,1fr) 50px; align-items:center; gap:10px; min-width:0; padding-bottom:16px; }
       .level-entry {
@@ -291,11 +364,12 @@ export class LevelSelectScene extends Phaser.Scene {
         padding:16px 18px 15px;
         text-align:left;
         color:${INK};
-        background:rgba(247,241,227,.82);
-        border:2px solid rgba(43,43,43,.24);
+        background:#f7f1e3;
+        border:2px solid rgba(106,61,8,.46);
         border-radius:10px;
+        box-shadow:3px 3px 0 rgba(106,61,8,.2);
       }
-      .level-route-item[data-current="true"] .level-entry { background:${PAPER_BG}; border-color:${INK}; box-shadow:5px 5px 0 var(--level-color); }
+      .level-route-item[data-current="true"] .level-entry { background:#fff8e8; border-color:#6a3d08; box-shadow:5px 5px 0 var(--level-color); }
       .level-entry:disabled { cursor:not-allowed; filter:saturate(.58); opacity:.68; }
       .level-entry-top,
       .level-entry-body,
@@ -307,14 +381,14 @@ export class LevelSelectScene extends Phaser.Scene {
       .level-entry-theme { min-width:0; gap:8px; color:var(--level-color); font-size:13px; font-weight:950; letter-spacing:.03em; }
       .level-entry-theme svg { width:20px; height:20px; flex:none; }
       .level-entry-theme span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-      .level-entry-status { gap:5px; flex:none; color:#52685a; font-size:13px; font-weight:900; }
+      .level-entry-status { gap:5px; flex:none; color:#6b5a35; font-size:13px; font-weight:900; }
       .level-entry-status svg { width:17px; height:17px; }
       .level-entry-body { justify-content:space-between; gap:16px; min-width:0; }
       .level-entry-info { min-width:0; flex:1; display:flex; flex-direction:column; gap:8px; }
-      .level-entry-number { color:#64776a; font-size:12px; font-weight:900; }
-      .level-entry-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:23px; font-weight:950; letter-spacing:.02em; }
-      .level-entry-progress { gap:8px; min-width:170px; color:#52685a; font-size:12px; font-weight:900; }
-      .level-progress-track { height:7px; flex:1; min-width:70px; overflow:hidden; background:#d9dfd8; border-radius:999px; }
+      .level-entry-number { color:#8c7549; font-size:12px; font-weight:900; }
+      .level-entry-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#4e2f06; font-size:23px; font-weight:950; letter-spacing:.02em; }
+      .level-entry-progress { gap:8px; min-width:170px; color:#6b5a35; font-size:12px; font-weight:900; }
+      .level-progress-track { height:7px; flex:1; min-width:70px; overflow:hidden; background:#dfd0a5; border-radius:999px; }
       .level-progress-fill { height:100%; background:var(--level-color); border-radius:inherit; }
       .level-entry-action {
         justify-content:center;
@@ -323,9 +397,9 @@ export class LevelSelectScene extends Phaser.Scene {
         min-width:124px;
         min-height:42px;
         padding:8px 12px;
-        color:#2f6242;
-        background:#e4eee6;
-        border:2px solid #5d866b;
+        color:#fff8e8;
+        background:#3f7b3a;
+        border:2px solid #285327;
         border-radius:8px;
         font-size:14px;
         font-weight:950;
@@ -344,21 +418,25 @@ export class LevelSelectScene extends Phaser.Scene {
       }
       .level-reset-button:hover, .level-reset-button:focus-visible { background:${PAPER_BG_ALT}; }
       .level-select-nav-button:hover,
+      .level-select-unlock-all:hover,
       .level-select-reset-all:hover,
       .level-entry:hover:not(:disabled) { transform:translateY(-2px); filter:brightness(1.03); }
       .level-select-nav-button:active,
+      .level-select-unlock-all:active,
       .level-select-reset-all:active,
       .level-entry:active:not(:disabled),
       .level-reset-button:active { transform:translateY(2px); }
       .level-select-nav-button:focus-visible,
+      .level-select-unlock-all:focus-visible,
       .level-select-reset-all:focus-visible,
       .level-entry:focus-visible,
       .level-reset-button:focus-visible { outline:3px solid #fff; outline-offset:3px; }
       @media (max-width:720px) {
         .level-select-shell { padding-left:${SAFE_LEFT}; padding-right:${SAFE_RIGHT}; }
         .level-select-nav { align-items:flex-start; }
-        .level-select-nav-button, .level-select-reset-all { min-height:44px; padding-inline:11px; }
-        .level-select-nav-button span, .level-select-reset-all span { max-width:16vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .level-select-nav-actions { gap:8px; }
+        .level-select-nav-button, .level-select-unlock-all, .level-select-reset-all { min-height:44px; padding-inline:11px; }
+        .level-select-nav-button span, .level-select-unlock-all span, .level-select-reset-all span { max-width:16vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .level-select-heading { padding-top:18px; }
         .level-select-heading h1 { font-size:32px; }
         .level-select-heading p { font-size:14px; }
@@ -378,7 +456,7 @@ export class LevelSelectScene extends Phaser.Scene {
         .level-reset-button { width:44px; height:44px; padding:9px; }
       }
       @media (prefers-reduced-motion:reduce) {
-        .level-select-nav-button, .level-select-reset-all, .level-entry, .level-reset-button { transition:none; }
+        .level-select-nav-button, .level-select-unlock-all, .level-select-reset-all, .level-entry, .level-reset-button { transition:none; }
       }
     `;
     document.head.appendChild(style);
@@ -554,6 +632,7 @@ export class LevelSelectScene extends Phaser.Scene {
       this._summaryMetric(ICON_STAR, t('levelSelect.completed'), `${completedCount}/${totalSlots}`),
       this._summaryMetric(ICON_STAR, 'Starite', String(data.starites)),
       this._summaryMetric(ICON_SHARD, getLang() === 'zh' ? '碎片' : 'Shards', String(data.shards)),
+      this._summaryMetric(ICON_SHARD, 'Object Shard', String(data.objectShards)),
     );
 
     const tierLabel = tier === 1 ? t('levelSelect.tier1') : tier === 2 ? t('levelSelect.tier2') : t('levelSelect.tier3');
@@ -590,7 +669,8 @@ export class LevelSelectScene extends Phaser.Scene {
     for (const challenge of lvl.authoredChallenges ?? []) resetLevelIds.add(challenge.id);
     const filteredRemaining = data.completedSlots.filter((id: string) => !resetLevelIds.has(id));
     let shards = 0;
-    let starites = 0;
+    // Object Shard 是跨关收集来源，重置单关挑战时不能扣除它兑换出的 Starite。
+    let starites = data.objectShardStarites;
     for (const sid of filteredRemaining) {
       const authoredReward = authoredRewards.get(sid);
       if (authoredReward) {
@@ -617,11 +697,15 @@ export class LevelSelectScene extends Phaser.Scene {
   private async _enterLevel(levelId: string): Promise<void> {
     this.overlay?.remove();
     this.scene.start('WorldScene', { levelId });
+    // Phaser 4 在 DOM 事件回调中不会自动处理场景切换队列，
+    // 立即冲刷才能让选关卡片进入对应世界。
+    this.scene.manager.processQueue();
   }
 
   private _backToTitle(): void {
     this.overlay?.remove();
     this.scene.start('TitleScene');
+    this.scene.manager.processQueue();
   }
 
   shutdown(): void {

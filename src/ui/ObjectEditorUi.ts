@@ -21,6 +21,7 @@ export class ObjectEditorUi {
   private readonly adjInput: HTMLInputElement;
   private readonly sizeInput: HTMLInputElement;
   private readonly behaviorInput: HTMLInputElement;
+  private readonly attachmentsInput: HTMLInputElement;
   private readonly zhNameInput: HTMLInputElement;
   private readonly enNameInput: HTMLInputElement;
   private readonly zhAliasesInput: HTMLInputElement;
@@ -79,6 +80,7 @@ export class ObjectEditorUi {
     this.adjInput = mkInput(t('editor.adjPh'));
     this.sizeInput = mkInput('尺寸形容词（如 big / 大，可选）');
     this.behaviorInput = mkInput('行为形容词（如 flying / 飞行，可选）');
+    this.attachmentsInput = mkInput(t('editor.attachmentsPh'));
     this.zhNameInput = mkInput(t('editor.namePh'));
     this.enNameInput = mkInput(t('editor.namePh'));
     this.zhAliasesInput = mkInput('中文别名（逗号分隔，可选）');
@@ -101,6 +103,8 @@ export class ObjectEditorUi {
     this.el.appendChild(field('形容词', this.adjInput));
     this.el.appendChild(field('尺寸', this.sizeInput));
     this.el.appendChild(field('行为', this.behaviorInput));
+    this.el.appendChild(sectionTitle(t('editor.attachmentsTitle')));
+    this.el.appendChild(field(t('editor.attachmentsLabel'), this.attachmentsInput));
     this.el.appendChild(sectionTitle('名称与识别'));
     this.el.appendChild(field('中文名称', this.zhNameInput));
     this.el.appendChild(field('英文名称', this.enNameInput));
@@ -138,6 +142,7 @@ export class ObjectEditorUi {
     this.adjInput.value = custom?.adjectives.join(' ') ?? '';
     this.sizeInput.value = '';
     this.behaviorInput.value = '';
+    this.attachmentsInput.value = custom?.attachments?.map((attachment) => `${attachment.childTypeId}@${attachment.anchor[0]}:${attachment.anchor[1]}`).join(', ') ?? '';
     this.zhNameInput.value = custom?.zh.name ?? '';
     this.enNameInput.value = custom?.en.name ?? '';
     this.zhAliasesInput.value = custom?.zh.aliases?.join('，') ?? '';
@@ -172,6 +177,7 @@ export class ObjectEditorUi {
         en: { name: enName, aliases: this.enAliasesInput.value },
         baseText,
         adjectives,
+        ...(this.attachmentsInput.value.trim() ? { attachments: this.attachmentsInput.value } : {}),
         ...(appearanceColor ? { appearanceOverrides: { color: appearanceColor } } : {}),
       });
     } catch {
@@ -192,6 +198,7 @@ export class ObjectEditorUi {
     this.adjInput.value = result.adjectives.join(' ');
     this.sizeInput.value = '';
     this.behaviorInput.value = '';
+    this.attachmentsInput.value = result.attachments?.map((attachment) => `${attachment.childTypeId}@${attachment.anchor[0]}:${attachment.anchor[1]}`).join(', ') ?? '';
     this.zhNameInput.value = result.zh.name;
     this.enNameInput.value = result.en.name;
     this.zhAliasesInput.value = result.zh.aliases?.join('，') ?? '';

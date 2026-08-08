@@ -5,14 +5,14 @@
  * WorldScene.create 已是装配+布线胖方法，再塞 6 层视差会耦合场景装配与背景渲染）。
  * 物理地面/平台仍由 LevelManager.buildTerrain 创建不可见静态矩形，本类只画可见视觉。
  *
- * 远景层优先用 GPT 生图双板（PreloadScene 加载的 bg-far/bg-near-{theme}）：
+ * 远景层优先用 GPT 生图双板（按区域加载的 bg-far/bg-near-{background}）：
  *  - 远板：固定屏整图天空盒（scrollFactor 0,0），含天空/远山/云/丛林远景元素
- *  - 近板：水平无缝条带 TileSprite（scrollFactor 0.5），中景低丘，底部衔接地面
+ *  - 近板：水平无缝条带 TileSprite（scrollFactorX 0.5、scrollFactorY 1），中景低丘，底部衔接地面
  * 缺图时自动回退程序化分层（gradient 天空 + 折线远山 + 椭圆云 + 低丘 TileSprite）。
  * 地面/平台/顶棚/装饰/传送门始终程序化（功能层，须精确匹配世界宽度与物理边界）。
  *
- * 视差用 Phaser 原生 setScrollFactor（零自写 scroll 数学），不加 zoom/deadzone
- *（zoom 会破坏 Notebook 以屏幕中心生成的 screenToWorld 逻辑）。
+ * 视差用 Phaser 原生 setScrollFactor（零自写 scroll 数学），不加 deadzone；
+ * 相机 zoom 由 Camera 统一维护，screenToWorld 使用 Phaser 当前 zoom 计算。
  * 远/中/地面层静态 → generateTexture 烘焙 → TileSprite，零 per-frame 重绘。
  */
 
@@ -110,20 +110,39 @@ const DEPTH = {
   portal: 5,
 } as const;
 
+interface ScreenFixedGameObject {
+  setPosition(x: number, y: number): unknown;
+  setScale(x: number, y?: number): unknown;
+}
+
+interface ScreenFixedLayer {
+  go: ScreenFixedGameObject;
+  x: number;
+  y: number;
+  scaleX: number;
+  scaleY: number;
+}
+
 export class Environment {
   private readonly scene: Phaser.Scene;
   private theme: EnvTheme = THEMES.meadow;
   private themeId = 'meadow';
+  private backgroundId = 'meadow';
   private bounds: AABB = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
   private gameObjects: Phaser.GameObjects.GameObject[] = [];
   /** 依赖窗口尺寸的固定屏层（远板/天空/山/云/中景），resize 时销毁重建 */
   private resizableGos: Phaser.GameObjects.GameObject[] = [];
+  /** scrollFactor 0 只锁定滚动，仍会被 Camera zoom 缩放；这里补偿缩放保持屏幕覆盖。 */
+  private screenFixedGos: ScreenFixedLayer[] = [];
+  private screenFixedLayoutKey = '';
   private cloudTiles: Phaser.GameObjects.TileSprite | undefined;
   private cloudOffset = 0;
   private portalGfx: Phaser.GameObjects.Graphics[] = [];
   private swayObjects: { go: Phaser.GameObjects.GameObject & { rotation: number }; baseRotation: number; phase: number }[] = [];
   /** 处理背景贴图晚于环境层创建完成的有限次刷新。 */
   private assetRefreshTimer: Phaser.Time.TimerEvent | undefined;
+  /** 当前 Environment 已经开始加载的区域背景键，避免同一场景重复请求。 */
+  private readonly queuedBackgroundKeys = new Set<string>();
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -134,12 +153,14 @@ export class Environment {
     this.dispose();
     this.theme = THEMES[level.theme] ?? THEMES.meadow;
     this.themeId = level.theme ?? 'meadow';
+    this.backgroundId = level.background ?? this.themeId;
     this.bounds = level.bounds;
     const { width, height } = this.scene.scale;
 
     // 远景层：若主题对应生图板已加载则用之，否则回退程序化分层绘制
-    const farKey = `bg-far-${this.themeId}`;
-    const nearKey = `bg-near-${this.themeId}`;
+    const farKey = `bg-far-${this.backgroundId}`;
+    const nearKey = `bg-near-${this.backgroundId}`;
+    this.queueBackgroundAssets([farKey, nearKey]);
     const hasFar = this.scene.textures.exists(farKey);
     const hasNear = this.scene.textures.exists(nearKey);
 
@@ -170,11 +191,12 @@ export class Environment {
     if (level.theme === 'jungle' && !hasFar) this.buildJungleExtra(width, height);
 
     this.scheduleAssetRefresh(width, height, hasFar, hasNear);
-    log.info('environment built', { theme: level.theme, layers: this.gameObjects.length + this.resizableGos.length, far: hasFar, near: hasNear });
+    log.info('environment built', { theme: level.theme, background: this.backgroundId, layers: this.gameObjects.length + this.resizableGos.length, far: hasFar, near: hasNear });
   }
 
   /** 每帧更新：云朵漂移、门户脉动 */
   update(_time: number, delta: number): void {
+    this.syncScreenFixedLayers();
     this.cloudOffset += delta * 0.004;
     if (this.cloudTiles) {
       this.cloudTiles.tilePositionX = this.cloudOffset;
@@ -196,14 +218,16 @@ export class Environment {
     // 先销毁旧的固定屏层，避免叠加泄漏
     for (const go of this.resizableGos) go.destroy();
     this.resizableGos = [];
+    this.screenFixedGos = [];
+    this.screenFixedLayoutKey = '';
     this.cloudTiles = undefined;
     this._rebuildResizable(width, height);
   }
 
   /** 按当前主题与窗口尺寸重建固定屏层（远板或程序化天空/山/云/中景） */
   private _rebuildResizable(width: number, height: number): void {
-    const farKey = `bg-far-${this.themeId}`;
-    const nearKey = `bg-near-${this.themeId}`;
+    const farKey = `bg-far-${this.backgroundId}`;
+    const nearKey = `bg-near-${this.backgroundId}`;
     const hasFar = this.scene.textures.exists(farKey);
     const hasNear = this.scene.textures.exists(nearKey);
     if (hasFar) {
@@ -213,7 +237,7 @@ export class Environment {
       this.buildMountain(width, height);
       this.buildClouds(width, height);
     }
-    // 近板为水平无缝 TileSprite（scrollFactor 0.5），宽度按世界坐标，不受窗口尺寸影响，无需重建
+    // 近板为水平无缝 TileSprite（scrollFactorX 0.5、scrollFactorY 1），宽度按世界坐标，不受窗口尺寸影响，无需重建
     if (!hasNear) {
       this.buildMidground(width, height);
     }
@@ -233,14 +257,32 @@ export class Environment {
     this.assetRefreshTimer = this.scene.time.delayedCall(250, () => {
       this.assetRefreshTimer = undefined;
       if (!this.scene.scene.isActive()) return;
-      const hasFar = this.scene.textures.exists(`bg-far-${this.themeId}`);
-      const hasNear = this.scene.textures.exists(`bg-near-${this.themeId}`);
+      const hasFar = this.scene.textures.exists(`bg-far-${this.backgroundId}`);
+      const hasNear = this.scene.textures.exists(`bg-near-${this.backgroundId}`);
       if (hasFar !== hadFar || hasNear !== hadNear) {
         this.resize(width, height);
         return;
       }
       this.scheduleAssetRefresh(width, height, hadFar, hadNear, attempt + 1);
     });
+  }
+
+  /**
+   * 进入区域时只加载当前区域的远板/近板，避免启动阶段为全部区域预加载大图导致 Loader 阻塞。
+   * 使用原生 Image 加入 Phaser TextureManager，不与精灵 atlas 的 Loader 队列争用。
+   */
+  private queueBackgroundAssets(keys: string[]): void {
+    const missing = keys.filter((key) => !this.scene.textures.exists(key) && !this.queuedBackgroundKeys.has(key));
+    for (const key of missing) {
+      this.queuedBackgroundKeys.add(key);
+      const image = new Image();
+      image.onload = () => {
+        if (!this.scene.textures.exists(key)) this.scene.textures.addImage(key, image);
+        if (this.scene.scene.isActive()) this.resize(this.scene.scale.width, this.scene.scale.height);
+      };
+      image.onerror = () => log.warn('background asset load failed', { key });
+      image.src = `assets/backgrounds/${key}.png`;
+    }
   }
 
   private dispose(): void {
@@ -250,6 +292,8 @@ export class Environment {
     for (const go of this.resizableGos) go.destroy();
     this.gameObjects = [];
     this.resizableGos = [];
+    this.screenFixedGos = [];
+    this.screenFixedLayoutKey = '';
     this.cloudTiles = undefined;
     this.portalGfx = [];
     this.swayObjects = [];
@@ -267,6 +311,43 @@ export class Environment {
     return go;
   }
 
+  /** 记录固定屏层在 1 倍 zoom 下的布局，运行时只调整 transform，不重绘纹理。 */
+  private addScreenFixed<T extends Phaser.GameObjects.GameObject>(
+    go: T,
+    x: number,
+    y: number,
+    scaleX = 1,
+    scaleY = scaleX,
+  ): T {
+    this.screenFixedGos.push({
+      go: go as unknown as ScreenFixedGameObject,
+      x,
+      y,
+      scaleX,
+      scaleY,
+    });
+    return go;
+  }
+
+  /** 让 scrollFactor 0 的天空层在 Camera zoom 下继续覆盖同一块屏幕。 */
+  private syncScreenFixedLayers(): void {
+    if (this.screenFixedGos.length === 0) return;
+    const cam = this.scene.cameras.main;
+    const zoom = cam.zoom || 1;
+    const key = `${cam.width}:${cam.height}:${zoom}`;
+    if (key === this.screenFixedLayoutKey) return;
+    this.screenFixedLayoutKey = key;
+    const centerX = cam.width / 2;
+    const centerY = cam.height / 2;
+    for (const layer of this.screenFixedGos) {
+      layer.go.setPosition(
+        centerX + (layer.x - centerX) / zoom,
+        centerY + (layer.y - centerY) / zoom,
+      );
+      layer.go.setScale(layer.scaleX / zoom, layer.scaleY / zoom);
+    }
+  }
+
   /**
    * 远板：固定屏整幅生图（天空盒），含天空/远山/云/丛林远景元素。
    * scrollFactor(0,0) 固定不动，按覆盖缩放铺满屏幕（与 TitleScene._fitKeyArt 同策略）。
@@ -276,13 +357,16 @@ export class Environment {
     img.setOrigin(0, 0).setScrollFactor(0, 0).setDepth(DEPTH.sky);
     const src = this.scene.textures.get(texKey).getSourceImage();
     const scale = Math.max(width / src.width, height / src.height);
+    const x = (width - src.width * scale) / 2;
+    const y = (height - src.height * scale) / 2;
     img.setScale(scale);
-    img.setPosition((width - src.width * scale) / 2, (height - src.height * scale) / 2);
+    img.setPosition(x, y);
     this.addResizable(img);
+    this.addScreenFixed(img, x, y, scale);
   }
 
   /**
-   * 近板：水平无缝条带生图，scrollFactor 0.5 视差移动。
+   * 近板：水平无缝条带生图，只在 X 轴使用 0.5 视差，Y 轴跟随世界坐标。
    * 宽度取世界宽（纹理水平平铺），底部衔接地面顶部（groundTopY = bounds.maxY - 30）。
    */
   private buildNearPlate(texKey: string): void {
@@ -292,12 +376,14 @@ export class Environment {
     const worldW = this.bounds.maxX - this.bounds.minX;
     // 视差移动会让有限宽度条带露边，向两侧各扩一段世界宽度，保证镜头边缘始终有连续中景。
     const tile = this.scene.add.tileSprite(this.bounds.minX - worldW, groundTopY - nearH, worldW * 3, nearH, texKey);
-    tile.setOrigin(0, 0).setScrollFactor(0.5, 0.5).setDepth(DEPTH.midground);
-    // 近板只提供层次，不抢交互实体的轮廓；降低对比度保留原版明亮手绘感。
+    // 近板只做水平视差；垂直方向必须跟随世界坐标，否则相机上下移动时
+    // 条带会脱离地面并在画面中上下抽动，形成重复的半透明场景带。
+    tile.setOrigin(0, 0).setScrollFactor(0.5, 1).setDepth(DEPTH.midground);
+    // 近板只提供很弱的层次，不抢交互实体的轮廓，也不能压过远板形成横向重复画面。
     tile.setAlpha(
-      this.themeId === 'jungle' ? 0.62 :
-        this.themeId === 'snow' ? 0.24 :
-          this.themeId === 'desert' ? 0.06 : 0.38,
+      this.themeId === 'jungle' ? 0.14 :
+        this.themeId === 'snow' ? 0.08 :
+          this.themeId === 'desert' ? 0.04 : 0.12,
     );
     this.add(tile);
   }
@@ -312,6 +398,7 @@ export class Environment {
     g.fillGradientStyle(0x496f91, 0x496f91, 0x496f91, 0x496f91, 0, 0, 0.022, 0.022);
     g.fillRect(0, height * 0.68, width, height * 0.32);
     this.addResizable(g);
+    this.addScreenFixed(g, 0, 0);
   }
 
   /** 天空：固定屏渐变（用 Gradient + ColorRamp 双色带） */
@@ -325,6 +412,7 @@ export class Environment {
     sky.setScrollFactor(0, 0);
     sky.setDepth(DEPTH.sky);
     this.addResizable(sky);
+    this.addScreenFixed(sky, 0, 0);
   }
 
   /** 远山：烘焙山脊折线 → TileSprite，scrollFactor 0.2 */
@@ -434,7 +522,8 @@ export class Environment {
     }
     const tile = this.scene.add.tileSprite(0, this.bounds.maxY - 30 - 120, width, 120, texKey);
     tile.setOrigin(0, 0);
-    tile.setScrollFactor(0.6, 0.6);
+    // 回退中景同样只做水平视差，垂直方向必须锚定地面。
+    tile.setScrollFactor(0.6, 1);
     tile.setDepth(DEPTH.midground);
     this.addResizable(tile);
   }
@@ -833,6 +922,7 @@ export class Environment {
     g.fillStyle(0xeaffbd, 0.055);
     g.fillEllipse(width * 0.78, 92, Math.min(width * 0.24, 240), 100);
     this.addResizable(g);
+    this.addScreenFixed(g, 0, 0);
   }
 
   /** 哥特式建筑剪影 —— 背景中央，scrollFactor 0.22 */

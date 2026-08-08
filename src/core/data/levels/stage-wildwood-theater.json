@@ -1,0 +1,39 @@
+{
+  "id": "stage-wildwood-theater",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-wildwood-theater",
+  "bgm": "stage-wildwood-theater",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-lava-laboratory", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-final-workshop", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "curtain", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "castle", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "crown", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "horse", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "dragon", "x": 280, "y": 200, "layer": 0 },
+    { "typeId": "rose", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "book", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "paper", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-wildwood-actor", "typeId": "human", "x": -520, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#c34c75", "pantsColor": "#63314b" } },
+    { "id": "npc-wildwood-royal", "typeId": "human", "x": -80, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#d49b2a", "pantsColor": "#704b20", "hat": "straw" } },
+    { "id": "npc-wildwood-rider", "typeId": "human", "x": 360, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b422b" } },
+    { "id": "npc-wildwood-storyteller", "typeId": "human", "x": 720, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#7b4ab0", "pantsColor": "#3e2866" } }
+  ],
+  "decorations": [ { "kind": "bush", "x": -760, "y": 560 }, { "kind": "flower", "x": -260, "y": 560 }, { "kind": "fence", "x": 160, "y": 560 }, { "kind": "flower", "x": 820, "y": 560 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "wildwood-actor", "giverNpcId": "npc-wildwood-actor", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "curtain", "near": { "npcId": "npc-wildwood-actor", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "castle", "near": { "npcId": "npc-wildwood-actor", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "演员：先拉开幕布，再搭好城堡布景。", "en": "Actor: Raise the curtain, then build the castle set." } ] },
+    { "id": "wildwood-royal", "giverNpcId": "npc-wildwood-royal", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "crown", "near": { "npcId": "npc-wildwood-royal", "radius": 240 } }, { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-wildwood-royal", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "王室演员：王冠和坐骑，准备好最后一幕。", "en": "Royal Actor: A crown and mount will prepare the final scene." } ] },
+    { "id": "wildwood-rider", "giverNpcId": "npc-wildwood-rider", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "dragon", "near": { "npcId": "npc-wildwood-rider", "radius": 240 } }, { "kind": "object-present", "typeId": "rose", "near": { "npcId": "npc-wildwood-rider", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "骑手：驯服巨龙，再把玫瑰献给舞台。", "en": "Rider: Tame the dragon, then offer a rose to the stage." } ] },
+    { "id": "wildwood-storyteller", "giverNpcId": "npc-wildwood-storyteller", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "book", "near": { "npcId": "npc-wildwood-storyteller", "radius": 240 } }, { "kind": "object-present", "typeId": "paper", "near": { "npcId": "npc-wildwood-storyteller", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "说书人：书或纸都能让新的故事继续。", "en": "Storyteller: A book or paper can keep the new story going." } ] }
+  ],
+  "challengeSlots": 4
+}

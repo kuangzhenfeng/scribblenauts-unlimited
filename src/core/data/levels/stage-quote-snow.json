@@ -1,0 +1,21 @@
+{
+  "id": "stage-quote-snow",
+  "type": "self-contained",
+  "theme": "snow",
+  "background": "stage-quote-snow",
+  "bgm": "stage-quote-snow",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-bracket-cave", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-dash-desert", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "ice", "x": -520, "y": 320, "layer": 0 }, { "typeId": "bird", "x": -160, "y": 260, "layer": 0 }, { "typeId": "bridge", "x": 220, "y": 320, "layer": 0 }, { "typeId": "car", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-quote-ice", "typeId": "human", "x": -520, "y": 320, "gender": "male" }, { "id": "npc-quote-bird", "typeId": "human", "x": -120, "y": 320, "gender": "female" }, { "id": "npc-quote-bridge", "typeId": "human", "x": 280, "y": 320, "gender": "male" }, { "id": "npc-quote-driver", "typeId": "human", "x": 640, "y": 320, "gender": "female" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "quote-ice", "giverNpcId": "npc-quote-ice", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-quote-ice", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-quote-ice", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "冰雕师：冰先凝成台阶，再用桥把台阶连起来。", "en": "Ice Sculptor: Freeze the steps, then connect them with a bridge." } ] },
+    { "id": "quote-bird", "giverNpcId": "npc-quote-bird", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-quote-bird", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "car", "near": { "npcId": "npc-quote-bird", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "观测员：鸟能发现风向，车能把消息送过雪谷。", "en": "Watcher: A bird finds the wind, and a car carries the message through the valley." } ] },
+    { "id": "quote-bridge", "giverNpcId": "npc-quote-bridge", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-quote-bridge", "radius": 260 } }, { "kind": "object-present", "typeId": "car", "near": { "npcId": "npc-quote-bridge", "radius": 260 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-quote-bridge", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "桥匠：桥或车都能过谷，但冰面必须先稳住。", "en": "Bridgewright: A bridge or car can cross the valley, but the ice must be steady first." } ] },
+    { "id": "quote-driver", "giverNpcId": "npc-quote-driver", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-quote-driver", "radius": 520 } }, { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-quote-driver", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "car", "near": { "npcId": "npc-quote-driver", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "司机：先听鸟鸣找方向，再架桥，车才不会迷路。", "en": "Driver: Follow the birdcall, build the bridge, and the car will not get lost." } ] }
+  ],
+  "challengeSlots": 4
+}

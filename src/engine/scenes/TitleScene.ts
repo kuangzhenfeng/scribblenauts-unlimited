@@ -46,9 +46,8 @@ export class TitleScene extends Phaser.Scene {
     this.windowResizeListener = () => this._handleResize(window.innerWidth, window.innerHeight);
     window.addEventListener('resize', this.windowResizeListener);
 
-    // 保留原版“任意键 / 点击画布开始”，但不抢占按钮的键盘操作。
+    // 保留原版“任意键开始”，但不让画布空白区域绕过标题页入口。
     this.input.keyboard?.on('keydown', this._handleKeyDown, this);
-    this.input.on('pointerdown', this._handleCanvasPointerDown, this);
 
     this.cameras.main.setBackgroundColor('#5cb6d9');
   }
@@ -327,10 +326,6 @@ export class TitleScene extends Phaser.Scene {
     this._layoutActionRail(width, height);
   }
 
-  private _handleCanvasPointerDown(): void {
-    this._startGame();
-  }
-
   private _handleKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Tab') return;
     const target = event.target;
@@ -348,6 +343,9 @@ export class TitleScene extends Phaser.Scene {
       beforeStart?.();
       this.overlay?.remove();
       this.scene.start(sceneKey);
+      // Phaser 4 在异步计时器回调中不会自动处理场景切换队列，
+      // 立即冲刷才能保证标题页按钮真正进入目标场景。
+      this.scene.manager.processQueue();
     }, duration);
   }
 
@@ -364,7 +362,6 @@ export class TitleScene extends Phaser.Scene {
       this.windowResizeListener = undefined;
     }
     this.input.keyboard?.off('keydown', this._handleKeyDown, this);
-    this.input.off('pointerdown', this._handleCanvasPointerDown, this);
     this.overlay?.remove();
     // keyArt 已被 Phaser 场景销毁，置空避免复用实例时 _setKeyArtTexture 误用已销毁对象
     this.keyArt = undefined;

@@ -2,11 +2,12 @@
  * 存档类型 —— IndexedDB 持久化自定义物体与进度。
  *
  * 自定义物体：玩家在 ObjectEditor 中组合物体+形容词→命名保存→注入词典索引。
- * 进度：Starite/碎片计数、已完成题目 slot、已解锁关卡、难度设置。
+ * 进度：Starite/碎片计数、Object Shard 跨关任务、已完成题目 slot、已解锁关卡、难度设置。
  * 不做向前兼容迁移逻辑（遵循"无需考虑兼容"），但留 schemaVersion 供未来重置。
  */
 
 import type { DifficultyTier, DifficultyStandard } from './question';
+import type { StoryProgress } from '@/core/game/StoryProgress';
 
 export interface CustomObjectDef {
   id: string; // 'custom:myDragon'
@@ -37,6 +38,12 @@ export interface SaveData {
   schemaVersion: number;
   starites: number;
   shards: number;
+  /** Object Shard 当前未兑换余数（10 个兑换 1 个 Starite）。 */
+  objectShards: number;
+  /** 已由 Object Shard 兑换产生的 Starite，用于重置普通挑战时保留跨关收集成果。 */
+  objectShardStarites: number;
+  /** 已完成的 Object Shard 任务 id，跨关且非排他。 */
+  completedObjectShardTasks: string[];
   /**
    * 已完成的题目 slot 列表，元素格式 `{levelId}:{tier}:{standard}:{slotIndex}`。
    * 题目随机化后 challenge id 每次不同，改用 slot 语义持久化进度。
@@ -51,6 +58,10 @@ export interface SaveData {
   difficultySetting: { tier: DifficultyTier; standard: DifficultyStandard };
   /** 首次进入世界时的基础入门是否已完成。 */
   tutorialCompleted: boolean;
+  /** 当前选择的家庭头像；资格由挑战/Starite 进度计算。 */
+  avatarId: string;
+  /** Maxwell 与 Lily 主线的本地叙事进度。 */
+  storyProgress: StoryProgress;
   /**
    * 题目随机种子。QuestionPicker 以 {levelId}:{tier}:{standard}:{questionSeed}
    * 派生 RNG 种子，同种子+同关+同难度 → 同题序；换种子 = 换一轮题目。

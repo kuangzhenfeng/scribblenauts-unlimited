@@ -502,6 +502,7 @@ export const objectEntries: DictEntry[] = [
     zh: { name: '宝箱', aliases: ['储物箱', '藏宝箱'] },
     en: { name: 'chest', aliases: ['trunk', 'coffer'] },
     category: 'object',
+    health: 30,
     size: { width: 56, height: 40 },
     appearance: { renderer: 'box', params: { w: 56, h: 40, color: '#8B5A2B' } },
     physics: { shape: 'box', density: 0.006, friction: 0.5, restitution: 0.05 },
@@ -639,6 +640,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.006, friction: 0.3, restitution: 0.1 },
     tags: tags(['metal', 'gold'], ['fragile']),
     behaviors: [],
+    wearable: { slot: 'head' },
     description: { zh: '王者戴的冠。', en: 'A sovereign\'s headpiece.' },
   },
   {
@@ -699,6 +701,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'circle', density: 0.005, friction: 0.3, restitution: 0.2 },
     tags: tags(['metal', 'gold'], ['fragile']),
     behaviors: [],
+    wearable: { slot: 'hands' },
     description: { zh: '戴指上的环饰。', en: 'A finger-worn band.' },
   },
   {
@@ -711,6 +714,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.003, friction: 0.3, restitution: 0.1 },
     tags: tags(['metal', 'gold'], ['fragile']),
     behaviors: [],
+    wearable: { slot: 'body' },
     description: { zh: '颈戴的链饰。', en: 'A neck-worn chain adornment.' },
   },
   {
@@ -723,6 +727,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.004, friction: 0.3, restitution: 0.1 },
     tags: tags(['metal', 'glass'], ['fragile', 'breakable']),
     behaviors: [],
+    wearable: { slot: 'hands' },
     description: { zh: '腕戴的时计。', en: 'A wrist-worn timepiece.' },
   },
   {
@@ -735,6 +740,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.002, friction: 0.3, restitution: 0.1 },
     tags: tags(['metal', 'glass'], ['fragile']),
     behaviors: [],
+    wearable: { slot: 'face' },
     description: { zh: '矫正视力的镜架。', en: 'A vision-correcting frame.' },
   },
   {
@@ -759,6 +765,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.002, friction: 0.4, restitution: 0.1 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'head' },
     description: { zh: '高顶平檐礼帽。', en: 'A tall flat-brimmed formal hat.' },
   },
   {
@@ -771,6 +778,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.4, restitution: 0.2 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'head' },
     description: { zh: '前檐软顶便帽。', en: 'A front-brimmed soft cap.' },
   },
   {
@@ -783,6 +791,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.006, friction: 0.4, restitution: 0.05 },
     tags: tags(['metal'], ['fragile', 'breakable']),
     behaviors: [],
+    wearable: { slot: 'head' },
     description: { zh: '护头的硬盔。', en: 'A head-protecting hard shell.' },
   },
   {
@@ -795,6 +804,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'circle', density: 0.0005, friction: 0.3, restitution: 0.2 },
     tags: tags(['plant'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'head' },
     description: { zh: '编织的戴头花环。', en: 'A woven floral headpiece.' },
   },
   {
@@ -807,6 +817,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.003, friction: 0.3, restitution: 0.1 },
     tags: tags(['cloth', 'plastic'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'face' },
     description: { zh: '遮脸的饰物。', en: 'A face-covering adornment.' },
   },
   {
@@ -819,7 +830,21 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.002, friction: 0.6, restitution: 0.1 },
     tags: tags(['cloth', 'rubber'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'feet' },
     description: { zh: '护足的鞋。', en: 'A foot-protecting shoe.' },
+  },
+  {
+    id: 'spring-shoes',
+    zh: { name: '弹簧鞋', aliases: ['弹跳鞋', '弹簧靴'] },
+    en: { name: 'spring shoes', aliases: ['jump shoes', 'spring boots'] },
+    category: 'object',
+    size: { width: 36, height: 20 },
+    appearance: { renderer: 'shoe', params: { w: 36, h: 20, color: '#D94841' } },
+    physics: { shape: 'box', density: 0.002, friction: 0.6, restitution: 0.1 },
+    tags: tags(['cloth', 'rubber', 'metal'], ['flammable']),
+    behaviors: [],
+    wearable: { slot: 'feet', effects: ['jump'] },
+    description: { zh: '穿上后能跳得更高的弹簧鞋。', en: 'Spring-loaded shoes that make the wearer jump higher.' },
   },
   {
     id: 'boot',
@@ -831,6 +856,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.003, friction: 0.6, restitution: 0.05 },
     tags: tags(['cloth', 'rubber'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'feet' },
     description: { zh: '高筒护腿靴。', en: 'A tall leg-covering boot.' },
   },
   {
@@ -843,6 +869,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.5, restitution: 0.1 },
     tags: tags(['cloth', 'rubber'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'hands' },
     description: { zh: '护手的套。', en: 'A hand-protecting glove.' },
   },
   {
@@ -855,6 +882,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.0008, friction: 0.4, restitution: 0.1, frictionAir: 0.08 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'body' },
     description: { zh: '围颈的织物。', en: 'A neck-wrapping fabric.' },
   },
   {
@@ -867,6 +895,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.4, restitution: 0.1 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'body' },
     description: { zh: '系颈的带饰。', en: 'A neck-knotted band.' },
   },
   {
@@ -879,6 +908,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.0008, friction: 0.5, restitution: 0.1 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'feet' },
     description: { zh: '穿足的针织物。', en: 'A foot-worn knit.' },
   },
   {
@@ -891,6 +921,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.4, restitution: 0.1, frictionAir: 0.06 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'full-body' },
     description: { zh: '女式连体服装。', en: 'A one-piece feminine garment.' },
   },
   {
@@ -903,6 +934,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.4, restitution: 0.1 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'body' },
     description: { zh: '上身衬衣。', en: 'An upper-body shirt.' },
   },
   {
@@ -915,6 +947,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.4, restitution: 0.1 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'legs' },
     description: { zh: '下身裤装。', en: 'A lower-body garment.' },
   },
   {
@@ -927,6 +960,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.002, friction: 0.4, restitution: 0.05 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'body' },
     description: { zh: '御寒的长外衣。', en: 'A cold-defying long outer garment.' },
   },
   {
@@ -939,6 +973,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.4, restitution: 0.05, frictionAir: 0.06 },
     tags: tags(['cloth'], ['flammable']),
     behaviors: [],
+    wearable: { slot: 'full-body' },
     description: { zh: '宽松的长外袍。', en: 'A loose long outer robe.' },
   },
   {
@@ -951,6 +986,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.012, friction: 0.5, restitution: 0.02 },
     tags: tags(['metal'], ['breakable']),
     behaviors: [],
+    wearable: { slot: 'full-body' },
     description: { zh: '金属护身甲。', en: 'A metal body-protecting suit.' },
   },
   {
@@ -963,6 +999,7 @@ export const objectEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.003, friction: 0.4, restitution: 0.1 },
     tags: tags(['cloth'], ['flammable', 'container']),
     behaviors: [],
+    wearable: { slot: 'back' },
     description: { zh: '背驮的包。', en: 'A back-carried sack.' },
   },
   {

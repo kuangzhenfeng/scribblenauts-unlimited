@@ -22,6 +22,7 @@ export function slotId(levelId: string, tier: DifficultyTier, standard: Difficul
 /** NPC 角色名映射（按 npcSpawnId → 双语角色名，用于 dialog 前缀） */
 const NPC_ROLE: Record<string, { zh: string; en: string }> = {
   'npc-explorer': { zh: '探险者', en: 'Explorer' },
+  'npc-edwin': { zh: 'Edwin', en: 'Edwin' },
   'npc-miner': { zh: '矿工', en: 'Miner' },
   'npc-cartographer': { zh: '制图师', en: 'Cartographer' },
   'npc-treasurer': { zh: '司库', en: 'Treasurer' },

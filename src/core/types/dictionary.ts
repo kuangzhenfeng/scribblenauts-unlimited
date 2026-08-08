@@ -66,6 +66,18 @@ export interface BehaviorSpec {
   priority?: number;
 }
 
+/** 角色可穿戴的身体部位；手持物与坐骑属于独立的主动关系。 */
+export type WearSlot = 'face' | 'head' | 'body' | 'hands' | 'legs' | 'feet' | 'back' | 'full-body';
+
+/** 穿戴物提供的角色能力；能力是词条数据，不由 UI 或渲染器推断。 */
+export type WearableEffect = 'fly' | 'jump';
+
+/** 词条声明的穿戴关系与能力。 */
+export interface WearableSpec {
+  slot: WearSlot;
+  effects?: WearableEffect[];
+}
+
 export type BehaviorKind =
   | 'idle'
   | 'walk'
@@ -105,12 +117,16 @@ export interface DictEntry {
   zh: LocalizedName;
   en: LocalizedName;
   category: ObjectCategory;
+  /** 原版 Objectnaut 的初始生命值；未声明时由 Spawner 使用类别默认值。 */
+  health?: number;
   size: SizeSpec;
   appearance: AppearanceSpec;
   physics: PhysicsSpec;
   /** 默认属性标签，运行时复制到实体 */
   tags: TagSetLike;
   behaviors: BehaviorSpec[];
+  /** 可选的角色穿戴关系；未声明则按普通世界物体处理 */
+  wearable?: WearableSpec;
   modifiable?: ModifiableFields;
   description?: { zh: string; en: string };
 }

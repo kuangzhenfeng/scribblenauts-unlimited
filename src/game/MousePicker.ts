@@ -47,6 +47,7 @@ export class MousePicker {
   /** 当前右键指针。 */
   private secondaryPointerId: number | undefined;
   private readonly options: MousePickerOptions;
+  private readonly blurHandler = (): void => this.resetPointerState();
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -63,6 +64,37 @@ export class MousePicker {
     this.scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.onDown(p));
     this.scene.input.on('pointermove', (p: Phaser.Input.Pointer) => this.onMove(p));
     this.scene.input.on('pointerup', (p: Phaser.Input.Pointer) => this.onUp(p));
+    this.scene.input.on('pointerupoutside', (p: Phaser.Input.Pointer) => this.onUp(p));
+    this.scene.sys.game.events.on('blur', this.blurHandler);
+  }
+
+  /** 场景销毁时移除全局失焦监听，避免旧世界继续持有输入层引用。 */
+  destroy(): void {
+    this.scene.sys.game.events.off('blur', this.blurHandler);
+    this.resetPointerState();
+  }
+
+  /** 键鼠焦点丢失时清除未完成手势，避免恢复窗口后实体继续被拖拽。 */
+  private resetPointerState(): void {
+    this.dragging = false;
+    this.primaryPointerId = undefined;
+    this.secondaryPointerId = undefined;
+    this.pendingEmptyTap = false;
+    this.dragDistance = 0;
+    this.lastDelta = { x: 0, y: 0 };
+  }
+
+  /** 按原版 Q/E 旋转当前选中的非玩家实体。 */
+  rotateSelected(direction: -1 | 1): boolean {
+    if (direction !== -1 && direction !== 1) return false;
+    const entity = this.selectedId
+      ? this.entities.get(this.selectedId) as GameEntity | undefined
+      : undefined;
+    if (!entity || entity.isPlayer || entity.dead) return false;
+    entity.setBodyAngle(entity.bodyAngle + direction * (Math.PI / 12));
+    entity.setBodyAngularVelocity(0);
+    log.info('entity rotated', { id: entity.id, direction: direction < 0 ? 'left' : 'right' });
+    return true;
   }
 
   private onDown(p: Phaser.Input.Pointer): void {

@@ -1,0 +1,39 @@
+{
+  "id": "stage-crystal-archive",
+  "type": "self-contained",
+  "theme": "cave",
+  "background": "stage-crystal-archive",
+  "bgm": "stage-crystal-archive",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-ruined-garden", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-aurora-camp", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "crystal", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "book", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "paper", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "light", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "candle", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "chest", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "compass-tool", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "lantern", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-archive-scholar", "typeId": "human", "x": -520, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#7b4ab0", "pantsColor": "#3e2866", "hat": "straw" } },
+    { "id": "npc-archive-scribe", "typeId": "human", "x": -80, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#d49b2a", "pantsColor": "#6b4226" } },
+    { "id": "npc-archive-warden", "typeId": "human", "x": 360, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#566573", "pantsColor": "#273746", "hat": "miner" } },
+    { "id": "npc-archive-seeker", "typeId": "human", "x": 720, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b2b2b" } }
+  ],
+  "decorations": [ { "kind": "crystal", "x": -700, "y": 560 }, { "kind": "stalactite", "x": -260, "y": 0 }, { "kind": "lantern", "x": 160, "y": 540 }, { "kind": "crystal", "x": 820, "y": 560 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "archive-scholar", "giverNpcId": "npc-archive-scholar", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "book", "near": { "npcId": "npc-archive-scholar", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-archive-scholar", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "学者：一本书和一块水晶，就能打开记忆库。", "en": "Scholar: A book and a crystal will open the memory vault." } ] },
+    { "id": "archive-scribe", "giverNpcId": "npc-archive-scribe", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "paper", "near": { "npcId": "npc-archive-scribe", "radius": 240 } }, { "kind": "object-present", "typeId": "candle", "near": { "npcId": "npc-archive-scribe", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "抄写员：纸张和烛光，才能写下遗失的章节。", "en": "Scribe: Paper and candlelight can restore the lost chapter." } ] },
+    { "id": "archive-warden", "giverNpcId": "npc-archive-warden", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "chest", "near": { "npcId": "npc-archive-warden", "radius": 220 } }, { "kind": "object-present", "typeId": "light", "near": { "npcId": "npc-archive-warden", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守卫：打开宝箱，再用光照亮封印。", "en": "Warden: Open the chest, then use light to reveal the seal." } ] },
+    { "id": "archive-seeker", "giverNpcId": "npc-archive-seeker", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "compass-tool", "near": { "npcId": "npc-archive-seeker", "radius": 240 } }, { "kind": "object-present", "typeId": "lantern", "near": { "npcId": "npc-archive-seeker", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "寻宝者：指南针或灯笼，都能带你找到下一页。", "en": "Seeker: A compass or lantern can lead you to the next page." } ] }
+  ],
+  "challengeSlots": 4
+}

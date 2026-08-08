@@ -7,6 +7,8 @@
 
 import type { SaveData, CustomObjectDef, ObjectLibraryRecord } from '@/core/types/save';
 import type { DifficultyTier, DifficultyStandard } from '@/core/types/question';
+import type { StoryProgress } from '@/core/game/StoryProgress';
+import { createStoryProgress, normalizeStoryProgress, resetStoryMilestone } from '@/core/game/StoryProgress';
 import { generateSeed } from '@/util/rng';
 
 const DB_NAME = 'scribblenauts-unlimited';
@@ -19,17 +21,26 @@ const memoryStore = new Map<string, SaveData>();
 
 function currentSave(): SaveData {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     starites: 0,
     shards: 0,
+    objectShards: 0,
+    objectShardStarites: 0,
+    completedObjectShardTasks: [],
     completedSlots: [],
     customObjects: [],
     library: [],
     unlockedLevels: ['overworld-meadow'],
     difficultySetting: { tier: 1 as DifficultyTier, standard: 'cefr' as DifficultyStandard },
     tutorialCompleted: false,
+    avatarId: 'maxwell',
+    storyProgress: createStoryProgress(),
     questionSeed: generateSeed(),
   };
+}
+
+function nonNegativeCount(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : fallback;
 }
 
 /** 补齐旧存档缺失的可选字段，并避免把脏数据传播到业务层。 */
@@ -39,6 +50,14 @@ function normalizeSave(data: Partial<SaveData> | undefined): SaveData {
   return {
     ...defaults,
     ...data,
+    schemaVersion: 4,
+    starites: nonNegativeCount(data.starites),
+    shards: nonNegativeCount(data.shards),
+    objectShards: nonNegativeCount(data.objectShards),
+    objectShardStarites: nonNegativeCount(data.objectShardStarites),
+    completedObjectShardTasks: Array.isArray(data.completedObjectShardTasks)
+      ? data.completedObjectShardTasks.filter((id): id is string => typeof id === 'string' && id.length > 0)
+      : [],
     customObjects: Array.isArray(data.customObjects) ? data.customObjects : [],
     library: Array.isArray(data.library)
       ? data.library.filter((record): record is ObjectLibraryRecord => Boolean(record && record.typeId))
@@ -47,6 +66,8 @@ function normalizeSave(data: Partial<SaveData> | undefined): SaveData {
       ? data.unlockedLevels
       : defaults.unlockedLevels,
     tutorialCompleted: data.tutorialCompleted === true,
+    avatarId: typeof data.avatarId === 'string' && data.avatarId.length > 0 ? data.avatarId : defaults.avatarId,
+    storyProgress: normalizeStoryProgress(data.storyProgress),
     completedSlots: Array.isArray(data.completedSlots) ? data.completedSlots : [],
   };
 }
@@ -184,11 +205,32 @@ export class SaveStore {
     return [...data.library].sort((a, b) => b.lastUsedAt - a.lastUsedAt);
   }
 
-  async updateProgress(starites: number, shards: number, completed: string[]): Promise<SaveData> {
+  async updateProgress(
+    starites: number,
+    shards: number,
+    completed: string[],
+    objectShardsOrStoryProgress?: number | StoryProgress,
+    completedObjectShardTasks?: string[],
+    objectShardStarites?: number,
+    storyProgress?: StoryProgress,
+  ): Promise<SaveData> {
     const data = await this.load();
     data.starites = starites;
     data.shards = shards;
     data.completedSlots = completed;
+    if (typeof objectShardsOrStoryProgress === 'number') data.objectShards = objectShardsOrStoryProgress;
+    else if (objectShardsOrStoryProgress) data.storyProgress = normalizeStoryProgress(objectShardsOrStoryProgress);
+    if (completedObjectShardTasks !== undefined) data.completedObjectShardTasks = completedObjectShardTasks;
+    if (objectShardStarites !== undefined) data.objectShardStarites = objectShardStarites;
+    if (storyProgress) data.storyProgress = normalizeStoryProgress(storyProgress);
+    await this.save(data);
+    return data;
+  }
+
+  /** 更新叙事状态；与 Starite/挑战进度分开提供，供首次入场叙事使用。 */
+  async updateStoryProgress(storyProgress: StoryProgress): Promise<SaveData> {
+    const data = await this.load();
+    data.storyProgress = normalizeStoryProgress(storyProgress);
     await this.save(data);
     return data;
   }
@@ -222,6 +264,16 @@ export class SaveStore {
     return data;
   }
 
+  /** 持久化当前家庭头像选择；是否已解锁由 WorldScene 在入口处校验。 */
+  async updateAvatarId(avatarId: string): Promise<SaveData> {
+    const data = await this.load();
+    if (avatarId.length > 0 && data.avatarId !== avatarId) {
+      data.avatarId = avatarId;
+      await this.save(data);
+    }
+    return data;
+  }
+
   /**
    * 清空题目进度：completedSlots/starites/shards 归零。
    * 保留 unlockedLevels（关卡访问权，与题目内容正交）与 customObjects。
@@ -229,9 +281,11 @@ export class SaveStore {
    */
   async clearChallengeProgress(): Promise<SaveData> {
     const data = await this.load();
-    data.starites = 0;
+    // Object Shard 是跨关收集，不随题目种子或单关挑战重置；只保留它已兑换出的 Starite。
+    data.starites = data.objectShardStarites;
     data.shards = 0;
     data.completedSlots = [];
+    data.storyProgress = resetStoryMilestone(data.storyProgress);
     await this.save(data);
     return data;
   }
@@ -246,6 +300,17 @@ export class SaveStore {
     return data;
   }
 
+  /** 批量解锁关卡并写回，幂等且只执行一次存档写入。 */
+  async unlockAllLevels(levelIds: string[]): Promise<SaveData> {
+    const data = await this.load();
+    const nextUnlockedLevels = [...new Set([...data.unlockedLevels, ...levelIds.filter(Boolean)])];
+    if (nextUnlockedLevels.length !== data.unlockedLevels.length) {
+      data.unlockedLevels = nextUnlockedLevels;
+      await this.save(data);
+    }
+    return data;
+  }
+
   /**
    * 完整重置进度：挑战清零、Starite/碎片归零、关卡解锁回退到仅首关。
    * 保留 customObjects（自制物体与关卡进度无关）。
@@ -254,8 +319,12 @@ export class SaveStore {
     const data = await this.load();
     data.starites = 0;
     data.shards = 0;
+    data.objectShards = 0;
+    data.objectShardStarites = 0;
+    data.completedObjectShardTasks = [];
     data.completedSlots = [];
     data.unlockedLevels = ['overworld-meadow'];
+    data.storyProgress = createStoryProgress();
     await this.save(data);
     return data;
   }

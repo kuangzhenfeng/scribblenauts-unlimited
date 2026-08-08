@@ -1,0 +1,21 @@
+{
+  "id": "stage-dash-desert",
+  "type": "self-contained",
+  "theme": "desert",
+  "background": "stage-dash-desert",
+  "bgm": "stage-dash-desert",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-quote-snow", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-slash-volcano", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "sand", "x": -520, "y": 320, "layer": 0 }, { "typeId": "cactus", "x": -160, "y": 320, "layer": 0 }, { "typeId": "horse", "x": 220, "y": 320, "layer": 0 }, { "typeId": "water", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-dash-sand", "typeId": "human", "x": -520, "y": 320, "gender": "female" }, { "id": "npc-dash-cactus", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-dash-horse", "typeId": "human", "x": 280, "y": 320, "gender": "female" }, { "id": "npc-dash-oasis", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "dash-sand", "giverNpcId": "npc-dash-sand", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "sand", "near": { "npcId": "npc-dash-sand", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "cactus", "near": { "npcId": "npc-dash-sand", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "沙画师：沙丘铺好，仙人掌才会留下路标。", "en": "Sand Artist: Shape the dunes, then the cactus can leave a marker." } ] },
+    { "id": "dash-cactus", "giverNpcId": "npc-dash-cactus", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "cactus", "near": { "npcId": "npc-dash-cactus", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-dash-cactus", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "绿洲守望者：仙人掌能找水，但必须把水带到它身边。", "en": "Oasis Watcher: The cactus can find water, but the water must reach it." } ] },
+    { "id": "dash-horse", "giverNpcId": "npc-dash-horse", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-dash-horse", "radius": 260 } }, { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-dash-horse", "radius": 260 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "sand", "near": { "npcId": "npc-dash-horse", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "赶路人：马或水都能救急，但沙路要先铺平。", "en": "Traveler: A horse or water can save the day, but the sand road must be level." } ] },
+    { "id": "dash-oasis", "giverNpcId": "npc-dash-oasis", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "cactus", "near": { "npcId": "npc-dash-oasis", "radius": 520 } }, { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-dash-oasis", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-dash-oasis", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "商队领队：先立路标，再找坐骑，最后把水送进绿洲。", "en": "Caravan Leader: Mark the route, find a mount, and bring water to the oasis last." } ] }
+  ],
+  "challengeSlots": 4
+}

@@ -1,5 +1,5 @@
 /**
- * 乐谱数据 —— 7 个 mood 的多声部乐曲（"弹什么"）。
+ * 乐谱数据 —— 10 个基础 mood + 每个关卡独立生成的多声部乐曲（"弹什么"）。
  *
  * 设计要点：
  *  - 16 分音符为一步，短语 64 步 = 4 小节（4/4 拍），10 段编排 = 640 步。
@@ -11,7 +11,19 @@
 
 import type { InstrumentName, PercussionType } from './instruments';
 
-export type MusicMood = 'title' | 'meadow' | 'cave' | 'jungle' | 'snow' | 'desert' | 'volcano';
+type BaseMusicMood =
+  | 'title'
+  | 'meadow'
+  | 'cave'
+  | 'jungle'
+  | 'snow'
+  | 'desert'
+  | 'volcano'
+  | 'storybook'
+  | 'clockwork'
+  | 'aurora';
+
+export type MusicMood = BaseMusicMood | `level:${string}`;
 
 /** 短语长度（16 分音符步数，64 = 4 小节） */
 export const PHRASE_LEN = 64;
@@ -70,7 +82,7 @@ const WALKING_OFFSETS = [0, 12, 7, 5];
 const OSTINATO_OFFSETS = [0, 0, 7, 0];
 
 /** 各 mood 乐曲 —— 旋律手写，和弦进行驱动和声伴奏/低音/琶音 */
-const MOODS: Record<MusicMood, MoodData> = {
+const MOODS: Record<BaseMusicMood, MoodData> = {
   // 标题：C 大调，78 BPM，温馨音乐盒，I-vi-ii-V7 jazz turnaround
   title: {
     tempo: 78,
@@ -483,6 +495,174 @@ const MOODS: Record<MusicMood, MoodData> = {
     },
     arrangement: ['A', 'A', 'B', 'A', 'C', 'A', 'B', 'A', 'C', 'A'],
   },
+
+  // 故事书：D 大调，92 BPM，钟琴与拨弦交替，像翻页一样轻快
+  storybook: {
+    tempo: 92,
+    melodyInstrument: 'glock',
+    harmonyInstrument: 'pizz',
+    bassInstrument: 'cbass',
+    percussionType: 'triangle',
+    bassMode: 'walking',
+    percDensity: 'normal',
+    phrases: {
+      A: {
+        melody: [
+          74, 0, 78, 0, 81, 0, 86, 0, 81, 0, 78, 0, 74, 0, 0, 0,
+          76, 0, 79, 0, 83, 0, 88, 0, 83, 0, 79, 0, 76, 0, 0, 0,
+          81, 0, 84, 0, 88, 0, 93, 0, 88, 0, 84, 0, 81, 0, 0, 0,
+          86, 0, 83, 0, 79, 0, 76, 0, 74, 0, 71, 0, 74, 0, 0, 0,
+        ],
+        chords: [
+          { root: 50, third: 54, fifth: 57, steps: 16 },
+          { root: 47, third: 50, fifth: 54, steps: 16 },
+          { root: 43, third: 47, fifth: 50, steps: 16 },
+          { root: 45, third: 49, fifth: 52, steps: 16 },
+        ],
+      },
+      B: {
+        melody: [
+          81, 0, 86, 0, 90, 0, 93, 0, 90, 0, 86, 0, 81, 0, 0, 0,
+          79, 0, 83, 0, 88, 0, 91, 0, 88, 0, 83, 0, 79, 0, 0, 0,
+          78, 0, 81, 0, 86, 0, 90, 0, 86, 0, 81, 0, 78, 0, 0, 0,
+          74, 0, 78, 0, 81, 0, 86, 0, 90, 0, 86, 0, 81, 0, 0, 0,
+        ],
+        chords: [
+          { root: 42, third: 45, fifth: 49, steps: 16 },
+          { root: 43, third: 47, fifth: 50, steps: 16 },
+          { root: 45, third: 49, fifth: 52, steps: 16 },
+          { root: 50, third: 54, fifth: 57, steps: 16 },
+        ],
+      },
+      C: {
+        melody: [
+          74, 78, 81, 0, 86, 0, 81, 78, 0, 74, 0, 71, 0, 74, 0, 0,
+          76, 79, 83, 0, 88, 0, 83, 79, 0, 76, 0, 72, 0, 76, 0, 0,
+          81, 84, 88, 0, 93, 0, 88, 84, 0, 81, 0, 78, 0, 81, 0, 0,
+          86, 0, 83, 0, 79, 0, 76, 0, 74, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        chords: [
+          { root: 50, third: 54, fifth: 57, steps: 16 },
+          { root: 45, third: 49, fifth: 52, steps: 16 },
+          { root: 47, third: 50, fifth: 54, steps: 16 },
+          { root: 50, third: 54, fifth: 57, steps: 16 },
+        ],
+      },
+    },
+    arrangement: ['A', 'A', 'B', 'A', 'C', 'A', 'B', 'A', 'C', 'A'],
+  },
+
+  // 齿轮站：E 小调，124 BPM，拨弦短音与密集铜铃，强调机械节拍
+  clockwork: {
+    tempo: 124,
+    melodyInstrument: 'pizz',
+    harmonyInstrument: 'woodwind',
+    bassInstrument: 'cbass',
+    percussionType: 'cowbell',
+    bassMode: 'ostinato',
+    percDensity: 'dense',
+    phrases: {
+      A: {
+        melody: [
+          76, 76, 0, 79, 0, 76, 0, 83, 76, 0, 79, 0, 83, 0, 86, 0,
+          74, 74, 0, 78, 0, 74, 0, 81, 74, 0, 78, 0, 81, 0, 85, 0,
+          71, 71, 0, 76, 0, 71, 0, 79, 71, 0, 76, 0, 79, 0, 83, 0,
+          72, 0, 76, 0, 79, 0, 84, 0, 79, 0, 76, 0, 72, 0, 0, 0,
+        ],
+        chords: [
+          { root: 40, third: 43, fifth: 47, steps: 16 },
+          { root: 38, third: 41, fifth: 45, steps: 16 },
+          { root: 43, third: 47, fifth: 50, steps: 16 },
+          { root: 45, third: 49, fifth: 52, steps: 16 },
+        ],
+      },
+      B: {
+        melody: [
+          83, 0, 86, 83, 0, 88, 0, 91, 0, 88, 83, 0, 79, 0, 83, 0,
+          81, 0, 85, 81, 0, 88, 0, 90, 0, 88, 85, 0, 81, 0, 85, 0,
+          79, 0, 83, 79, 0, 86, 0, 90, 0, 86, 83, 0, 79, 0, 83, 0,
+          76, 0, 79, 0, 83, 0, 88, 0, 83, 0, 79, 0, 76, 0, 0, 0,
+        ],
+        chords: [
+          { root: 43, third: 47, fifth: 50, steps: 16 },
+          { root: 45, third: 49, fifth: 52, steps: 16 },
+          { root: 47, third: 50, fifth: 54, steps: 16 },
+          { root: 40, third: 43, fifth: 47, steps: 16 },
+        ],
+      },
+      C: {
+        melody: [
+          76, 79, 83, 86, 0, 83, 0, 79, 76, 0, 0, 79, 83, 0, 86, 0,
+          74, 78, 81, 85, 0, 81, 0, 78, 74, 0, 0, 78, 81, 0, 85, 0,
+          71, 74, 79, 83, 0, 79, 0, 74, 71, 0, 0, 74, 79, 0, 83, 0,
+          72, 76, 79, 84, 0, 79, 0, 76, 72, 0, 0, 0, 0, 0, 0, 0,
+        ],
+        chords: [
+          { root: 40, third: 43, fifth: 47, steps: 16 },
+          { root: 38, third: 41, fifth: 45, steps: 16 },
+          { root: 43, third: 47, fifth: 50, steps: 16 },
+          { root: 45, third: 49, fifth: 52, steps: 16 },
+        ],
+      },
+    },
+    arrangement: ['A', 'B', 'A', 'C', 'A', 'B', 'A', 'C', 'B', 'A'],
+  },
+
+  // 极光营地：C 大调，64 BPM，长音钟琴与稀疏三角铁，留出夜空感
+  aurora: {
+    tempo: 64,
+    melodyInstrument: 'glock',
+    harmonyInstrument: 'woodwind',
+    bassInstrument: 'cbass',
+    percussionType: 'triangle',
+    bassMode: 'pedal',
+    percDensity: 'sparse',
+    phrases: {
+      A: {
+        melody: [
+          72, 0, 0, 0, 79, 0, 0, 0, 84, 0, 0, 0, 79, 0, 0, 0,
+          74, 0, 0, 0, 81, 0, 0, 0, 86, 0, 0, 0, 81, 0, 0, 0,
+          76, 0, 0, 0, 83, 0, 0, 0, 88, 0, 0, 0, 83, 0, 0, 0,
+          79, 0, 0, 0, 86, 0, 0, 0, 91, 0, 0, 0, 86, 0, 0, 0,
+        ],
+        chords: [
+          { root: 48, third: 52, fifth: 55, steps: 16 },
+          { root: 53, third: 57, fifth: 60, steps: 16 },
+          { root: 55, third: 59, fifth: 62, steps: 16 },
+          { root: 43, third: 47, fifth: 50, steps: 16 },
+        ],
+      },
+      B: {
+        melody: [
+          84, 0, 0, 0, 91, 0, 0, 0, 96, 0, 0, 0, 91, 0, 0, 0,
+          83, 0, 0, 0, 90, 0, 0, 0, 95, 0, 0, 0, 90, 0, 0, 0,
+          81, 0, 0, 0, 88, 0, 0, 0, 93, 0, 0, 0, 88, 0, 0, 0,
+          79, 0, 0, 0, 86, 0, 0, 0, 91, 0, 0, 0, 86, 0, 0, 0,
+        ],
+        chords: [
+          { root: 53, third: 57, fifth: 60, steps: 16 },
+          { root: 55, third: 59, fifth: 62, steps: 16 },
+          { root: 43, third: 47, fifth: 50, steps: 16 },
+          { root: 48, third: 52, fifth: 55, steps: 16 },
+        ],
+      },
+      C: {
+        melody: [
+          72, 0, 0, 0, 84, 0, 0, 0, 91, 0, 0, 0, 84, 0, 0, 0,
+          74, 0, 0, 0, 86, 0, 0, 0, 93, 0, 0, 0, 86, 0, 0, 0,
+          76, 0, 0, 0, 88, 0, 0, 0, 95, 0, 0, 0, 88, 0, 0, 0,
+          72, 0, 0, 0, 84, 0, 0, 0, 91, 0, 0, 0, 84, 0, 0, 0,
+        ],
+        chords: [
+          { root: 48, third: 52, fifth: 55, steps: 16 },
+          { root: 53, third: 57, fifth: 60, steps: 16 },
+          { root: 55, third: 59, fifth: 62, steps: 16 },
+          { root: 48, third: 52, fifth: 55, steps: 16 },
+        ],
+      },
+    },
+    arrangement: ['A', 'A', 'B', 'A', 'C', 'A', 'B', 'A', 'C', 'A'],
+  },
 };
 
 /** 展平后的完整乐曲（640 步），供 scheduleStep 直接索引 */
@@ -509,9 +689,113 @@ export const VOICE_VOLUMES = {
   percussion: 0.18,
 } as const;
 
+const LEVEL_SCALES = [
+  [0, 2, 4, 5, 7, 9, 11], // 大调
+  [0, 2, 3, 5, 7, 8, 10], // 自然小调
+  [0, 2, 3, 5, 7, 9, 10], // 多利亚调式
+  [0, 1, 3, 5, 7, 8, 10], // 异域小调
+] as const;
+
+const LEVEL_MELODIES: InstrumentName[] = ['glock', 'marimba', 'pizz', 'woodwind'];
+const LEVEL_PERCUSSIONS: PercussionType[] = ['triangle', 'woodblock', 'snap', 'cowbell'];
+const LEVEL_BASS_MODES: BassMode[] = ['walking', 'pedal', 'ostinato'];
+const LEVEL_PERC_DENSITIES: PercDensity[] = ['sparse', 'normal', 'dense'];
+const LEVEL_ARRANGEMENTS: Array<('A' | 'B' | 'C')[]> = [
+  ['A', 'A', 'B', 'A', 'C', 'A', 'B', 'A', 'C', 'A'],
+  ['A', 'B', 'A', 'C', 'A', 'B', 'C', 'A', 'B', 'A'],
+  ['A', 'C', 'B', 'A', 'C', 'A', 'B', 'C', 'A', 'B'],
+];
+
+const LEVEL_MOODS = new Map<`level:${string}`, MoodData>();
+
+function hashLevelId(levelId: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < levelId.length; i++) {
+    hash ^= levelId.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function levelNote(root: number, scale: readonly number[], degree: number, octave: number): number {
+  const scaleSize = scale.length;
+  const normalized = ((degree % scaleSize) + scaleSize) % scaleSize;
+  const octaveOffset = Math.floor(degree / scaleSize);
+  return root + scale[normalized] + (octave + octaveOffset) * 12;
+}
+
+/** 为每个关卡生成独立旋律、和弦、节拍与配器，不复用任何另一关卡的乐谱。 */
+function buildLevelMood(levelId: string): MoodData {
+  const seed = hashLevelId(levelId);
+  const scale = LEVEL_SCALES[seed % LEVEL_SCALES.length];
+  const root = 36 + (seed % 12);
+  const stride = 1 + ((seed >>> 8) % 4);
+
+  const makeMelody = (section: number): number[] => {
+    const melody = new Array<number>(PHRASE_LEN).fill(0);
+    const restEvery = 5 + ((seed >>> (section * 5)) % 4);
+    for (let i = 0; i < PHRASE_LEN; i++) {
+      if ((i + section * 3 + (seed % 7)) % restEvery === 0) continue;
+      const degree = (seed % 7 + section * 3 + i * stride + Math.floor(i / 8) * (section + 1)) % 14;
+      melody[i] = levelNote(root + 24, scale, degree, 0);
+    }
+    // 每个关卡的稳定标记音，避免不同 seed 恰好产生相同的短句。
+    const markerIndex = 1 + ((seed >>> 16) % (PHRASE_LEN - 2));
+    melody[markerIndex] = levelNote(root + 24, scale, (seed >>> 20) % 14, 0);
+    return melody;
+  };
+
+  const makePhrase = (section: number): Phrase => {
+    const chordDegrees = [
+      (seed + section * 2) % 7,
+      (seed >>> 3 + section) % 7,
+      (seed >>> 7 + section * 2) % 7,
+      (seed >>> 11 + section * 3) % 7,
+    ];
+    return {
+      melody: makeMelody(section),
+      chords: chordDegrees.map((degree) => ({
+        root: levelNote(root, scale, degree, 0),
+        third: levelNote(root, scale, degree + 2, 0),
+        fifth: levelNote(root, scale, degree + 4, 0),
+        seventh: levelNote(root, scale, degree + 6, 0),
+        steps: 16,
+      })),
+    };
+  };
+
+  const arrangement = LEVEL_ARRANGEMENTS[(seed >>> 24) % LEVEL_ARRANGEMENTS.length];
+  const rotation = seed % arrangement.length;
+  return {
+    tempo: 72 + (seed % 57),
+    melodyInstrument: LEVEL_MELODIES[(seed >>> 4) % LEVEL_MELODIES.length],
+    harmonyInstrument: LEVEL_MELODIES[(seed >>> 12) % LEVEL_MELODIES.length],
+    bassInstrument: 'cbass',
+    percussionType: LEVEL_PERCUSSIONS[(seed >>> 20) % LEVEL_PERCUSSIONS.length],
+    bassMode: LEVEL_BASS_MODES[(seed >>> 25) % LEVEL_BASS_MODES.length],
+    percDensity: LEVEL_PERC_DENSITIES[(seed >>> 28) % LEVEL_PERC_DENSITIES.length],
+    phrases: { A: makePhrase(0), B: makePhrase(1), C: makePhrase(2) },
+    arrangement: [...arrangement.slice(rotation), ...arrangement.slice(0, rotation)],
+  };
+}
+
+/** 把关卡 bgm 键转换成不会与基础 mood 混淆的运行时音乐键。 */
+export function levelMood(levelId: string): `level:${string}` {
+  return `level:${levelId}`;
+}
+
 /** 获取 mood 数据（供调度器读取配器/速度） */
 export function getMoodData(mood: MusicMood): MoodData {
-  return MOODS[mood];
+  const baseMood = MOODS[mood as BaseMusicMood];
+  if (baseMood) return baseMood;
+  const levelId = mood.slice('level:'.length);
+  const key = levelMood(levelId);
+  let data = LEVEL_MOODS.get(key);
+  if (!data) {
+    data = buildLevelMood(levelId);
+    LEVEL_MOODS.set(key, data);
+  }
+  return data;
 }
 
 /**
@@ -519,7 +803,7 @@ export function getMoodData(mood: MusicMood): MoodData {
  * melody 手写直接拷贝；harmony/bass/arpeggio/percussion 从和弦进行 + mood 模式生成。
  */
 export function flatten(mood: MusicMood): FlattenedScore {
-  const data = MOODS[mood];
+  const data = getMoodData(mood);
   const score: FlattenedScore = {
     melody: new Array(TOTAL_STEPS).fill(0),
     harmony: new Array(TOTAL_STEPS).fill(0),

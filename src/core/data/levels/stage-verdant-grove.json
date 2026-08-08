@@ -1,0 +1,50 @@
+{
+  "id": "stage-verdant-grove",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-verdant-grove",
+  "bgm": "stage-verdant-grove",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-clockwork", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-moonlit-cavern", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [
+    { "x": -620, "y": 170, "w": 240, "h": 24 },
+    { "x": -160, "y": 90, "w": 180, "h": 24 },
+    { "x": 260, "y": 220, "w": 240, "h": 24 },
+    { "x": 680, "y": 120, "w": 180, "h": 24 }
+  ],
+  "spawns": [
+    { "typeId": "tree", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "flower", "x": -380, "y": 320, "layer": 0 },
+    { "typeId": "apple", "x": -140, "y": 320, "layer": 0 },
+    { "typeId": "dog", "x": 40, "y": 320, "layer": 0 },
+    { "typeId": "rope", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "bridge", "x": 520, "y": 320, "layer": 0 },
+    { "typeId": "flower", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "water", "x": 760, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-grove-botanist", "typeId": "human", "x": -520, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#5aa34b", "pantsColor": "#345c35" } },
+    { "id": "npc-grove-ranger", "typeId": "human", "x": -80, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b422b", "hat": "straw" } },
+    { "id": "npc-grove-gardener", "typeId": "human", "x": 360, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#d15b72", "pantsColor": "#704b20" } },
+    { "id": "npc-grove-child", "typeId": "human", "x": 720, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#e6a43b", "pantsColor": "#2e5d8a" } }
+  ],
+  "decorations": [
+    { "kind": "bush", "x": -760, "y": 560 },
+    { "kind": "flower", "x": -300, "y": 560 },
+    { "kind": "fence", "x": 80, "y": 560 },
+    { "kind": "flower", "x": 500, "y": 560 },
+    { "kind": "bush", "x": 820, "y": 560 }
+  ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "grove-botanist", "giverNpcId": "npc-grove-botanist", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-grove-botanist", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-grove-botanist", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "植物学家：先找一棵树，再用水让林地恢复生机。", "en": "Botanist: Find a tree, then use water to bring the grove back to life." } ] },
+    { "id": "grove-ranger", "giverNpcId": "npc-grove-ranger", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "dog", "near": { "npcId": "npc-grove-ranger", "radius": 220 } }, { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-grove-ranger", "radius": 220 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "巡林员：带来伙伴和绳索，修好林间小径。", "en": "Ranger: Bring a companion and a rope to repair the forest trail." } ] },
+    { "id": "grove-gardener", "giverNpcId": "npc-grove-gardener", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "apple", "near": { "npcId": "npc-grove-gardener", "radius": 220 } }, { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-grove-gardener", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "园丁：先准备果实，再浇灌新芽，林心就会发光。", "en": "Gardener: Prepare a fruit, then water the new sprout and the grove will shine." } ] },
+    { "id": "grove-child", "giverNpcId": "npc-grove-child", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-grove-child", "radius": 240 } }, { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-grove-child", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "孩子：造一座桥，或者找匹马，带我穿过树林。", "en": "Child: Build a bridge or find a horse to carry me through the woods." } ] }
+  ],
+  "challengeSlots": 4
+}

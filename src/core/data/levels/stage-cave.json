@@ -2,6 +2,8 @@
   "id": "stage-cave",
   "type": "self-contained",
   "theme": "cave",
+  "background": "stage-cave",
+  "bgm": "stage-cave",
   "bounds": {
     "minX": -800,
     "minY": -200,
@@ -232,28 +234,28 @@
       "id": "cave-miner-lights",
       "giverNpcId": "npc-miner",
       "kind": "shard",
-      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "lantern", "count": 2, "near": { "npcId": "npc-miner", "radius": 180 } } ] },
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "lantern", "near": { "npcId": "npc-miner", "radius": 180 } } ] },
       "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "torch", "region": { "minX": -700, "minY": 430, "maxX": -250, "maxY": 600 } } ] } ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "矿工：两盏灯照亮矿口后，再插一支火把指路。", "en": "Miner: Light the mine entrance with two lanterns, then place a torch as a guide." } ]
+      "dialog": [ { "zh": "矿工：用灯照亮矿口后，再插一支火把指路。", "en": "Miner: Light the mine entrance with a lantern, then place a torch as a guide." } ]
     },
     {
       "id": "cave-cartographer-map",
       "giverNpcId": "npc-cartographer",
       "kind": "shard",
       "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "compass-tool", "near": { "npcId": "npc-cartographer", "radius": 180 } } ] },
-      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "rope", "count": 2, "region": { "minX": -500, "minY": 430, "maxX": 120, "maxY": 600 } } ] } ],
+      "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "rope", "region": { "minX": -500, "minY": 430, "maxX": 120, "maxY": 600 } } ] } ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "制图师：给我指南针，再把两段绳索放在裂谷边。", "en": "Cartographer: Bring a compass, then place two ropes beside the chasm." } ]
+      "dialog": [ { "zh": "制图师：给我指南针，再把绳索放在裂谷边。", "en": "Cartographer: Bring a compass, then place rope beside the chasm." } ]
     },
     {
       "id": "cave-treasurer-cache",
       "giverNpcId": "npc-treasurer",
       "kind": "shard",
-      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "coin", "count": 3, "near": { "npcId": "npc-treasurer", "radius": 180 } } ] },
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "coin", "near": { "npcId": "npc-treasurer", "radius": 180 } } ] },
       "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "chest", "region": { "minX": 420, "minY": 430, "maxX": 700, "maxY": 600 } } ] } ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "司库：凑齐三枚硬币，再把宝箱送到高台。", "en": "Treasurer: Gather three coins, then move the chest to the high ledge." } ]
+      "dialog": [ { "zh": "司库：找到硬币，再把宝箱送到高台。", "en": "Treasurer: Gather a coin, then move the chest to the high ledge." } ]
     },
     {
       "id": "cave-sentinel-gate",

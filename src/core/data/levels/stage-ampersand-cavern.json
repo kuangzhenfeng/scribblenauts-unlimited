@@ -1,0 +1,21 @@
+{
+  "id": "stage-ampersand-cavern",
+  "type": "self-contained",
+  "theme": "cave",
+  "background": "stage-ampersand-cavern",
+  "bgm": "stage-ampersand-cavern",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-arrow-meadow", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-final-mark", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "key", "x": -520, "y": 320, "layer": 0 }, { "typeId": "lock", "x": -160, "y": 320, "layer": 0 }, { "typeId": "box", "x": 220, "y": 320, "layer": 0 }, { "typeId": "lamp", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-ampersand-key", "typeId": "human", "x": -520, "y": 320, "gender": "female" }, { "id": "npc-ampersand-lock", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-ampersand-box", "typeId": "human", "x": 280, "y": 320, "gender": "female" }, { "id": "npc-ampersand-lamp", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "ampersand-key", "giverNpcId": "npc-ampersand-key", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-ampersand-key", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "lock", "near": { "npcId": "npc-ampersand-key", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "寻宝人：钥匙会带我找到洞口，锁会证明我找对了。", "en": "Treasure Hunter: The key finds the entrance; the lock proves I found the right one." } ] },
+    { "id": "ampersand-lock", "giverNpcId": "npc-ampersand-lock", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "lock", "near": { "npcId": "npc-ampersand-lock", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-ampersand-lock", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守库人：锁先固定，箱子才能安全地放入宝库。", "en": "Vault Keeper: Secure the lock first so the box can enter the vault safely." } ] },
+    { "id": "ampersand-box", "giverNpcId": "npc-ampersand-box", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-ampersand-box", "radius": 240 } }, { "kind": "object-present", "typeId": "lamp", "near": { "npcId": "npc-ampersand-box", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-ampersand-box", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "宝库管理员：箱子和灯先就位，钥匙才能照出隐藏层。", "en": "Vault Manager: Place the box and lamp so the key can reveal the hidden level." } ] },
+    { "id": "ampersand-lamp", "giverNpcId": "npc-ampersand-lamp", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "lamp", "near": { "npcId": "npc-ampersand-lamp", "radius": 520 } }, { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-ampersand-lamp", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "lock", "near": { "npcId": "npc-ampersand-lamp", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "洞窟管家：先照亮，再取钥匙，最后锁上宝库。", "en": "Cavern Steward: Light the way, take the key, and lock the vault last." } ] }
+  ],
+  "challengeSlots": 4
+}

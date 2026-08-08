@@ -29,4 +29,10 @@ describe('Hud', () => {
     expect(document.querySelector<HTMLButtonElement>('.world-hud__portrait')?.getAttribute('aria-label')).toContain('装备');
     void hud;
   });
+
+  it('保留原版常驻资源栏，不把玩家血量塞进左上角 HUD', () => {
+    const hud = new Hud();
+    hud.render(0, 0, 0);
+    expect(document.querySelector('.world-hud__health')).toBeNull();
+  });
 });

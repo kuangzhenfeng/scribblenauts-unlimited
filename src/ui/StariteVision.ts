@@ -5,10 +5,10 @@
  * 宿主可以传入任意世界坐标，并用 setProjectedPositions() 注入屏幕坐标，不依赖 Phaser。
  */
 
-import { ICON_CLOSE, ICON_SHARD, ICON_STAR } from './icons';
+import { ICON_CLOSE, ICON_SHARD, ICON_STAR, ICON_TROPHY } from './icons';
 import { INK, PAPER_BG, PAPER_BG_ALT, PAPER_SHADOW, SAFE_RIGHT, SAFE_TOP, TORN_EDGE, UI_FONT } from './paperStyle';
 
-export type StariteCollectibleKind = 'starite' | 'shard';
+export type StariteCollectibleKind = 'starite' | 'shard' | 'challenge';
 
 export interface WorldPoint {
   x: number;
@@ -54,6 +54,7 @@ export interface StariteVisionLabels {
   title: string;
   starite: string;
   shard: string;
+  challenge: string;
   noTargets: string;
   close: string;
 }
@@ -73,6 +74,7 @@ const DEFAULT_LABELS: StariteVisionLabels = {
   title: '附近收藏品',
   starite: 'Starite',
   shard: '碎片',
+  challenge: '未完成任务',
   noTargets: '没有发现未收集的目标',
   close: '关闭目标列表',
 };
@@ -143,7 +145,15 @@ export function markStariteVisionTargets(
 }
 
 function iconFor(kind: StariteCollectibleKind): string {
-  return kind === 'starite' ? ICON_STAR : ICON_SHARD;
+  if (kind === 'starite') return ICON_STAR;
+  if (kind === 'shard') return ICON_SHARD;
+  return ICON_TROPHY;
+}
+
+function labelForKind(kind: StariteCollectibleKind, labels: StariteVisionLabels): string {
+  if (kind === 'starite') return labels.starite;
+  if (kind === 'shard') return labels.shard;
+  return labels.challenge;
 }
 
 export class StariteVision {
@@ -154,6 +164,7 @@ export class StariteVision {
   private readonly toggleLabel: HTMLSpanElement;
   private readonly countEl: HTMLSpanElement;
   private readonly listEl: HTMLDivElement;
+  private readonly blueFilter: HTMLDivElement;
   private readonly markerLayer: HTMLDivElement;
   private readonly closeButton: HTMLButtonElement;
   private readonly labels: StariteVisionLabels;
@@ -161,9 +172,11 @@ export class StariteVision {
   private readonly onSelect?: (target: StariteVisionTarget) => void;
   private collectibles: readonly StariteCollectible[];
   private markedIds: Set<string>;
+  private worldPositions = new Map<string, WorldPoint>();
   private projections = new Map<string, StariteVisionProjection>();
   private enabled: boolean;
-  private visible = true;
+  /** 原版默认只显示工具栏入口，探测列表由玩家主动展开。 */
+  private visible = false;
 
   constructor(options: StariteVisionOptions) {
     this.labels = { ...DEFAULT_LABELS, ...options.labels };
@@ -195,7 +208,7 @@ export class StariteVision {
         position:fixed;top:${SAFE_TOP};right:${SAFE_RIGHT};
         display:flex;flex-direction:column;gap:12px;width:min(320px,calc(100vw - 28px));
         padding:16px;background:${PAPER_BG};box-shadow:${PAPER_SHADOW};${TORN_EDGE};
-        pointer-events:auto;
+        pointer-events:auto;z-index:2;
       }
       .starite-vision__toggle-row { display:flex;align-items:center;gap:8px; }
       .starite-vision__toggle {
@@ -222,7 +235,13 @@ export class StariteVision {
       .starite-vision__target:hover,.starite-vision__target:focus-visible { background:#f0e3bb; }
       .starite-vision__target-icon { display:grid;place-items:center;width:18px;height:18px;color:#a05a00;flex:none; }
       .starite-vision__target-label { min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-      .starite-vision__marker-layer { position:fixed;inset:0;pointer-events:none; }
+      .starite-vision__blue-filter {
+        position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;
+        background:rgba(39,116,255,.18);backdrop-filter:hue-rotate(155deg) saturate(1.34) brightness(1.04);
+        transition:opacity .24s ease;
+      }
+      .starite-vision__blue-filter[data-active="true"] { opacity:1; }
+      .starite-vision__marker-layer { position:fixed;inset:0;z-index:1;pointer-events:none; }
       .starite-vision__marker {
         position:fixed;display:grid;place-items:center;width:44px;height:44px;padding:8px;box-sizing:border-box;
         transform:translate(-50%,-50%);color:#fff8dd;background:#a05a00;border:2px solid #6a3d08;border-radius:50%;
@@ -236,10 +255,14 @@ export class StariteVision {
         .starite-vision__list { max-height:180px; }
       }
       @media (prefers-reduced-motion:reduce) {
-        .starite-vision__toggle,.starite-vision__marker { transition:none; }
+        .starite-vision__toggle,.starite-vision__marker,.starite-vision__blue-filter { transition:none; }
       }
     `;
     this.el.appendChild(style);
+
+    this.blueFilter = document.createElement('div');
+    this.blueFilter.className = 'starite-vision__blue-filter';
+    this.blueFilter.setAttribute('aria-hidden', 'true');
 
     this.markerLayer = document.createElement('div');
     this.markerLayer.className = 'starite-vision__marker-layer';
@@ -284,8 +307,9 @@ export class StariteVision {
     this.listEl.className = 'starite-vision__list';
     this.listEl.setAttribute('role', 'list');
     this.panel.append(meta, toggleRow, this.listEl);
-    this.el.append(this.markerLayer, this.panel);
+    this.el.append(this.blueFilter, this.markerLayer, this.panel);
     document.body.appendChild(this.el);
+    this.el.style.display = 'none';
     this.render();
   }
 
@@ -302,13 +326,15 @@ export class StariteVision {
   }
 
   get visibleTargets(): StariteVisionTarget[] {
-    return filterStariteVisionTargets(this.collectibles, this.enabled, { markedIds: this.markedIds });
+    return filterStariteVisionTargets(this.positionedCollectibles(), this.enabled, { markedIds: this.markedIds });
   }
 
   setCollectibles(collectibles: readonly StariteCollectible[]): void {
     this.collectibles = collectibles;
     const knownIds = new Set(collectibles.map((collectible) => collectible.id));
     this.markedIds = new Set([...this.markedIds].filter((id) => knownIds.has(id)));
+    this.worldPositions = new Map([...this.worldPositions].filter(([id]) => knownIds.has(id)));
+    this.projections = new Map([...this.projections].filter(([id]) => knownIds.has(id)));
     this.render();
   }
 
@@ -323,9 +349,24 @@ export class StariteVision {
     this.setEnabled(!this.enabled);
   }
 
+  /** 快捷键入口：展开面板并切换探测状态。 */
+  toggleFromShortcut(): void {
+    if (!this.visible) this.show();
+    this.toggle();
+  }
+
   /** 设置宿主计算出的屏幕坐标；坐标单位为 viewport px。 */
   setProjectedPositions(projected: StariteVisionProjectionState): void {
     this.projections = toProjectionMap(projected);
+    this.renderMarkers();
+  }
+
+  /** 设置宿主每帧计算的世界坐标；用于目标移动时保持列表与屏幕标记同步。 */
+  setWorldPositions(worldPositions: StariteVisionProjectionState): void {
+    const next = toProjectionMap(worldPositions);
+    this.worldPositions = new Map(
+      [...next].map(([id, point]) => [id, { x: point.x, y: point.y }] as const),
+    );
     this.renderMarkers();
   }
 
@@ -349,6 +390,7 @@ export class StariteVision {
   hide(): void {
     this.visible = false;
     this.el.style.display = 'none';
+    this.syncBlueFilter();
   }
 
   destroy(): void {
@@ -377,13 +419,13 @@ export class StariteVision {
         button.className = 'starite-vision__target';
         button.dataset.marked = String(target.marked);
         button.setAttribute('aria-pressed', String(target.marked));
-        button.setAttribute('aria-label', target.label ?? `${target.kind === 'starite' ? this.labels.starite : this.labels.shard} ${target.id}`);
+        button.setAttribute('aria-label', target.label ?? `${labelForKind(target.kind, this.labels)} ${target.id}`);
         const icon = document.createElement('span');
         icon.className = 'starite-vision__target-icon';
         icon.innerHTML = iconFor(target.kind);
         const label = document.createElement('span');
         label.className = 'starite-vision__target-label';
-        label.textContent = target.label ?? `${target.kind === 'starite' ? this.labels.starite : this.labels.shard} ${target.id}`;
+        label.textContent = target.label ?? `${labelForKind(target.kind, this.labels)} ${target.id}`;
         button.append(icon, label);
         button.addEventListener('click', () => this.selectTarget(target));
         this.listEl.appendChild(button);
@@ -394,6 +436,7 @@ export class StariteVision {
 
   private renderMarkers(): void {
     this.markerLayer.innerHTML = '';
+    this.syncBlueFilter();
     if (!this.enabled || !this.visible) return;
     for (const target of this.visibleTargets) {
       const projection = this.projections.get(target.id);
@@ -406,7 +449,7 @@ export class StariteVision {
       marker.dataset.marked = String(target.marked);
       marker.setAttribute('aria-pressed', String(target.marked));
       marker.innerHTML = iconFor(target.kind);
-      marker.setAttribute('aria-label', target.label ?? `${target.kind === 'starite' ? this.labels.starite : this.labels.shard} ${target.id}`);
+      marker.setAttribute('aria-label', target.label ?? `${labelForKind(target.kind, this.labels)} ${target.id}`);
       marker.addEventListener('click', () => this.selectTarget(target));
       this.markerLayer.appendChild(marker);
     }
@@ -417,5 +460,16 @@ export class StariteVision {
     const markedTarget: StariteVisionTarget = { ...target, marked: true };
     this.render();
     this.onSelect?.(markedTarget);
+  }
+
+  private positionedCollectibles(): StariteCollectible[] {
+    return this.collectibles.map((collectible) => {
+      const position = this.worldPositions.get(collectible.id);
+      return position ? { ...collectible, x: position.x, y: position.y } : collectible;
+    });
+  }
+
+  private syncBlueFilter(): void {
+    this.blueFilter.dataset.active = String(this.enabled && this.visible);
   }
 }

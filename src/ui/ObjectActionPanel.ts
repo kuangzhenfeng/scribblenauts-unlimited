@@ -221,6 +221,7 @@ export interface ObjectActionPanelCallbacks {
   onCreateObject: () => void;
   onAddAdjective: () => void;
   onEditObject: (entity: GameEntity) => void;
+  onOpenContainer: (entity: GameEntity) => void;
 }
 
 interface ActionSpec {
@@ -325,6 +326,14 @@ export class ObjectActionPanel {
       { label: t('actionPanel.addAdj'), hint: t('actionPanel.addAdjHint'), icon: ICON_SPARKLES, onClick: this.cb.onAddAdjective },
       { label: t('actionPanel.edit'), hint: t('actionPanel.editHint'), icon: ICON_EDIT, onClick: () => this.current && this.cb.onEditObject(this.current) },
     ];
+    if (entity.tags.hasFlag('container') && (entity.containedTypeIds?.length ?? 0) > 0) {
+      specs.splice(1, 0, {
+        label: t('actionPanel.openContainer'),
+        hint: t('actionPanel.openContainerHint', { count: entity.containedTypeIds?.length ?? 0 }),
+        icon: ICON_OBJECTS,
+        onClick: () => this.current && this.cb.onOpenContainer(this.current),
+      });
+    }
     for (const spec of specs) this.actionsEl.appendChild(this.createAction(spec));
 
     this.el.style.display = 'block';

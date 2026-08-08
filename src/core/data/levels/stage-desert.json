@@ -2,6 +2,8 @@
   "id": "stage-desert",
   "type": "self-contained",
   "theme": "desert",
+  "background": "stage-desert",
+  "bgm": "stage-desert",
   "bounds": {
     "minX": -900,
     "minY": -200,
@@ -234,19 +236,19 @@
       "id": "desert-merchant-water",
       "giverNpcId": "npc-merchant",
       "kind": "shard",
-      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "water", "count": 2, "near": { "npcId": "npc-merchant", "radius": 180 } } ] },
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-merchant", "radius": 180 } } ] },
       "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "umbrella", "near": { "npcId": "npc-merchant", "radius": 180 } } ] } ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "商人：两瓶水解渴后，再给我一把遮阳伞。", "en": "Merchant: Two waters first, then bring me an umbrella for the sun." } ]
+      "dialog": [ { "zh": "商人：水解渴后，再给我一把遮阳伞。", "en": "Merchant: Bring water first, then bring me an umbrella for the sun." } ]
     },
     {
       "id": "desert-nomad-dunes",
       "giverNpcId": "npc-nomad",
       "kind": "shard",
       "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "camel", "near": { "npcId": "npc-nomad", "radius": 220 } } ] },
-      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "sand", "count": 2, "region": { "minX": -200, "minY": 430, "maxX": 500, "maxY": 600 } } ] } ],
+      "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "sand", "region": { "minX": -200, "minY": 430, "maxX": 500, "maxY": 600 } } ] } ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "游牧民：找到坐骑后，再收集两堆沙子修复沙丘标记。", "en": "Nomad: Find a mount, then gather two piles of sand for the dune marker." } ]
+      "dialog": [ { "zh": "游牧民：找到坐骑后，再收集沙子修复沙丘标记。", "en": "Nomad: Find a mount, then gather sand for the dune marker." } ]
     },
     {
       "id": "desert-sphinx-riddle",
@@ -262,9 +264,9 @@
       "giverNpcId": "npc-oasis-keeper",
       "kind": "starite-gate",
       "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "npc-state", "npcId": "npc-oasis-keeper", "states": [ "normal" ] }, { "kind": "object-present", "typeId": "shovel", "near": { "npcId": "npc-oasis-keeper", "radius": 180 } } ] } ] },
-      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "cactus", "count": 2, "region": { "minX": 450, "minY": 430, "maxX": 850, "maxY": 600 } } ] } ],
+      "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "cactus", "region": { "minX": 450, "minY": 430, "maxX": 850, "maxY": 600 } } ] } ],
       "reward": { "type": "starite", "count": 1 },
-      "dialog": [ { "zh": "绿洲守护者：拿起铲子清出水源，再移开两株仙人掌。", "en": "Oasis Keeper: Take a shovel to clear the spring, then move two cacti aside." } ]
+      "dialog": [ { "zh": "绿洲守护者：拿起铲子清出水源，再移开仙人掌。", "en": "Oasis Keeper: Take a shovel to clear the spring, then move a cactus aside." } ]
     }
   ],
   "challengeSlots": 4

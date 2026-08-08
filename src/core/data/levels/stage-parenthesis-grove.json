@@ -1,0 +1,21 @@
+{
+  "id": "stage-parenthesis-grove",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-parenthesis-grove",
+  "bgm": "stage-parenthesis-grove",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-slash-volcano", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-asterisk-archive", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "tree", "x": -520, "y": 320, "layer": 0 }, { "typeId": "bridge", "x": -160, "y": 320, "layer": 0 }, { "typeId": "rope", "x": 220, "y": 320, "layer": 0 }, { "typeId": "bird", "x": 560, "y": 260, "layer": 0 } ],
+  "npcs": [ { "id": "npc-parenthesis-tree", "typeId": "human", "x": -520, "y": 320, "gender": "female" }, { "id": "npc-parenthesis-bridge", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-parenthesis-rope", "typeId": "human", "x": 280, "y": 320, "gender": "female" }, { "id": "npc-parenthesis-bird", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "parenthesis-tree", "giverNpcId": "npc-parenthesis-tree", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-parenthesis-tree", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-parenthesis-tree", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "林地居民：树根站稳，桥才不会被藤蔓拽走。", "en": "Grove Dweller: Set the roots, or the vines will pull the bridge away." } ] },
+    { "id": "parenthesis-bridge", "giverNpcId": "npc-parenthesis-bridge", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-parenthesis-bridge", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-parenthesis-bridge", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "桥头人：桥先跨过溪谷，绳子再把两端系紧。", "en": "Bridge Tender: Cross the stream with a bridge, then tie both ends with rope." } ] },
+    { "id": "parenthesis-rope", "giverNpcId": "npc-parenthesis-rope", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-parenthesis-rope", "radius": 240 } }, { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-parenthesis-rope", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-parenthesis-rope", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "攀藤者：绳子能爬，鸟能看路，树冠必须托住它们。", "en": "Vine Climber: Rope climbs, birds scout, and the canopy must support them." } ] },
+    { "id": "parenthesis-bird", "giverNpcId": "npc-parenthesis-bird", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-parenthesis-bird", "radius": 520 } }, { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-parenthesis-bird", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-parenthesis-bird", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "林冠守望者：先有树和桥，鸟才愿意把消息带进深林。", "en": "Canopy Watcher: Build the tree and bridge before the bird carries news into the deep forest." } ] }
+  ],
+  "challengeSlots": 4
+}

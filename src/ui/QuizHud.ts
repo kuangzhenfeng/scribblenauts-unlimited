@@ -2,19 +2,19 @@
  * 简易问答 toast —— 答对/答错瞬时反馈浮层。
  *
  * 徽章职责由 QuizTopBar 承载，本组件只负责答对/答错反馈：
- * 反馈落在任务条下方的舞台空间，不遮挡题面与输入台，pointer-events:none，不拦截键盘。
+ * 反馈落在任务条下方的自然情境空间，不遮挡题面与输入台，pointer-events:none，不拦截键盘。
  */
 
 import {
   UI_FONT,
   SAFE_TOP,
-  QUIZ_RADIUS_MD,
-  QUIZ_SHADOW_LIFT,
-  QUIZ_BORDER,
+  QUIZ_GOLD_DARK,
   QUIZ_DANGER,
   QUIZ_DANGER_SOFT,
   QUIZ_SUCCESS,
   QUIZ_SUCCESS_SOFT,
+  QUIZ_RADIUS_SM,
+  QUIZ_SHADOW,
 } from './quizStyle';
 import { ICON_CHECK, ICON_CLOSE } from './icons';
 import { t } from '@/core/i18n/I18n';
@@ -35,7 +35,7 @@ export class QuizHud {
       'justify-content:center',
       'pointer-events:none',
       'opacity:0',
-      'transition:opacity 0.2s ease',
+      'transition:opacity 180ms ease-out',
     ].join(';');
     this.el.setAttribute('role', 'status');
     this.el.setAttribute('aria-live', 'polite');
@@ -59,12 +59,13 @@ export class QuizHud {
     const fg = correct ? QUIZ_SUCCESS : QUIZ_DANGER;
     const bg = correct ? QUIZ_SUCCESS_SOFT : QUIZ_DANGER_SOFT;
     const icon = correct ? ICON_CHECK : ICON_CLOSE;
-    this.el.innerHTML = `<div class="quiz-toast-message" style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:${bg};color:${fg};border:2px solid ${QUIZ_BORDER};border-radius:${QUIZ_RADIUS_MD};box-shadow:${QUIZ_SHADOW_LIFT};font-family:${UI_FONT};font-size:15px;font-weight:800;letter-spacing:0.02em;animation:quizToast 1.6s ease forwards"><span class="quiz-toast-icon" aria-hidden="true">${icon}</span><span>${this._escape(toast)}</span></div>`;
+    this.el.dataset.state = correct ? 'correct' : 'wrong';
+    this.el.innerHTML = `<div class="quiz-toast-message" style="--quiz-feedback-fg:${fg};--quiz-feedback-bg:${bg}"><span class="quiz-toast-icon" aria-hidden="true">${icon}</span><span>${this._escape(toast)}</span></div>`;
     this.el.style.display = 'flex';
     this.el.style.opacity = '1';
   }
 
-  /** 让反馈落在任务条下方的舞台区域，不覆盖输入台。 */
+  /** 让反馈落在任务条下方的自然情境区域，不覆盖输入台。 */
   setTop(top: number): void {
     this.el.style.top = `${Math.max(0, top)}px`;
   }
@@ -75,7 +76,26 @@ export class QuizHud {
     const style = document.createElement('style');
     style.id = 'quiz-hud-style';
     style.textContent = `
-      @keyframes quizToast{0%{opacity:0;transform:translateY(6px)}15%,75%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-4px)}}
+      .quiz-toast-message {
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        min-height:36px;
+        box-sizing:border-box;
+        padding:7px 15px;
+        background:var(--quiz-feedback-bg);
+        color:var(--quiz-feedback-fg);
+        border:2px solid ${QUIZ_GOLD_DARK};
+        border-radius:${QUIZ_RADIUS_SM};
+        box-shadow:${QUIZ_SHADOW};
+        font-family:${UI_FONT};
+        font-size:15px;
+        font-weight:950;
+        letter-spacing:.02em;
+        transform:rotate(-.6deg);
+        animation:quizToast 1.6s ease-out forwards;
+      }
+      @keyframes quizToast{0%{opacity:0;transform:translateY(7px) rotate(-.6deg)}15%,75%{opacity:1;transform:translateY(0) rotate(-.6deg)}100%{opacity:0;transform:translateY(-5px) rotate(-.6deg)}}
       .quiz-toast-icon { display:inline-flex; align-items:center; justify-content:center; }
       .quiz-toast-icon svg { flex:none; }
       @media (max-width:390px) { .quiz-toast-message { max-width:calc(100vw - 32px); font-size:14px !important; } }

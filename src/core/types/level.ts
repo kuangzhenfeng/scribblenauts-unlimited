@@ -21,6 +21,10 @@ export interface NpcSpawn {
   x: number;
   y: number;
   gender: 'male' | 'female';
+  /** 故事关键 NPC 保持在关卡锚点，不参与布局随机化。 */
+  fixed?: boolean;
+  /** 可选家庭头像绑定；用于让世界中的家庭成员复用头像目录样式。 */
+  avatarId?: string;
   /** NPC 专属绘制参数覆盖（衬衫色/发型/帽子等），合并进 entity.drawParams */
   drawParams?: Record<string, unknown>;
 }
@@ -65,7 +69,9 @@ export type PuzzleCondition =
       typeId: string;
       /** 题目要求的形容词 id 列表，可空；校验 entity.appliedAdjectives 超集 */
       adjectives?: string[];
-      near: { npcId: string; radius: number };
+      near?: { npcId: string; radius: number };
+      /** 可选区域筛选，与 near 同时存在时需同时满足。 */
+      region?: AABB;
       /** 至少需要满足的实体数量，缺省为 1。 */
       count?: number;
     }
@@ -117,6 +123,8 @@ export interface LevelData {
   id: string;
   type: 'overworld' | 'self-contained';
   theme: string;
+  /** 当前关卡独立背景板键；远板/近板均从此键加载，缺省才回退到 theme。 */
+  background?: string;
   bounds: AABB;
   /** 玩家出生/重定位点（关卡入口） */
   playerStart: { x: number; y: number };

@@ -44,6 +44,42 @@ export const ICON_WING = svg(
   19,
 );
 
+/** 面部（Face）—— 穿戴部位槽位 */
+export const ICON_FACE = svg(
+  '<circle cx="12" cy="12" r="8"></circle><circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"></circle><circle cx="15" cy="10" r="1" fill="currentColor" stroke="none"></circle><path d="M9 15c2 1.5 4 1.5 6 0"></path>',
+  19,
+);
+
+/** 头部（Head）—— 穿戴部位槽位 */
+export const ICON_HEAD = svg(
+  '<path d="M4 11h16"></path><path d="M6 11V8a6 6 0 0 1 12 0v3"></path><path d="M3 11h18v3H3z"></path>',
+  19,
+);
+
+/** 身体（Body）—— 穿戴部位槽位 */
+export const ICON_BODY = svg(
+  '<path d="m8 4 4 3 4-3 4 3-2 6v7H6v-7L4 7z"></path><path d="M8 4v4h8V4"></path>',
+  19,
+);
+
+/** 腿部（Legs）—— 穿戴部位槽位 */
+export const ICON_LEGS = svg(
+  '<path d="M8 4v8l-2 8H4l2-8V4"></path><path d="M16 4v8l2 8h2l-2-8V4"></path><path d="M7 4h10"></path>',
+  19,
+);
+
+/** 脚部（Feet）—— 穿戴部位槽位 */
+export const ICON_FEET = svg(
+  '<path d="M5 5v9c0 2 2 3 5 3h3v3H4c-1 0-2-.8-2-2v-4c0-2 1-4 3-4V5z"></path><path d="M14 5v9c0 2 2 3 5 3h3v3h-9c-1 0-2-.8-2-2v-4c0-2 1-4 3-4V5z"></path>',
+  19,
+);
+
+/** 全身（Full Body）—— 套装穿戴部位槽位 */
+export const ICON_FULL_BODY = svg(
+  '<circle cx="12" cy="5" r="3"></circle><path d="M7 22v-7l2-5h6l2 5v7"></path><path d="M9 13H5l-2 5"></path><path d="M15 13h4l2 5"></path>',
+  19,
+);
+
 /** 骑乘（Saddle）—— 装备关系槽位 */
 export const ICON_RIDE = svg(
   '<path d="M5 18h14"></path><path d="M7 18c0-4 1.8-7 5-7s5 3 5 7"></path><path d="M9 8h6"></path><path d="M10 5h4"></path><path d="M8 18v2"></path><path d="M16 18v2"></path>',
@@ -131,6 +167,12 @@ export const ICON_FLAME = svg(
 /** 锁（Lock）—— 关卡锁定状态 */
 export const ICON_LOCK = svg(
   '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>',
+  18,
+);
+
+/** 解锁（Unlock）—— 批量开放全部关卡 */
+export const ICON_UNLOCK = svg(
+  '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path>',
   18,
 );
 

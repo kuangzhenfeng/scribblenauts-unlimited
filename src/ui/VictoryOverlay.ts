@@ -4,7 +4,7 @@
  * 只负责胜利状态的展示和出口事件；世界暂停、地图切换和音乐恢复由 WorldScene 负责。
  */
 
-import { ICON_MAP, ICON_STAR } from './icons';
+import { ICON_MAP, ICON_MAXWELL, ICON_STAR } from './icons';
 import { INK, PAPER_BG, PAPER_BG_ALT, PAPER_SHADOW, SAFE_BOTTOM, SAFE_TOP, UI_FONT } from './paperStyle';
 import { t } from '@/core/i18n/I18n';
 
@@ -15,9 +15,17 @@ export interface VictoryOverlayCallbacks {
   onMap: () => void;
 }
 
+export type VictoryOverlayVariant = 'curse' | 'collection';
+
 export class VictoryOverlay {
   private readonly el: HTMLDivElement;
   private readonly continueButton: HTMLButtonElement;
+  private readonly eyebrow: HTMLDivElement;
+  private readonly title: HTMLHeadingElement;
+  private readonly description: HTMLParagraphElement;
+  private readonly rewardText: HTMLSpanElement;
+  private readonly revealTitle: HTMLElement;
+  private readonly revealText: HTMLSpanElement;
   private open = false;
 
   constructor(private readonly cb: VictoryOverlayCallbacks) {
@@ -38,21 +46,32 @@ export class VictoryOverlay {
     star.innerHTML = ICON_STAR;
     star.setAttribute('aria-hidden', 'true');
 
-    const eyebrow = document.createElement('div');
-    eyebrow.className = 'victory-overlay__eyebrow';
-    eyebrow.textContent = t('victory.eyebrow');
+    this.eyebrow = document.createElement('div');
+    this.eyebrow.className = 'victory-overlay__eyebrow';
 
-    const title = document.createElement('h1');
-    title.id = 'victory-overlay-title';
-    title.textContent = t('victory.title');
+    this.title = document.createElement('h1');
+    this.title.id = 'victory-overlay-title';
 
-    const description = document.createElement('p');
-    description.id = 'victory-overlay-description';
-    description.textContent = t('victory.description');
+    this.description = document.createElement('p');
+    this.description.id = 'victory-overlay-description';
 
     const reward = document.createElement('div');
     reward.className = 'victory-overlay__reward';
-    reward.innerHTML = `${ICON_STAR}<span>${t('victory.reward')}</span>`;
+    this.rewardText = document.createElement('span');
+    reward.innerHTML = ICON_STAR;
+    reward.appendChild(this.rewardText);
+
+    const reveal = document.createElement('div');
+    reveal.className = 'victory-overlay__reveal';
+    const revealIcon = document.createElement('span');
+    revealIcon.className = 'victory-overlay__reveal-icon';
+    revealIcon.innerHTML = ICON_MAXWELL;
+    revealIcon.setAttribute('aria-hidden', 'true');
+    const revealCopy = document.createElement('div');
+    this.revealTitle = document.createElement('strong');
+    this.revealText = document.createElement('span');
+    revealCopy.append(this.revealTitle, this.revealText);
+    reveal.append(revealIcon, revealCopy);
 
     const actions = document.createElement('div');
     actions.className = 'victory-overlay__actions';
@@ -72,18 +91,20 @@ export class VictoryOverlay {
     mapButton.addEventListener('click', () => this.cb.onMap());
 
     actions.append(this.continueButton, mapButton);
-    card.append(star, eyebrow, title, description, reward, actions);
+    card.append(star, this.eyebrow, this.title, this.description, reward, reveal, actions);
     this.el.appendChild(card);
     this.el.style.display = 'none';
     this.el.setAttribute('aria-hidden', 'true');
     document.body.appendChild(this.el);
+    this.applyVariant('curse');
   }
 
   get isOpen(): boolean {
     return this.open;
   }
 
-  show(): void {
+  show(variant: VictoryOverlayVariant = 'curse'): void {
+    this.applyVariant(variant);
     this.open = true;
     this.el.style.display = 'grid';
     this.el.setAttribute('aria-hidden', 'false');
@@ -99,6 +120,32 @@ export class VictoryOverlay {
   destroy(): void {
     this.open = false;
     this.el.remove();
+  }
+
+  private applyVariant(variant: VictoryOverlayVariant): void {
+    const copy = variant === 'collection'
+      ? {
+          eyebrow: t('victory.collectionEyebrow'),
+          title: t('victory.collectionTitle'),
+          description: t('victory.collectionDescription'),
+          reward: t('victory.collectionReward'),
+          revealTitle: t('victory.collectionRevealTitle'),
+          reveal: t('victory.collectionReveal'),
+        }
+      : {
+          eyebrow: t('victory.eyebrow'),
+          title: t('victory.title'),
+          description: t('victory.description'),
+          reward: t('victory.reward'),
+          revealTitle: t('victory.revealTitle'),
+          reveal: t('victory.reveal'),
+        };
+    this.eyebrow.textContent = copy.eyebrow;
+    this.title.textContent = copy.title;
+    this.description.textContent = copy.description;
+    this.rewardText.textContent = copy.reward;
+    this.revealTitle.textContent = copy.revealTitle;
+    this.revealText.textContent = copy.reveal;
   }
 
   private ensureStyle(): void {
@@ -181,6 +228,32 @@ export class VictoryOverlay {
         font-weight:900;
       }
       .victory-overlay__reward svg { width:18px; height:18px; color:#d58b08; }
+      .victory-overlay__reveal {
+        width:100%;
+        display:flex;
+        align-items:flex-start;
+        gap:9px;
+        padding:10px 11px;
+        color:#4e3b20;
+        background:#fff8de;
+        border:1px solid rgba(106,61,8,.3);
+        border-radius:10px;
+        font-size:12px;
+        line-height:1.45;
+        text-align:left;
+      }
+      .victory-overlay__reveal-icon {
+        display:grid;
+        place-items:center;
+        flex:none;
+        width:28px;
+        height:28px;
+        color:#7b4e18;
+      }
+      .victory-overlay__reveal-icon svg { width:25px; height:25px; }
+      .victory-overlay__reveal strong,
+      .victory-overlay__reveal span { display:block; }
+      .victory-overlay__reveal strong { margin-bottom:2px; color:#6a3d08; font-size:11px; letter-spacing:.08em; }
       .victory-overlay__actions {
         width:100%;
         display:grid;

@@ -1,0 +1,21 @@
+{
+  "id": "stage-asterisk-archive",
+  "type": "self-contained",
+  "theme": "cave",
+  "background": "stage-asterisk-archive",
+  "bgm": "stage-asterisk-archive",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-parenthesis-grove", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-plus-snowfield", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "crystal", "x": -520, "y": 320, "layer": 0 }, { "typeId": "lamp", "x": -160, "y": 320, "layer": 0 }, { "typeId": "robot", "x": 220, "y": 320, "layer": 0 }, { "typeId": "clock", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-asterisk-crystal", "typeId": "human", "x": -520, "y": 320, "gender": "female" }, { "id": "npc-asterisk-lamp", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-asterisk-robot", "typeId": "human", "x": 280, "y": 320, "gender": "female" }, { "id": "npc-asterisk-clock", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "asterisk-crystal", "giverNpcId": "npc-asterisk-crystal", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-asterisk-crystal", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "lamp", "near": { "npcId": "npc-asterisk-crystal", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "档案员：晶石会保存记忆，灯会让记忆显形。", "en": "Archivist: Crystal stores memory, and a lamp makes it visible." } ] },
+    { "id": "asterisk-lamp", "giverNpcId": "npc-asterisk-lamp", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "lamp", "near": { "npcId": "npc-asterisk-lamp", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-asterisk-lamp", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "灯匠：点亮档案，再让机器人把书架推回去。", "en": "Lamplighter: Light the archive, then let the robot move the shelf back." } ] },
+    { "id": "asterisk-robot", "giverNpcId": "npc-asterisk-robot", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-asterisk-robot", "radius": 240 } }, { "kind": "object-present", "typeId": "clock", "near": { "npcId": "npc-asterisk-robot", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-asterisk-robot", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "修理师：机器人和时钟能重启档案，晶石负责校准。", "en": "Repairer: The robot and clock restart the archive; crystal calibrates it." } ] },
+    { "id": "asterisk-clock", "giverNpcId": "npc-asterisk-clock", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "lamp", "near": { "npcId": "npc-asterisk-clock", "radius": 520 } }, { "kind": "object-present", "typeId": "clock", "near": { "npcId": "npc-asterisk-clock", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-asterisk-clock", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "钟表员：灯先亮，时间再走，机器人最后封存档案。", "en": "Clockkeeper: Light first, start time, and let the robot seal the archive last." } ] }
+  ],
+  "challengeSlots": 4
+}

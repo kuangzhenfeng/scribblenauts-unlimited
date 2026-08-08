@@ -1,0 +1,21 @@
+{
+  "id": "stage-comma-canopy",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-comma-canopy",
+  "bgm": "stage-comma-canopy",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-final-workshop", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-question-cavern", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "tree", "x": -480, "y": 320, "layer": 0 }, { "typeId": "rope", "x": -160, "y": 320, "layer": 0 }, { "typeId": "bird", "x": 220, "y": 260, "layer": 0 }, { "typeId": "bridge", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-comma-gardener", "typeId": "human", "x": -500, "y": 320, "gender": "female" }, { "id": "npc-comma-vine", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-comma-scout", "typeId": "human", "x": 260, "y": 320, "gender": "female" }, { "id": "npc-comma-keeper", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 680, "y": 260 },
+  "authoredChallenges": [
+    { "id": "comma-gardener", "giverNpcId": "npc-comma-gardener", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-comma-gardener", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-comma-gardener", "radius": 520 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "园丁：先种下树，再把小路接到林冠。", "en": "Gardener: Plant a tree, then connect the path to the canopy." } ] },
+    { "id": "comma-vine", "giverNpcId": "npc-comma-vine", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-comma-vine", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-comma-vine", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "藤蔓师：给我一根绳子，让鸟儿带它越过树冠。", "en": "Vine Keeper: Give me a rope so the bird can cross the canopy." } ] },
+    { "id": "comma-scout", "giverNpcId": "npc-comma-scout", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-comma-scout", "radius": 260 } }, { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-comma-scout", "radius": 260 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-comma-scout", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "侦察员：鸟或桥都能带我找到高处，但还需要一棵树。", "en": "Scout: A bird or bridge can reach the high path, but I still need a tree." } ] },
+    { "id": "comma-keeper", "giverNpcId": "npc-comma-keeper", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-comma-keeper", "radius": 520 } }, { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-comma-keeper", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-comma-keeper", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守林人：按顺序搭好绳桥和树台，林路就连起来了。", "en": "Warden: Build the rope path and tree platform in order to reconnect the forest." } ] }
+  ],
+  "challengeSlots": 4
+}

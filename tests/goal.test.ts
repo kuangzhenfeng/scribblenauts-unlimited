@@ -341,6 +341,34 @@ describe('GoalSystem', () => {
     expect(completed).toEqual(['count-challenge']);
   });
 
+  it('accepts one object-present entity constrained by a region', () => {
+    const inRegion = fakeEntity('wood-in-region', 'wood', 120, 500);
+    const entities: Entity[] = [inRegion];
+    const em: EntityQuery = { all: () => entities, get: (id) => entities.find((e) => e.id === id) };
+    const level = {
+      id: 'region-object-test',
+      challenges: [{
+        id: 'region-object-challenge', giverNpcId: 'npc-region', kind: 'shard' as const,
+        puzzle: {
+          conditions: [{
+            kind: 'object-present' as const,
+            typeId: 'wood',
+            region: { minX: 0, minY: 400, maxX: 200, maxY: 600 },
+          }],
+        },
+        reward: { type: 'shard' as const, count: 1 }, dialog: [{ zh: '', en: '' }],
+      }],
+    } as unknown as LevelData;
+    const levelRef = makeLevelRef('npc-region', level);
+    const completed: string[] = [];
+    const goal = new GoalSystem(em, levelRef, {
+      onShard: () => {}, onStarite: () => {}, onChallengeComplete: (id) => completed.push(id), onWin: () => {},
+    });
+
+    goal.evaluate();
+    expect(completed).toEqual(['region-object-challenge']);
+  });
+
   it('advances authored challenge stages in order', () => {
     const npc = fakeEntity('npc-sequence', 'human', 100, 100);
     const key = fakeEntity('key-1', 'key', 110, 100);

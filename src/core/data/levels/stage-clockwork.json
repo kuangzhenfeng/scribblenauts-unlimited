@@ -1,0 +1,177 @@
+{
+  "id": "stage-clockwork",
+  "type": "self-contained",
+  "theme": "cave",
+  "background": "stage-clockwork",
+  "bgm": "stage-clockwork",
+  "bounds": {
+    "minX": -900,
+    "minY": -220,
+    "maxX": 900,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": -620,
+    "y": 542
+  },
+  "transitions": [
+    {
+      "toLevelId": "stage-storybook",
+      "at": {
+        "minX": -900,
+        "minY": 350,
+        "maxX": -800,
+        "maxY": 620
+      }
+    },
+    {
+      "toLevelId": "stage-verdant-grove",
+      "at": {
+        "minX": 800,
+        "minY": 350,
+        "maxX": 900,
+        "maxY": 620
+      }
+    }
+  ],
+  "terrain": [
+    { "x": -620, "y": 180, "w": 220, "h": 24 },
+    { "x": -180, "y": 80, "w": 180, "h": 24 },
+    { "x": 260, "y": 230, "w": 220, "h": 24 },
+    { "x": 680, "y": 120, "w": 180, "h": 24 }
+  ],
+  "spawns": [
+    { "typeId": "clock", "x": -540, "y": 320, "layer": 0 },
+    { "typeId": "metal", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "wheel", "x": -100, "y": 320, "layer": 0 },
+    { "typeId": "wire", "x": 80, "y": 200, "layer": 0 },
+    { "typeId": "robot", "x": 320, "y": 320, "layer": 0 },
+    { "typeId": "magnet", "x": 500, "y": 320, "layer": 0 },
+    { "typeId": "bell", "x": 700, "y": 200, "layer": 0 },
+    { "typeId": "wrench", "x": 760, "y": 320, "layer": 0 },
+    { "typeId": "electricity", "x": 160, "y": 320, "layer": 0 },
+    { "typeId": "hammer", "x": -720, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    {
+      "id": "npc-clockmaker",
+      "typeId": "human",
+      "x": -560,
+      "y": 320,
+      "gender": "male",
+      "drawParams": { "shirtColor": "#b26d2b", "pantsColor": "#593b2a", "hat": "miner" }
+    },
+    {
+      "id": "npc-conductor",
+      "typeId": "human",
+      "x": -80,
+      "y": 320,
+      "gender": "female",
+      "drawParams": { "shirtColor": "#2d8b82", "pantsColor": "#1d4e4a" }
+    },
+    {
+      "id": "npc-toymaker",
+      "typeId": "human",
+      "x": 360,
+      "y": 320,
+      "gender": "male",
+      "drawParams": { "shirtColor": "#9b59b6", "pantsColor": "#4a235a" }
+    },
+    {
+      "id": "npc-timekeeper",
+      "typeId": "human",
+      "x": 720,
+      "y": 320,
+      "gender": "female",
+      "drawParams": { "shirtColor": "#d4a017", "pantsColor": "#6b4e16", "hat": "miner" }
+    }
+  ],
+  "decorations": [
+    { "kind": "stalactite", "x": -720, "y": 0 },
+    { "kind": "lantern", "x": -480, "y": 540 },
+    { "kind": "crystal", "x": -180, "y": 560, "scale": 0.9 },
+    { "kind": "lantern", "x": 80, "y": 540 },
+    { "kind": "mushroom", "x": 380, "y": 570 },
+    { "kind": "stalactite", "x": 640, "y": 0 },
+    { "kind": "lantern", "x": 760, "y": 540 }
+  ],
+  "starite": {
+    "x": 720,
+    "y": 260
+  },
+  "authoredChallenges": [
+    {
+      "id": "clockwork-clockmaker",
+      "giverNpcId": "npc-clockmaker",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "clock", "near": { "npcId": "npc-clockmaker", "radius": 210 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "wheel", "region": { "minX": -820, "minY": 430, "maxX": -300, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "钟表匠：先找来钟，再把轮子送到工作台。", "en": "Clockmaker: Bring a clock, then put a wheel beside the workbench." } ]
+    },
+    {
+      "id": "clockwork-conductor",
+      "giverNpcId": "npc-conductor",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "all-of", "conditions": [
+            { "kind": "object-present", "typeId": "wire", "near": { "npcId": "npc-conductor", "radius": 220 } },
+            { "kind": "object-present", "typeId": "electricity", "near": { "npcId": "npc-conductor", "radius": 220 } }
+          ] }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "object-present", "typeId": "bell", "near": { "npcId": "npc-conductor", "radius": 260 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "指挥家：接好导线和电流，再让铃声响起来。", "en": "Conductor: Connect the wire and electricity, then make the bell ring." } ]
+    },
+    {
+      "id": "clockwork-toymaker",
+      "giverNpcId": "npc-toymaker",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-toymaker", "radius": 220 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "object-present", "typeId": "metal", "region": { "minX": 120, "minY": 430, "maxX": 620, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "玩具匠：请来一个机器人，再收集金属给它装甲。", "en": "Toymaker: Bring a robot, then collect metal for its armor." } ]
+    },
+    {
+      "id": "clockwork-gate",
+      "giverNpcId": "npc-timekeeper",
+      "kind": "starite-gate",
+      "puzzle": {
+        "conditions": [
+          { "kind": "sequence", "conditions": [
+            { "kind": "object-present", "typeId": "clock", "near": { "npcId": "npc-timekeeper", "radius": 240 } },
+            { "kind": "any-of", "conditions": [
+              { "kind": "object-present", "typeId": "bell", "near": { "npcId": "npc-timekeeper", "radius": 240 } },
+              { "kind": "object-present", "typeId": "radio", "near": { "npcId": "npc-timekeeper", "radius": 240 } }
+            ] }
+          ] }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "all-of", "conditions": [
+          { "kind": "object-present", "typeId": "wrench", "near": { "npcId": "npc-timekeeper", "radius": 240 } },
+          { "kind": "object-present", "typeId": "magnet", "near": { "npcId": "npc-timekeeper", "radius": 240 } }
+        ] } ] }
+      ],
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [ { "zh": "守时人：先让时钟和声音对上节拍，再用扳手和磁铁修好传送门。", "en": "Timekeeper: Sync the clock with a sound, then repair the portal with a wrench and magnet." } ]
+    }
+  ],
+  "challengeSlots": 4
+}

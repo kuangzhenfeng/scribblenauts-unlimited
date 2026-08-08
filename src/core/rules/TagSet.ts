@@ -38,7 +38,7 @@ const BEHAVIOR_ORDER: BehaviorTag[] = [
 const FLAG_ORDER: FlagTag[] = [
   'flammable', 'conductive', 'sharp', 'edible', 'fragile', 'cuttable',
   'breakable', 'weapon', 'ranged', 'tool', 'projectile', 'container', 'rideable', 'wing',
-  'igniter', 'edible-target',
+  'igniter', 'explosive', 'edible-target',
 ];
 
 const materialBit = new Map<MaterialTag, number>();

@@ -82,10 +82,13 @@ function randomizeSpawns(spawns: SpawnDef[], level: LevelData, rng: () => number
 
 function randomizeNpcs(npcs: NpcSpawn[], level: LevelData, rng: () => number): NpcSpawn[] {
   if (npcs.length === 0) return [];
-  const positions = shuffle(npcs.map(({ x, y }) => ({ x, y })), rng);
+  const movableNpcs = npcs.filter((npc) => !npc.fixed);
+  const positions = shuffle(movableNpcs.map(({ x, y }) => ({ x, y })), rng);
   const threshold = level.bounds.maxY - GROUND_BAND_HEIGHT;
-  return npcs.map((npc, index) => {
-    const source = positions[index]!;
+  let positionIndex = 0;
+  return npcs.map((npc) => {
+    if (npc.fixed) return { ...npc };
+    const source = positions[positionIndex++]!;
     const isAir = source.y < threshold;
     return {
       ...npc,

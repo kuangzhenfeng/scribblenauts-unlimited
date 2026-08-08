@@ -1,0 +1,21 @@
+{
+  "id": "stage-hashtag-foundry",
+  "type": "self-contained",
+  "theme": "volcano",
+  "background": "stage-hashtag-foundry",
+  "bgm": "stage-hashtag-foundry",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-equals-desert", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-arrow-meadow", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "bomb", "x": -520, "y": 320, "layer": 0 }, { "typeId": "fire", "x": -160, "y": 320, "layer": 0 }, { "typeId": "robot", "x": 220, "y": 320, "layer": 0 }, { "typeId": "bridge", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-hashtag-bomb", "typeId": "human", "x": -520, "y": 320, "gender": "female" }, { "id": "npc-hashtag-fire", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-hashtag-robot", "typeId": "human", "x": 280, "y": 320, "gender": "female" }, { "id": "npc-hashtag-bridge", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "hashtag-bomb", "giverNpcId": "npc-hashtag-bomb", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "bomb", "near": { "npcId": "npc-hashtag-bomb", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-hashtag-bomb", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "铸工：爆炸物和火焰会把废炉重新点活。", "en": "Foundry Worker: Explosives and fire will wake the dead furnace." } ] },
+    { "id": "hashtag-fire", "giverNpcId": "npc-hashtag-fire", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-hashtag-fire", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-hashtag-fire", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "火工：先升温，再让机器人把金属送进熔炉。", "en": "Fire Worker: Raise the heat, then let the robot carry metal into the furnace." } ] },
+    { "id": "hashtag-robot", "giverNpcId": "npc-hashtag-robot", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-hashtag-robot", "radius": 240 } }, { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-hashtag-robot", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-hashtag-robot", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "自动机师：机器人跨桥运料，火焰负责最后加工。", "en": "Automaton Maker: The robot carries material over the bridge; fire finishes the work." } ] },
+    { "id": "hashtag-bridge", "giverNpcId": "npc-hashtag-bridge", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "bridge", "near": { "npcId": "npc-hashtag-bridge", "radius": 520 } }, { "kind": "object-present", "typeId": "bomb", "near": { "npcId": "npc-hashtag-bridge", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-hashtag-bridge", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "桥守：桥先搭好，爆破开路，机器人负责收尾。", "en": "Bridge Keeper: Build the bridge, blast the way open, and let the robot finish." } ] }
+  ],
+  "challengeSlots": 4
+}

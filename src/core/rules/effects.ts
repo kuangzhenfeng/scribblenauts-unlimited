@@ -32,6 +32,8 @@ export interface EffectDeps {
   destroyEntity: (e: Entity) => void;
   /** 施加冲量（桥接物理层） */
   applyImpulse: (e: Entity, dir: [number, number], mag: number) => void;
+  /** 将物品收纳进容器；具体的实体隐藏/物理移除由 game 层负责。 */
+  storeEntity?: (container: Entity, item: Entity) => void;
   /** 记录已经完成的 effect 结果，供挑战系统查询 */
   onEffectResult?: (result: EffectResult) => void;
 }
@@ -206,6 +208,40 @@ handlers.set('add-flag', (eff, ctx) => {
 handlers.set('remove-flag', (eff, ctx) => {
   if (eff.kind !== 'remove-flag') return;
   for (const e of resolveTarget(eff.target, ctx)) removeFlag(e, eff.flags);
+});
+
+handlers.set('explode', (eff, ctx, deps) => {
+  if (eff.kind !== 'explode') return;
+  const detonated = new Set<string>();
+  const detonate = (source: Entity, depth: number): void => {
+    if (source.dead || detonated.has(source.id) || depth > 4) return;
+    detonated.add(source.id);
+    const radiusSquared = eff.radius * eff.radius;
+    const targets = deps.entities.all().filter((target) => {
+      if (target.dead) return false;
+      const dx = target.bodyPositionX - source.bodyPositionX;
+      const dy = target.bodyPositionY - source.bodyPositionY;
+      return dx * dx + dy * dy <= radiusSquared;
+    });
+    // 先引爆范围内的其他爆炸物，再统一结算伤害，避免次级爆炸被首轮伤害提前销毁。
+    for (const target of targets) {
+      if (target !== source && target.tags.hasFlag('explosive')) detonate(target, depth + 1);
+    }
+    for (const target of targets) {
+      if (target.dead) continue;
+      damage(target, eff.damage, deps, ctx);
+    }
+  };
+  for (const source of resolveTarget(eff.target, ctx)) detonate(source, 0);
+});
+
+handlers.set('store', (eff, ctx, deps) => {
+  if (eff.kind !== 'store' || !deps.storeEntity) return;
+  const container = eff.container === 'a' ? ctx.a : ctx.b;
+  const item = eff.item === 'a' ? ctx.a : ctx.b;
+  if (!container || !item || container === item || container.dead || item.dead) return;
+  if (!container.tags.hasFlag('container') || item.tags.hasFlag('container') || item.isPlayer) return;
+  deps.storeEntity(container, item);
 });
 
 handlers.set('apply-impulse', (eff, ctx, deps) => {

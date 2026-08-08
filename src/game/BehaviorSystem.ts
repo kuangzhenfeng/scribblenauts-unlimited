@@ -14,7 +14,7 @@ import type { EntityManager } from '@/game/EntityManager';
 import type { EffectDeps } from '@/core/rules/effects';
 import { damageEntity } from '@/core/rules/effects';
 import type { GameEntity } from '@/game/Entity';
-import { PLAYER_CONTROLLED_MOUNT } from '@/game/PlayerController';
+import { PLAYER_CONTROLLED_EQUIPMENT, PLAYER_CONTROLLED_MOUNT } from '@/game/PlayerController';
 
 /** AI 转向速度（世界像素/帧） */
 const AI_SPEED = 1.5;
@@ -26,6 +26,8 @@ const ATTACK_RANGE = 40;
 const ATTACK_DAMAGE = 10;
 /** attack 冷却毫秒 */
 const ATTACK_COOLDOWN = 1000;
+/** AI 攻击动画的可视持续时间（毫秒），与 attack 三帧一次性 clip 对齐。 */
+const ATTACK_ANIMATION_DURATION = 360;
 /** 中毒持续伤害间隔 */
 const POISON_TICK_INTERVAL = 1000;
 /** 睡眠状态最长持续时间 */
@@ -77,8 +79,15 @@ export class BehaviorSystem {
         }
       }
 
-      // 玩家接管的坐骑由 PlayerController 驱动，不能再被 AI 改写速度或 locomotion。
-      if (ge.aiMem?.get(PLAYER_CONTROLLED_MOUNT) === true) continue;
+      // 玩家接管的坐骑/装备由 PlayerController 驱动，不能再被 AI 改写速度或 locomotion。
+      if (ge.aiMem?.get(PLAYER_CONTROLLED_MOUNT) === true) {
+        continue;
+      }
+      if (ge.aiMem?.get(PLAYER_CONTROLLED_EQUIPMENT) === true) {
+        const bodyVel = (ge.body as { velocity: { x: number; y: number } }).velocity;
+        ge.setBodyVelocity(0, bodyVel.y);
+        continue;
+      }
 
       // 冻结、石化、睡眠和死亡都会锁定移动；玩家仍由 PlayerController 处理。
       if (ge.isPlayer && !ge.dead) continue;
@@ -107,16 +116,30 @@ export class BehaviorSystem {
 
   private steer(e: GameEntity, player: GameEntity | undefined, kinds: Set<string>): void {
     const bodyVel = (e.body as { velocity: { x: number; y: number } }).velocity;
+    const now = this.now();
+    const mem = e.aiMem ?? (e.aiMem = new Map<string, unknown>());
+    const attackAnimationUntil = mem.get('attackAnimationUntil') as number | undefined;
+    if (attackAnimationUntil !== undefined) {
+      if (now < attackAnimationUntil) {
+        e.setBodyVelocity(0, bodyVel.y);
+        e.state.locomotion = 'attack';
+        return;
+      }
+      mem.delete('attackAnimationUntil');
+    }
     // attack
     if (kinds.has('attack') && player) {
       const dx = player.bodyPositionX - e.bodyPositionX;
       const dy = player.bodyPositionY - e.bodyPositionY;
       if (dx * dx + dy * dy <= ATTACK_RANGE * ATTACK_RANGE) {
-        const mem = e.aiMem ?? (e.aiMem = new Map<string, unknown>());
         const until = (mem.get('attackUntil') as number) ?? 0;
-        if (this.now() >= until) {
+        if (now >= until) {
           damageEntity(player, ATTACK_DAMAGE, this.deps);
-          mem.set('attackUntil', this.now() + ATTACK_COOLDOWN);
+          mem.set('attackUntil', now + ATTACK_COOLDOWN);
+          mem.set('attackAnimationUntil', now + ATTACK_ANIMATION_DURATION);
+          e.setBodyVelocity(0, bodyVel.y);
+          e.state.locomotion = 'attack';
+          return;
         }
       }
     }

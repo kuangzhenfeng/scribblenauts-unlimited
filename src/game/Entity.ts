@@ -17,7 +17,7 @@ import Phaser from 'phaser';
 import type { Entity as EntityIface, EntityState } from '@/core/entity/Entity';
 import { createEntityState } from '@/core/entity/Entity';
 import type { TagSet } from '@/core/rules/TagSet';
-import type { BehaviorSpec } from '@/core/types/dictionary';
+import type { BehaviorSpec, WearableSpec } from '@/core/types/dictionary';
 
 type MatterBody = MatterJS.BodyType;
 
@@ -42,10 +42,15 @@ export class GameEntity implements EntityIface {
   dead?: boolean;
   isPlayer?: boolean;
   behaviors?: BehaviorSpec[];
+  /** 词条声明的角色穿戴关系与能力 */
+  wearable?: WearableSpec;
   /** 被施加的形容词 id 集合（Spawner 在 applyAdjectives 后写入），供 GoalSystem 校验形容词题目 */
   appliedAdjectives?: Set<string>;
   hidden?: boolean;
   aiMem?: Map<string, unknown>;
+  /** 自定义组合物体的刚性部件关系，由销毁路径统一解除。 */
+  compositeAttachments?: import('@/engine/physics/Composite').Attachment[];
+  containedTypeIds?: string[];
   /** 简易问答模式：物品剩余存活回合数（初始 3，每切一题 -1，归零销毁） */
   ttl?: number;
 
@@ -66,6 +71,7 @@ export class GameEntity implements EntityIface {
     health?: number;
     maxHealth?: number;
     drawParams?: Record<string, unknown>;
+    wearable?: WearableSpec;
     gameObject?: Phaser.GameObjects.GameObject;
   }) {
     this.id = opts.id;
@@ -79,6 +85,7 @@ export class GameEntity implements EntityIface {
     this.health = opts.health;
     this.maxHealth = opts.maxHealth;
     this.drawParams = opts.drawParams ?? {};
+    this.wearable = opts.wearable;
     this.gameObject = opts.gameObject;
   }
 

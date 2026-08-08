@@ -7,6 +7,7 @@
 import { ICON_MAXWELL, ICON_STAR } from './icons';
 import { INK, PAPER_BG, PAPER_BG_ALT, PAPER_SHADOW, SAFE_TOP, UI_FONT } from './paperStyle';
 import { getLang, t } from '@/core/i18n/I18n';
+import { STORY_CURSE_BREAK_STARITES, type LilyCondition } from '@/core/game/StoryProgress';
 
 const PROGRESS_STYLE_ID = 'progress-layout-style';
 const GOLD_DARK = '#6a3d08';
@@ -74,6 +75,33 @@ function ensureStyle(): void {
       font-weight:900;
       line-height:1;
     }
+    #progress .progress__story {
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:76px;
+      padding:0 7px;
+      border-left:1px solid rgba(106,61,8,.22);
+      border-right:1px solid rgba(106,61,8,.22);
+      line-height:1;
+    }
+    #progress .progress__story-label {
+      color:#805000;
+      font-size:9px;
+      font-weight:950;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+    }
+    #progress .progress__story-count {
+      color:${INK};
+      font-size:13px;
+      font-weight:950;
+    }
+    #progress .progress__story-state {
+      color:#766c5b;
+      font-size:9px;
+      font-weight:850;
+    }
     #progress .progress__slots {
       display:flex;
       align-items:center;
@@ -110,6 +138,8 @@ function ensureStyle(): void {
       #progress .progress__portrait svg { width:21px; height:21px; }
       #progress .progress__label { font-size:8px; letter-spacing:.08em; }
       #progress .progress__counter { font-size:13px; }
+      #progress .progress__story { min-width:60px; padding-inline:5px; }
+      #progress .progress__story-state { display:none; }
       #progress .progress__slot { width:23px; height:27px; }
       #progress .progress__slot svg { width:19px; height:19px; }
     }
@@ -124,12 +154,23 @@ function starSlot(filled: boolean): string {
   return `<span class="progress__slot${filled ? ' is-filled' : ''}" aria-hidden="true">${ICON_STAR}</span>`;
 }
 
+export interface StoryStatus {
+  starites: number;
+  target: number;
+  lilyCondition: LilyCondition;
+}
+
 export class ProgressPanel {
   private readonly el: HTMLDivElement;
   private challenges: { id: string }[] = [];
   private completedIds: string[] = [];
   private starites = 0;
   private shards = 0;
+  private story: StoryStatus = {
+    starites: 0,
+    target: STORY_CURSE_BREAK_STARITES,
+    lilyCondition: 'petrified',
+  };
   private toastTimer = 0;
 
   constructor() {
@@ -169,6 +210,12 @@ export class ProgressPanel {
     this.redraw();
   }
 
+  /** 设置 Lily 主线状态；与关卡挑战槽位分开渲染。 */
+  setStoryStatus(status: StoryStatus): void {
+    this.story = { ...status };
+    this.redraw();
+  }
+
   private redraw(): void {
     // 没有关卡挑战时保留 3 个空槽，避免顶栏在加载阶段跳动。
     const list = this.challenges.length > 0 ? this.challenges : [{ id: '' }, { id: '' }, { id: '' }];
@@ -178,12 +225,18 @@ export class ProgressPanel {
     const resourceLabels = getLang() === 'zh'
       ? { starites: 'Starite', shards: '碎片' }
       : { starites: 'Starites', shards: 'Shards' };
+    const lilyState = this.story.lilyCondition === 'cured' ? t('story.cured') : t('story.petrified');
+    const storyAria = t('story.progressAria', {
+      current: this.story.starites,
+      target: this.story.target,
+      state: lilyState,
+    });
 
     this.el.setAttribute('aria-valuenow', String(completedCount));
     this.el.setAttribute('aria-valuemax', String(list.length));
     this.el.setAttribute(
       'aria-label',
-      `${t('settings.dataDesc')}: ${completedCount}/${list.length}; ${this.starites} ${resourceLabels.starites}, ${this.shards} ${resourceLabels.shards}`,
+      `${t('settings.dataDesc')}: ${completedCount}/${list.length}; ${this.starites} ${resourceLabels.starites}, ${this.shards} ${resourceLabels.shards}; ${storyAria}`,
     );
     this.el.innerHTML =
       `<div class="progress__identity">
@@ -192,6 +245,12 @@ export class ProgressPanel {
           <span class="progress__label">${completedLabel}</span>
           <span class="progress__counter">${completedCount} / ${list.length}</span>
         </div>
+      </div>
+      <span class="progress__arrow" aria-hidden="true">›</span>
+      <div class="progress__story" aria-label="${storyAria}">
+        <span class="progress__story-label">${t('story.lily')}</span>
+        <span class="progress__story-count">${this.story.starites}/${this.story.target}</span>
+        <span class="progress__story-state">${lilyState}</span>
       </div>
       <span class="progress__arrow" aria-hidden="true">›</span>
       <div class="progress__slots" aria-hidden="true">${stars}</div>`;

@@ -1,0 +1,21 @@
+{
+  "id": "stage-plus-snowfield",
+  "type": "self-contained",
+  "theme": "snow",
+  "background": "stage-plus-snowfield",
+  "bgm": "stage-plus-snowfield",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-asterisk-archive", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-equals-desert", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "ice", "x": -520, "y": 320, "layer": 0 }, { "typeId": "box", "x": -160, "y": 320, "layer": 0 }, { "typeId": "torch", "x": 220, "y": 320, "layer": 0 }, { "typeId": "bird", "x": 560, "y": 260, "layer": 0 } ],
+  "npcs": [ { "id": "npc-plus-ice", "typeId": "human", "x": -520, "y": 320, "gender": "male" }, { "id": "npc-plus-box", "typeId": "human", "x": -120, "y": 320, "gender": "female" }, { "id": "npc-plus-torch", "typeId": "human", "x": 280, "y": 320, "gender": "male" }, { "id": "npc-plus-bird", "typeId": "human", "x": 640, "y": 320, "gender": "female" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "plus-ice", "giverNpcId": "npc-plus-ice", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "snow", "near": { "npcId": "npc-plus-ice", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-plus-ice", "radius": 320 } }, { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-plus-ice", "radius": 320 } } ] } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "冰场管理员：先堆起雪坡，再把冰和箱子送上滑道。", "en": "Ice Manager: Build a snow ramp, then put ice and a box on the slide." } ] },
+    { "id": "plus-box", "giverNpcId": "npc-plus-box", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-plus-box", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-plus-box", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "补给员：箱子装好，火把才能照见冰缝。", "en": "Quartermaster: Pack the box, then the torch can reveal the ice crack." } ] },
+    { "id": "plus-torch", "giverNpcId": "npc-plus-torch", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-plus-torch", "radius": 260 } }, { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-plus-torch", "radius": 260 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-plus-torch", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "巡逻员：火把或鸟都能发现路，冰面必须留在脚下。", "en": "Patroller: A torch or bird can find the route, but ice must remain beneath our feet." } ] },
+    { "id": "plus-bird", "giverNpcId": "npc-plus-bird", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-plus-bird", "radius": 520 } }, { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-plus-bird", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-plus-bird", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "信号员：先把信装箱，再让鸟带走，火把负责送行。", "en": "Signal Keeper: Pack the message, let the bird carry it, and send it off with a torch." } ] }
+  ],
+  "challengeSlots": 4
+}

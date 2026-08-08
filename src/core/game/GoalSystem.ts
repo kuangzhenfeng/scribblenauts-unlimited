@@ -14,25 +14,41 @@ import type { BehaviorTag, StateTag } from '@/core/types/rules';
 import type { EffectResultQuery } from './EffectResultLog';
 import { log } from '@/util/log';
 import { L } from '@/core/i18n/I18n';
+import { STORY_CURSE_BREAK_STARITES } from './StoryProgress';
+import { objectShardTaskForTypeId, type ObjectShardTask } from '@/core/data/starite/object-shards';
+
+export interface ProgressSnapshot {
+  starites: number;
+  shards: number;
+  completed: string[];
+  objectShards: number;
+  objectShardStarites: number;
+  completedObjectShardTasks: string[];
+}
 
 /** 进度回调：当 Starite/碎片计数变化时通知 UI */
 export interface ProgressCallbacks {
   onShard: (total: number) => void;
   onStarite: (total: number) => void;
+  /** 首次召唤一个 Object Shard 目录词条时触发。 */
+  onObjectShard?: (task: ObjectShardTask, objectShards: number, starites: number) => void;
   onChallengeComplete: (challengeId: string, dialogZh: string) => void;
   onWin: () => void;
   /** 进度变化时通知持久化（完成挑战即写盘） */
-  onProgress?: (starites: number, shards: number, completed: string[]) => void;
+  onProgress?: (snapshot: ProgressSnapshot) => void | Promise<void>;
 }
 
 /** 10 碎片换 1 Starite */
 const SHARDS_PER_STARITE = 10;
 /** 通关所需 Starite 数 */
-const WIN_STARITE = 3;
+const WIN_STARITE = STORY_CURSE_BREAK_STARITES;
 
 export class GoalSystem {
   private shards = 0;
   private starites = 0;
+  private objectShards = 0;
+  private objectShardStarites = 0;
+  private readonly completedObjectShardTasks = new Set<string>();
   private won = false;
   /** 有序条件的阶段游标只属于本次运行，挑战完成后不会再次评估。 */
   private readonly sequenceProgress = new Map<string, number>();
@@ -80,20 +96,76 @@ export class GoalSystem {
     const lastDialog = L(ch.dialog[ch.dialog.length - 1]);
     this.cb.onChallengeComplete(ch.id, lastDialog);
     log.info('challenge complete', { id: ch.id, starites: this.starites, shards: this.shards });
-    this.cb.onProgress?.(this.starites, this.shards, this.level.completedArray());
+    this.emitProgress();
     if (this.starites >= WIN_STARITE && !this.won) {
       this.won = true;
       this.cb.onWin();
     }
   }
 
+  /**
+   * 记录玩家首次召唤的 Object Shard 词条。
+   *
+   * 任务跨关且非排他：同一词条只完成一次，10 个 Object Shard 自动兑换
+   * 一个 Starite，并把来源单独记录以便重置普通挑战时保留该成果。
+   */
+  recordObjectType(typeId: string): ObjectShardTask | undefined {
+    const task = objectShardTaskForTypeId(typeId);
+    if (!task || this.completedObjectShardTasks.has(task.id)) return undefined;
+
+    this.completedObjectShardTasks.add(task.id);
+    this.objectShards += 1;
+    while (this.objectShards >= SHARDS_PER_STARITE) {
+      this.objectShards -= SHARDS_PER_STARITE;
+      this.starites += 1;
+      this.objectShardStarites += 1;
+      this.cb.onStarite(this.starites);
+    }
+    this.cb.onObjectShard?.(task, this.objectShards, this.starites);
+    log.info('object shard completed', {
+      taskId: task.id,
+      typeId: task.typeId,
+      objectShards: this.objectShards,
+      starites: this.starites,
+    });
+    this.emitProgress();
+    if (this.starites >= WIN_STARITE && !this.won) {
+      this.won = true;
+      this.cb.onWin();
+    }
+    return task;
+  }
+
   /** 从存档恢复：设计数 + 标记已完成挑战（避免 loadLevel 后 evaluate 重复发奖） */
-  restore(starites: number, shards: number, completed: string[]): void {
-    this.starites = starites;
-    this.shards = shards;
+  restore(
+    starites: number,
+    shards: number,
+    completed: string[],
+    objectShards = 0,
+    completedObjectShardTasks: string[] = [],
+    objectShardStarites = 0,
+  ): void {
+    this.starites = Math.max(0, starites);
+    this.shards = Math.max(0, shards);
+    this.objectShards = Math.max(0, objectShards);
+    this.objectShardStarites = Math.min(this.starites, Math.max(0, objectShardStarites));
+    this.completedObjectShardTasks.clear();
+    for (const id of completedObjectShardTasks) this.completedObjectShardTasks.add(id);
     this.sequenceProgress.clear();
     for (const id of completed) this.level.markChallengeDone(id);
-    if (starites >= WIN_STARITE) this.won = true;
+    if (this.starites >= WIN_STARITE) this.won = true;
+  }
+
+  get objectShardCount(): number {
+    return this.objectShards;
+  }
+
+  get objectShardStariteCount(): number {
+    return this.objectShardStarites;
+  }
+
+  completedObjectShardTaskIds(): string[] {
+    return [...this.completedObjectShardTasks];
   }
 
   private challengeMet(ch: NonNullable<LevelData['challenges']>[number]): boolean {
@@ -114,7 +186,7 @@ export class GoalSystem {
   private conditionMet(c: PuzzleCondition, progressKey: string): boolean {
     switch (c.kind) {
       case 'object-present':
-        return this.countMatchingEntities(c.typeId, c.adjectives, c.near, undefined) >= normalizeCount(c.count, 1);
+        return this.countMatchingEntities(c.typeId, c.adjectives, c.near, c.region) >= normalizeCount(c.count, 1);
       case 'object-destroyed':
         return this.effectResults.has({
           kind: 'destroy',
@@ -193,6 +265,17 @@ export class GoalSystem {
       return entity.tags?.state.has(state as StateTag) === true || entity.tags?.behavior.has(state as BehaviorTag) === true;
     };
     return mode === 'any' ? states.some(hasState) : states.every(hasState);
+  }
+
+  private emitProgress(): void {
+    this.cb.onProgress?.({
+      starites: this.starites,
+      shards: this.shards,
+      completed: this.level.completedArray(),
+      objectShards: this.objectShards,
+      objectShardStarites: this.objectShardStarites,
+      completedObjectShardTasks: this.completedObjectShardTaskIds(),
+    });
   }
 }
 

@@ -1,0 +1,21 @@
+{
+  "id": "stage-final-mark",
+  "type": "self-contained",
+  "theme": "snow",
+  "background": "stage-final-mark",
+  "bgm": "stage-final-mark",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-ampersand-cavern", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "crystal", "x": -520, "y": 320, "layer": 0 }, { "typeId": "ice", "x": -160, "y": 320, "layer": 0 }, { "typeId": "bird", "x": 220, "y": 260, "layer": 0 }, { "typeId": "torch", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-final-mark-crystal", "typeId": "human", "x": -520, "y": 320, "gender": "male" }, { "id": "npc-final-mark-ice", "typeId": "human", "x": -120, "y": 320, "gender": "female" }, { "id": "npc-final-mark-bird", "typeId": "human", "x": 280, "y": 320, "gender": "male" }, { "id": "npc-final-mark-torch", "typeId": "human", "x": 640, "y": 320, "gender": "female" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "final-mark-crystal", "giverNpcId": "npc-final-mark-crystal", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-final-mark-crystal", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-final-mark-crystal", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "终点记录员：晶石留下记号，冰面把记号保存到最后。", "en": "Final Recorder: Crystal marks the route; ice preserves it to the end." } ] },
+    { "id": "final-mark-ice", "giverNpcId": "npc-final-mark-ice", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-final-mark-ice", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-final-mark-ice", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "雪谷向导：冰铺出路，鸟把最后一条消息带来。", "en": "Snow Guide: Ice makes the path; the bird brings the final message." } ] },
+    { "id": "final-mark-bird", "giverNpcId": "npc-final-mark-bird", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-final-mark-bird", "radius": 240 } }, { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-final-mark-bird", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-final-mark-bird", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "信使：鸟和火把带来方向，晶石确认终点。", "en": "Messenger: The bird and torch give direction; crystal confirms the destination." } ] },
+    { "id": "final-mark-torch", "giverNpcId": "npc-final-mark-torch", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-final-mark-torch", "radius": 520 } }, { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-final-mark-torch", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-final-mark-torch", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "终门守卫：先冻结道路，再点亮终门，晶石会打开回家的方向。", "en": "Final Gatekeeper: Freeze the road, light the final gate, and crystal will reveal the way home." } ] }
+  ],
+  "challengeSlots": 4
+}

@@ -12,7 +12,7 @@
  */
 
 import type { TagSet } from '../rules/TagSet';
-import type { BehaviorSpec } from '@/core/types/dictionary';
+import type { BehaviorSpec, WearableSpec } from '@/core/types/dictionary';
 
 /** 实体运行时状态（渲染用，core 层只关心 animTime/locomotion/facing） */
 export interface EntityState {
@@ -91,6 +91,8 @@ export interface Entity {
   isPlayer?: boolean;
   /** 运行时行为列表（从词条复制，供 BehaviorSystem AI 分发） */
   behaviors?: BehaviorSpec[];
+  /** 词条声明的角色穿戴关系与能力 */
+  wearable?: WearableSpec;
   /**
    * 被施加的形容词 id 集合（Spawner 在 applyAdjectives 后写入）。
    * 供 GoalSystem 校验"红色鸟"等形容词题目：实体 appliedAdjectives 须为
@@ -101,6 +103,8 @@ export interface Entity {
   hidden?: boolean;
   /** AI 临时记忆（wander 方向与计时等），按需创建 */
   aiMem?: Map<string, unknown>;
+  /** 已被容器收纳的词条 id；实体取出时由 game 层重新生成。 */
+  containedTypeIds?: string[];
 
   // ---- 运动学桥接（由 game 层实体实现代理 Matter body） ----
 

@@ -2,6 +2,8 @@
   "id": "stage-volcano",
   "type": "self-contained",
   "theme": "volcano",
+  "background": "stage-volcano",
+  "bgm": "stage-volcano",
   "bounds": {
     "minX": -800,
     "minY": -200,
@@ -233,18 +235,18 @@
       "giverNpcId": "npc-blacksmith",
       "kind": "shard",
       "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "anvil", "near": { "npcId": "npc-blacksmith", "radius": 180 } } ] },
-      "stages": [ { "conditions": [ { "kind": "counter", "typeId": "metal", "count": 2, "region": { "minX": -500, "minY": 430, "maxX": 100, "maxY": 600 } } ] } ],
+      "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "metal", "region": { "minX": -500, "minY": 430, "maxX": 100, "maxY": 600 } } ] } ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "铁匠：先召来铁砧，再送两块金属锻造武器。", "en": "Blacksmith: Bring an anvil, then two pieces of metal for a weapon." } ]
+      "dialog": [ { "zh": "铁匠：先召来铁砧，再送金属锻造武器。", "en": "Blacksmith: Bring an anvil, then metal for a weapon." } ]
     },
     {
       "id": "volcano-firemage-cooling",
       "giverNpcId": "npc-firemage",
       "kind": "shard",
-      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "water", "count": 2, "near": { "npcId": "npc-firemage", "radius": 180 } } ] },
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-firemage", "radius": 180 } } ] },
       "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-firemage", "radius": 180 } } ] } ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "火焰法师：两份水先降温，再用冰封住裂口。", "en": "Fire Mage: Cool the vent with two waters, then seal it with ice." } ]
+      "dialog": [ { "zh": "火焰法师：水先降温，再用冰封住裂口。", "en": "Fire Mage: Cool the vent with water, then seal it with ice." } ]
     },
     {
       "id": "volcano-scientist-sample",

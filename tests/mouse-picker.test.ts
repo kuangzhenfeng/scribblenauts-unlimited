@@ -18,8 +18,13 @@ type PointerHandler = (pointer: Phaser.Input.Pointer) => void;
 function makePicker(
   entity: GameEntity | undefined,
   options: MousePickerOptions = {},
-): { picker: MousePicker; emit: (name: string, pointer: unknown) => void } {
+): {
+  picker: MousePicker;
+  emit: (name: string, pointer: unknown) => void;
+  emitGame: (name: string) => void;
+} {
   const handlers = new Map<string, PointerHandler>();
+  const gameHandlers = new Map<string, () => void>();
   const scene = {
     time: { now: 100 },
     input: {
@@ -27,6 +32,7 @@ function makePicker(
         handlers.set(name, handler);
       },
     },
+    sys: { game: { events: { on(name: string, handler: () => void) { gameHandlers.set(name, handler); } } } },
   } as unknown as Phaser.Scene;
   const entities = {
     get: (id: string) => id === entity?.id ? entity : undefined,
@@ -43,20 +49,25 @@ function makePicker(
   return {
     picker,
     emit: (name, pointer) => handlers.get(name)?.(pointer as Phaser.Input.Pointer),
+    emitGame: (name: string) => gameHandlers.get(name)?.(),
   };
 }
 
 function makeEntity(): GameEntity {
   let x = 100;
   let y = 100;
+  let angle = 0;
   return {
     id: 'entity-1',
     typeId: 'gun',
     body: { id: 1 } as never,
     get bodyPositionX() { return x; },
     get bodyPositionY() { return y; },
+    get bodyAngle() { return angle; },
     setBodyPosition(nextX: number, nextY: number) { x = nextX; y = nextY; },
     setBodyVelocity() {},
+    setBodyAngle(nextAngle: number) { angle = nextAngle; },
+    setBodyAngularVelocity() {},
   } as unknown as GameEntity;
 }
 
@@ -105,5 +116,31 @@ describe('MousePicker mouse gesture routing', () => {
     emit('pointermove', pointer(1, 2, 130, 100));
     emit('pointerup', pointer(1, 2, 130, 100));
     expect(actions).toEqual(['down', 'move', 'up']);
+  });
+
+  it('rotates the selected entity with the original Q/E action semantics', () => {
+    const entity = makeEntity();
+    const { picker, emit } = makePicker(entity);
+    emit('pointerdown', pointer(0, 0, 100, 100));
+    emit('pointerup', pointer(0, 0, 100, 100));
+    expect(picker.rotateSelected(-1)).toBe(true);
+    expect(entity.bodyAngle).toBeCloseTo(-Math.PI / 12);
+    expect(picker.rotateSelected(1)).toBe(true);
+    expect(entity.bodyAngle).toBeCloseTo(0);
+  });
+
+  it('clears an unfinished drag when the game loses focus', () => {
+    const entity = makeEntity();
+    const drops: string[] = [];
+    const { emit, emitGame } = makePicker(entity, {
+      onDropEntity: () => {
+        drops.push('drop');
+        return true;
+      },
+    });
+    emit('pointerdown', pointer(0, 0, 100, 100));
+    emitGame('blur');
+    emit('pointerup', pointer(0, 0, 140, 100));
+    expect(drops).toEqual([]);
   });
 });

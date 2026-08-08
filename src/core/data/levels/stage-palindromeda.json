@@ -1,0 +1,395 @@
+{
+  "id": "stage-palindromeda",
+  "type": "overworld",
+  "theme": "cave",
+  "background": "stage-palindromeda",
+  "bgm": "stage-palindromeda",
+  "bounds": {
+    "minX": -1600,
+    "minY": -320,
+    "maxX": 1600,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": 0,
+    "y": 542
+  },
+  "terrain": [
+    { "x": -1240, "y": 150, "w": 220, "h": 24 },
+    { "x": -760, "y": 90, "w": 180, "h": 24 },
+    { "x": -320, "y": 220, "w": 200, "h": 24 },
+    { "x": 320, "y": 220, "w": 200, "h": 24 },
+    { "x": 760, "y": 90, "w": 180, "h": 24 },
+    { "x": 1240, "y": 150, "w": 220, "h": 24 }
+  ],
+  "transitions": [
+    {
+      "toLevelId": "overworld-meadow",
+      "at": {
+        "minX": -1600,
+        "minY": 350,
+        "maxX": -1500,
+        "maxY": 620
+      }
+    },
+    {
+      "toLevelId": "stage-storybook",
+      "at": {
+        "minX": 1500,
+        "minY": 350,
+        "maxX": 1600,
+        "maxY": 620
+      }
+    }
+  ],
+  "spawns": [
+    { "typeId": "mirror", "x": -1340, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "shield", "x": -1080, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "crystal", "x": -700, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "robot", "x": -260, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "clock", "x": 260, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "rope", "x": 700, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "bell", "x": 1120, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "parrot", "x": 500, "y": 160, "layer": 0, "fixed": true },
+    { "typeId": "bat", "x": -500, "y": 160, "layer": 0, "fixed": true },
+    { "typeId": "rocket", "x": 0, "y": 160, "layer": 0, "fixed": true },
+    { "typeId": "sign", "x": 1450, "y": 320, "layer": 0, "fixed": true }
+  ],
+  "npcs": [
+    {
+      "id": "npc-pal-reflector",
+      "typeId": "alien",
+      "x": -1260,
+      "y": 320,
+      "gender": "female",
+      "fixed": true,
+      "drawParams": { "bodyColor": "#8dd6c7" }
+    },
+    {
+      "id": "npc-pal-signal",
+      "typeId": "alien",
+      "x": -880,
+      "y": 320,
+      "gender": "male",
+      "fixed": true,
+      "drawParams": { "bodyColor": "#d6b85c" }
+    },
+    {
+      "id": "npc-pal-chronist",
+      "typeId": "human",
+      "x": -440,
+      "y": 320,
+      "gender": "female",
+      "fixed": true,
+      "drawParams": {
+        "shirtColor": "#6f5aa8",
+        "pantsColor": "#30294f",
+        "hat": "miner"
+      }
+    },
+    {
+      "id": "npc-pal-roboticist",
+      "typeId": "human",
+      "x": 0,
+      "y": 320,
+      "gender": "male",
+      "fixed": true,
+      "drawParams": {
+        "shirtColor": "#3b7f9e",
+        "pantsColor": "#243746"
+      }
+    },
+    {
+      "id": "npc-pal-cutter",
+      "typeId": "alien",
+      "x": 440,
+      "y": 320,
+      "gender": "female",
+      "fixed": true,
+      "drawParams": { "bodyColor": "#d279a5" }
+    },
+    {
+      "id": "npc-pal-chorus",
+      "typeId": "alien",
+      "x": 880,
+      "y": 320,
+      "gender": "male",
+      "fixed": true,
+      "drawParams": { "bodyColor": "#9c83d6" }
+    },
+    {
+      "id": "npc-pal-gatewarden",
+      "typeId": "human",
+      "x": 1260,
+      "y": 320,
+      "gender": "female",
+      "fixed": true,
+      "drawParams": {
+        "shirtColor": "#c15f3d",
+        "pantsColor": "#4c2930",
+        "hat": "straw"
+      }
+    }
+  ],
+  "decorations": [
+    { "kind": "stalactite", "x": -1280, "y": 0 },
+    { "kind": "stalactite", "x": -640, "y": 0 },
+    { "kind": "stalactite", "x": 0, "y": -20 },
+    { "kind": "stalactite", "x": 640, "y": 0 },
+    { "kind": "stalactite", "x": 1280, "y": 0 },
+    { "kind": "crystal", "x": -1000, "y": 560, "scale": 0.9 },
+    { "kind": "crystal", "x": 0, "y": 560, "scale": 1.1 },
+    { "kind": "crystal", "x": 1000, "y": 560, "scale": 0.9 },
+    { "kind": "lantern", "x": -1450, "y": 540 },
+    { "kind": "lantern", "x": 1450, "y": 540 },
+    { "kind": "mushroom", "x": -420, "y": 570 },
+    { "kind": "mushroom", "x": 420, "y": 570 }
+  ],
+  "authoredChallenges": [
+    {
+      "id": "pal-reflector-twin",
+      "giverNpcId": "npc-pal-reflector",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "object-present",
+            "typeId": "mirror",
+            "near": { "npcId": "npc-pal-reflector", "radius": 180 },
+            "region": { "minX": -1500, "minY": 430, "maxX": -1050, "maxY": 600 }
+          }
+        ]
+      },
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "反射员：把镜子放到反射台边，折返的星光才会穿过这条洞窟。",
+          "en": "Reflector: Put a mirror beside the reflection ledge so the folded starlight can cross the cavern."
+        },
+        {
+          "zh": "提示：镜子要在左侧反射台附近。",
+          "en": "Hint: Summon a mirror near the reflection ledge on the left."
+        }
+      ]
+    },
+    {
+      "id": "pal-signal-bell",
+      "giverNpcId": "npc-pal-signal",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "entity-at",
+            "typeId": "bell",
+            "region": { "minX": -1050, "minY": 430, "maxX": -650, "maxY": 600 }
+          }
+        ]
+      },
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "信标员：回声坑只认一枚真正的铃，把它放在左侧裂隙的回声圈里。",
+          "en": "Beacon Keeper: The echo pit answers to one real bell; place it inside the left rift's echo ring."
+        },
+        {
+          "zh": "提示：把铃铛放进左侧中段的指定区域。",
+          "en": "Hint: Place a bell in the marked middle-left region."
+        }
+      ]
+    },
+    {
+      "id": "pal-chronist-loop",
+      "giverNpcId": "npc-pal-chronist",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "sequence",
+            "conditions": [
+              {
+                "kind": "object-present",
+                "typeId": "clock",
+                "near": { "npcId": "npc-pal-chronist", "radius": 190 }
+              },
+              {
+                "kind": "object-present",
+                "typeId": "parrot",
+                "near": { "npcId": "npc-pal-chronist", "radius": 190 }
+              }
+            ]
+          }
+        ]
+      },
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "计时师：先让时钟对齐，再让鹦鹉把同一句讯号从另一端复述。",
+          "en": "Chronist: Align the clock first, then let a parrot repeat the same signal from the other side."
+        }
+      ]
+    },
+    {
+      "id": "pal-roboticist-frame",
+      "giverNpcId": "npc-pal-roboticist",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "all-of",
+            "conditions": [
+              {
+                "kind": "object-present",
+                "typeId": "robot",
+                "near": { "npcId": "npc-pal-roboticist", "radius": 220 }
+              },
+              {
+                "kind": "any-of",
+                "conditions": [
+                  {
+                    "kind": "object-present",
+                    "typeId": "metal",
+                    "near": { "npcId": "npc-pal-roboticist", "radius": 220 }
+                  },
+                  {
+                    "kind": "object-present",
+                    "typeId": "car",
+                    "near": { "npcId": "npc-pal-roboticist", "radius": 220 }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "stages": [
+        {
+          "conditions": [
+            {
+              "kind": "object-present",
+              "typeId": "wrench",
+              "near": { "npcId": "npc-pal-roboticist", "radius": 220 }
+            }
+          ]
+        }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "机械师：给机器人一副金属骨架或一辆汽车，再交给我扳手校准它的关节。",
+          "en": "Roboticist: Give the robot a metal frame or a car, then bring a wrench to tune its joints."
+        }
+      ]
+    },
+    {
+      "id": "pal-cutter-loop",
+      "giverNpcId": "npc-pal-cutter",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "object-destroyed",
+            "typeId": "rope",
+            "sourceTypeId": "sword",
+            "ruleId": "sharp-cut-cuttable",
+            "region": { "minX": 560, "minY": 430, "maxX": 900, "maxY": 600 }
+          }
+        ]
+      },
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "断路员：这根回路绳不能烧坏，必须用剑从切口处清掉。",
+          "en": "Circuit Cutter: Do not burn this loop-rope; cut it cleanly with a sword."
+        },
+        {
+          "zh": "提示：用剑切断右侧切口区域里的绳索。",
+          "en": "Hint: Use a sword to cut the rope inside the right-side cut-through."
+        }
+      ]
+    },
+    {
+      "id": "pal-chorus-language",
+      "giverNpcId": "npc-pal-chorus",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "any-of",
+            "conditions": [
+              {
+                "kind": "object-present",
+                "typeId": "drum",
+                "near": { "npcId": "npc-pal-chorus", "radius": 220 }
+              },
+              {
+                "kind": "object-present",
+                "typeId": "piano",
+                "near": { "npcId": "npc-pal-chorus", "radius": 220 }
+              }
+            ]
+          }
+        ]
+      },
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "共鸣员：这里的居民听不懂地球语言，鼓或钢琴都能把双向节拍传过去。",
+          "en": "Resonance Keeper: The residents do not understand Earth speech; a drum or piano can carry the two-way beat."
+        }
+      ]
+    },
+    {
+      "id": "pal-return-gate",
+      "giverNpcId": "npc-pal-gatewarden",
+      "kind": "starite-gate",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "sequence",
+            "conditions": [
+              {
+                "kind": "object-present",
+                "typeId": "rocket",
+                "near": { "npcId": "npc-pal-gatewarden", "radius": 240 }
+              },
+              {
+                "kind": "object-present",
+                "typeId": "map",
+                "near": { "npcId": "npc-pal-gatewarden", "radius": 240 }
+              }
+            ]
+          }
+        ]
+      },
+      "stages": [
+        {
+          "conditions": [
+            {
+              "kind": "all-of",
+              "conditions": [
+                {
+                  "kind": "object-present",
+                  "typeId": "key",
+                  "near": { "npcId": "npc-pal-gatewarden", "radius": 240 }
+                },
+                {
+                  "kind": "object-present",
+                  "typeId": "light",
+                  "near": { "npcId": "npc-pal-gatewarden", "radius": 240 }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [
+        {
+          "zh": "回返门守卫：先把火箭和地图带到门前，再用钥匙与光唤醒回返门。",
+          "en": "Return Warden: Bring the rocket and a map to the gate, then wake the return door with a key and light."
+        }
+      ]
+    }
+  ],
+  "challengeSlots": 7
+}

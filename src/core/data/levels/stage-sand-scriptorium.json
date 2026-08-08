@@ -1,0 +1,39 @@
+{
+  "id": "stage-sand-scriptorium",
+  "type": "self-contained",
+  "theme": "desert",
+  "background": "stage-sand-scriptorium",
+  "bgm": "stage-sand-scriptorium",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-frost-fair", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-ember-foundry", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "sand", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "cactus", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "camel", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "book", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "compass-tool", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "water", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "shovel", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "chest", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-sand-scholar", "typeId": "human", "x": -520, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#b97732", "pantsColor": "#704b20", "hat": "straw" } },
+    { "id": "npc-sand-nomad", "typeId": "human", "x": -80, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#d6b26f", "pantsColor": "#6b4226", "hat": "straw" } },
+    { "id": "npc-sand-keeper", "typeId": "human", "x": 360, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#7d5a3d", "pantsColor": "#3d2b1f" } },
+    { "id": "npc-sand-guide", "typeId": "human", "x": 720, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#704b20", "hat": "straw" } }
+  ],
+  "decorations": [ { "kind": "cactus", "x": -760, "y": 560 }, { "kind": "cactus", "x": -260, "y": 560 }, { "kind": "ruin-pillar", "x": 160, "y": 540 }, { "kind": "cactus", "x": 820, "y": 560 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "sand-scholar", "giverNpcId": "npc-sand-scholar", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "book", "near": { "npcId": "npc-sand-scholar", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "compass-tool", "near": { "npcId": "npc-sand-scholar", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "学者：一本书配上一枚指南针，就能读懂沙海。", "en": "Scholar: A book and a compass are enough to read the sea of sand." } ] },
+    { "id": "sand-nomad", "giverNpcId": "npc-sand-nomad", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "camel", "near": { "npcId": "npc-sand-nomad", "radius": 240 } }, { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-sand-nomad", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "游牧民：骆驼和水都准备好，旅队才能出发。", "en": "Nomad: The caravan can leave when camel and water are ready." } ] },
+    { "id": "sand-keeper", "giverNpcId": "npc-sand-keeper", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "sand", "near": { "npcId": "npc-sand-keeper", "radius": 220 } }, { "kind": "object-present", "typeId": "shovel", "near": { "npcId": "npc-sand-keeper", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守门人：先准备沙子，再用铲子挖出古门。", "en": "Keeper: Prepare sand, then dig out the ancient gate with a shovel." } ] },
+    { "id": "sand-guide", "giverNpcId": "npc-sand-guide", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "cactus", "near": { "npcId": "npc-sand-guide", "radius": 240 } }, { "kind": "object-present", "typeId": "chest", "near": { "npcId": "npc-sand-guide", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "向导：找到沙漠地标，或打开宝箱里的秘密。", "en": "Guide: Find a desert landmark or unlock the secret inside the chest." } ] }
+  ],
+  "challengeSlots": 4
+}

@@ -1,0 +1,21 @@
+{
+  "id": "stage-colon-dunes",
+  "type": "self-contained",
+  "theme": "desert",
+  "background": "stage-colon-dunes",
+  "bgm": "stage-colon-dunes",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-exclaim-snowfield", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-semicolon-volcano", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 220, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 440, "y": 200, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "cactus", "x": -520, "y": 320, "layer": 0 }, { "typeId": "sand", "x": -160, "y": 320, "layer": 0 }, { "typeId": "bucket", "x": 220, "y": 320, "layer": 0 }, { "typeId": "horse", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-colon-cactus", "typeId": "human", "x": -520, "y": 320, "gender": "male" }, { "id": "npc-colon-sand", "typeId": "human", "x": -120, "y": 320, "gender": "female" }, { "id": "npc-colon-water", "typeId": "human", "x": 280, "y": 320, "gender": "male" }, { "id": "npc-colon-rider", "typeId": "human", "x": 640, "y": 320, "gender": "female" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "colon-cactus", "giverNpcId": "npc-colon-cactus", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "cactus", "near": { "npcId": "npc-colon-cactus", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "sand", "near": { "npcId": "npc-colon-cactus", "radius": 340 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "园丁：沙里先有一株仙人掌，旅人才找得到方向。", "en": "Gardener: A cactus in the sand will give travelers their direction." } ] },
+    { "id": "colon-sand", "giverNpcId": "npc-colon-sand", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "sand", "near": { "npcId": "npc-colon-sand", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bucket", "near": { "npcId": "npc-colon-sand", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "制陶人：给我沙子，再找个桶把它运过沙丘。", "en": "Potter: Bring sand, then a bucket to carry it over the dunes." } ] },
+    { "id": "colon-water", "giverNpcId": "npc-colon-water", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "bucket", "near": { "npcId": "npc-colon-water", "radius": 300 } }, { "kind": "object-present", "typeId": "cactus", "near": { "npcId": "npc-colon-water", "radius": 300 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "sand", "near": { "npcId": "npc-colon-water", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "水商：桶和仙人掌都能帮我找水，但沙路也要铺好。", "en": "Water Seller: A bucket and cactus can help me find water, but the sand road must be laid too." } ] },
+    { "id": "colon-rider", "giverNpcId": "npc-colon-rider", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "bucket", "near": { "npcId": "npc-colon-rider", "radius": 520 } }, { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-colon-rider", "radius": 300 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "cactus", "near": { "npcId": "npc-colon-rider", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "骑手：先带水，再找坐骑，仙人掌会指向下一片绿洲。", "en": "Rider: Carry water, find a mount, and let the cactus point to the next oasis." } ] }
+  ],
+  "challengeSlots": 4
+}

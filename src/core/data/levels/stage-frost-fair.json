@@ -1,0 +1,39 @@
+{
+  "id": "stage-frost-fair",
+  "type": "self-contained",
+  "theme": "snow",
+  "background": "stage-frost-fair",
+  "bgm": "stage-frost-fair",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-moonlit-cavern", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-sand-scriptorium", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "snow", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "ice", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "penguin", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "fish", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "sleigh", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "umbrella", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "lantern", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "torch", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-frost-fisher", "typeId": "human", "x": -520, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#273746", "hat": "winter" } },
+    { "id": "npc-frost-rider", "typeId": "human", "x": -80, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#bd6fb5", "pantsColor": "#4b3f72" } },
+    { "id": "npc-frost-guard", "typeId": "human", "x": 360, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#566573", "pantsColor": "#273746", "hat": "winter" } },
+    { "id": "npc-frost-child", "typeId": "human", "x": 720, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#e6a43b", "pantsColor": "#2e5d8a" } }
+  ],
+  "decorations": [ { "kind": "snowflake", "x": -720, "y": 560 }, { "kind": "snowflake", "x": -260, "y": 560 }, { "kind": "lantern", "x": 160, "y": 540 }, { "kind": "snowflake", "x": 820, "y": 560 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "frost-fisher", "giverNpcId": "npc-frost-fisher", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "fish", "near": { "npcId": "npc-frost-fisher", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-frost-fisher", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "冰钓者：鱼和一块冰，就能办成冬日集市。", "en": "Ice Fisher: A fish and a block of ice will make the winter fair." } ] },
+    { "id": "frost-rider", "giverNpcId": "npc-frost-rider", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "sleigh", "near": { "npcId": "npc-frost-rider", "radius": 240 } }, { "kind": "object-present", "typeId": "umbrella", "near": { "npcId": "npc-frost-rider", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "雪橇手：带来雪橇和伞，准备一场不会融化的游行。", "en": "Rider: Bring a sleigh and umbrella for a parade that will not melt." } ] },
+    { "id": "frost-guard", "giverNpcId": "npc-frost-guard", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "snow", "near": { "npcId": "npc-frost-guard", "radius": 220 } }, { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-frost-guard", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守卫：先堆雪，再点火把，冰门才会打开。", "en": "Guard: Stack snow, then light a torch to open the ice gate." } ] },
+    { "id": "frost-child", "giverNpcId": "npc-frost-child", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "penguin", "near": { "npcId": "npc-frost-child", "radius": 240 } }, { "kind": "object-present", "typeId": "lantern", "near": { "npcId": "npc-frost-child", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "孩子：企鹅会跳舞，灯笼也能照亮庆典。", "en": "Child: A penguin can dance, and a lantern can light the celebration." } ] }
+  ],
+  "challengeSlots": 4
+}

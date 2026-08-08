@@ -24,4 +24,18 @@ describe('Notebook exact dictionary submission', () => {
     document.getElementById('autocomplete')?.remove();
     document.getElementById('candidate-menu')?.remove();
   });
+
+  it('hides the notebook when Enter is pressed with an empty input', () => {
+    const notebook = new Notebook({
+      onSpawn: () => undefined,
+    });
+    notebook.show();
+    const input = document.querySelector<HTMLInputElement>('#notebook input');
+    expect(input).toBeTruthy();
+    input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+    expect(document.getElementById('notebook')?.style.display).toBe('none');
+    document.getElementById('notebook')?.remove();
+    document.getElementById('autocomplete')?.remove();
+    document.getElementById('candidate-menu')?.remove();
+  });
 });

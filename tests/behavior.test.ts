@@ -98,6 +98,15 @@ describe('BehaviorSystem AI', () => {
     expect(dog._vx).toBe(0);
   });
 
+  it('attack behavior enters the one-shot attack locomotion clip', () => {
+    const dog = mkEntity('d1', -10, [{ kind: 'attack' }]) as Entity & { _vx: number };
+    const player = mkPlayer(0);
+    const { bs } = setup([dog, player]);
+    bs.update();
+    expect(dog._vx).toBe(0);
+    expect(dog.state.locomotion).toBe('attack');
+  });
+
   it('wander sets locomotion walk when moving', () => {
     const dog = mkEntity('d1', 0, [{ kind: 'wander' }]) as Entity & { _vx: number };
     const player = mkPlayer(0);

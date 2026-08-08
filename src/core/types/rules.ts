@@ -86,6 +86,7 @@ export type FlagTag =
   | 'rideable'
   | 'wing'
   | 'igniter'
+  | 'explosive'
   | 'edible-target';
 
 /** 规则触发条件（只声明并实现 collision/contact/tick 三种） */
@@ -144,6 +145,8 @@ export type RuleEffect =
   | { kind: 'transform'; target: EffectTarget; toTypeId: string }
   | { kind: 'add-flag'; target: EffectTarget; flags: FlagTag[] }
   | { kind: 'remove-flag'; target: EffectTarget; flags: FlagTag[] }
+  | { kind: 'explode'; target: EffectTarget; radius: number; damage: number }
+  | { kind: 'store'; container: 'a' | 'b'; item: 'a' | 'b' }
   | { kind: 'apply-impulse'; target: EffectTarget; dir: ImpulseDirection; mag: number };
 
 /** 声明式规则 */

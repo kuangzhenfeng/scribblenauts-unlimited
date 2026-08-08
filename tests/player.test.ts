@@ -232,12 +232,17 @@ describe('PlayerController virtual input', () => {
   });
 
   it('equipped wings enable vertical flight while retaining horizontal movement', () => {
-    const { player, em, phys } = groundedPlayer();
+    const { player, phys } = groundedPlayer();
     const wing = mkPlayer(100, 112);
     wing.id = 'wing1';
     wing.isPlayer = false;
     wing.body = { ...wing.body, id: 2 } as never;
     setTags(wing, ['wing']);
+    const em = {
+      getPlayer: () => player,
+      all: () => [player, wing],
+      get: (id: string) => id === wing.id ? wing : id === player.id ? player : undefined,
+    } as unknown as EntityManager;
     const pc = new PlayerController(em, phys);
     pc.pickUp(wing);
     pc.setVirtualMove(1);
@@ -247,6 +252,7 @@ describe('PlayerController virtual input', () => {
     expect(vel.x).toBeGreaterThan(0);
     expect(vel.y).toBeLessThan(0);
     expect(player.state.locomotion).toBe('fly');
+    expect(wing.state.locomotion).toBe('fly');
   });
 
   it('allows a ranged weapon, wings, and a rideable dragon at the same time', () => {
@@ -401,6 +407,49 @@ describe('PlayerController virtual input', () => {
     const after = (dragon as unknown as { body: { velocity: { x: number; y: number } } }).body.velocity;
     expect(after.x).toBe(before.x);
     expect(after.y).toBe(before.y);
+  });
+
+  it('keeps a hand-held wandering dog out of BehaviorSystem AI steering', () => {
+    const { player, phys } = groundedPlayer();
+    player.tags = TagSet.fromRaw({
+      material: new Set(['flesh']),
+      temperature: 'normal',
+      state: new Set(['normal']),
+      behavior: new Set(),
+      flags: new Set(),
+      category: 'creature',
+    });
+    const dog = mkPlayer(114, 100);
+    dog.id = 'held-dog';
+    dog.typeId = 'dog';
+    dog.isPlayer = false;
+    dog.body = { ...dog.body, id: 2, mass: 1 } as never;
+    setTags(dog, [], ['walk']);
+    dog.behaviors = [{ kind: 'wander' }];
+    dog.aiMem = new Map([
+      ['homeX', dog.bodyPositionX],
+      ['wanderDir', 1],
+      ['wanderUntil', 5000],
+    ]);
+    const em = {
+      getPlayer: () => player,
+      all: () => [player, dog],
+      get: (id: string) => id === player.id ? player : id === dog.id ? dog : undefined,
+    } as unknown as EntityManager;
+    const pc = new PlayerController(em, phys);
+    pc.pickUp(dog);
+    const deps: EffectDeps = {
+      entities: em,
+      tagIndex: { attach() {}, detach() {}, byStateSet: () => new Set(), byFlagSet: () => new Set() } as never,
+      spawn: () => undefined,
+      destroyEntity: () => undefined,
+      applyImpulse: () => undefined,
+    };
+
+    new BehaviorSystem(em, () => 1000, deps).update();
+
+    const velocity = (dog as unknown as { body: { velocity: { x: number } } }).body.velocity;
+    expect(velocity.x).toBe(0);
   });
 
   it('detaches all equipment and restores player visibility before a world reset', () => {
@@ -591,6 +640,46 @@ describe('PlayerController virtual input', () => {
     expect(gun.body.angularVelocity).toBe(0);
     expect(constraints[0]?.pointA).toEqual({ x: -14, y: 12 });
     expect(constraints[0]?.pointB).toEqual({ x: 8, y: 7 });
+    pc.handleMouseSecondaryUp();
+  });
+
+  it('composes a held item direction with Maxwell direction', () => {
+    const { player, phys: groundedPhys } = groundedPlayer();
+    const gun = mkPlayer(114, 100);
+    gun.id = 'intrinsic-facing-gun';
+    gun.typeId = 'gun';
+    gun.isPlayer = false;
+    gun.state.facing = -1;
+    gun.body = { ...gun.body, id: 2 } as never;
+    setTags(gun, ['ranged']);
+    const constraints: Array<{ pointB: { x: number; y: number } }> = [];
+    const phys = {
+      pointQuery: groundedPhys.pointQuery.bind(groundedPhys),
+      createConstraint: (_a: unknown, _b: unknown, _length: number, _stiffness: number, options: unknown) => {
+        const input = options as { pointB: { x: number; y: number } };
+        const constraint = { pointB: { ...input.pointB } };
+        constraints.push(constraint);
+        return constraint;
+      },
+      removeConstraint: () => undefined,
+    } as unknown as Physics;
+    const em = {
+      getPlayer: () => player,
+      all: () => [player, gun],
+      get: (id: string) => id === gun.id ? gun : undefined,
+    } as unknown as EntityManager;
+    const pc = new PlayerController(em, phys);
+
+    pc.pickUp(gun);
+    expect(gun.state.facing).toBe(-1);
+    expect(constraints[0]?.pointB).toEqual({ x: 8, y: 7 });
+
+    pc.handleMouseSecondaryDown(player.bodyPositionX - 40, player.bodyPositionY);
+    pc.update(0);
+    expect(gun.state.facing).toBe(1);
+    expect(constraints[0]?.pointB).toEqual({ x: -8, y: 7 });
+    expect(pc.unequip('hand')).toBe(true);
+    expect(gun.state.facing).toBe(-1);
     pc.handleMouseSecondaryUp();
   });
 });

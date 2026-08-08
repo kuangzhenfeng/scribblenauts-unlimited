@@ -1,0 +1,39 @@
+{
+  "id": "stage-river-market",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-river-market",
+  "bgm": "stage-river-market",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-ember-foundry", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-sky-observatory", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "fish", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "fishingrod", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "water", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "apple", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "box", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "bird", "x": 480, "y": 200, "layer": 0 },
+    { "typeId": "umbrella", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "log", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-river-fisher", "typeId": "human", "x": -520, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b422b", "hat": "straw" } },
+    { "id": "npc-river-merchant", "typeId": "human", "x": -80, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#d49b2a", "pantsColor": "#704b20" } },
+    { "id": "npc-river-ferry", "typeId": "human", "x": 360, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#7b4ab0", "pantsColor": "#3e2866" } },
+    { "id": "npc-river-child", "typeId": "human", "x": 720, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#e6a43b", "pantsColor": "#2e5d8a" } }
+  ],
+  "decorations": [ { "kind": "bush", "x": -760, "y": 560 }, { "kind": "flower", "x": -260, "y": 560 }, { "kind": "fence", "x": 160, "y": 560 }, { "kind": "bush", "x": 820, "y": 560 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "river-fisher", "giverNpcId": "npc-river-fisher", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "fish", "near": { "npcId": "npc-river-fisher", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "fishingrod", "near": { "npcId": "npc-river-fisher", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "渔夫：鱼和一根鱼竿，就能开市。", "en": "Fisher: A fish and a fishing rod will open the market." } ] },
+    { "id": "river-merchant", "giverNpcId": "npc-river-merchant", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "apple", "near": { "npcId": "npc-river-merchant", "radius": 240 } }, { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-river-merchant", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "商人：把水果装进箱子，河边的摊位就能开张。", "en": "Merchant: Pack fruit in a box and the riverside stall can open." } ] },
+    { "id": "river-ferry", "giverNpcId": "npc-river-ferry", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-river-ferry", "radius": 220 } }, { "kind": "object-present", "typeId": "log", "near": { "npcId": "npc-river-ferry", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "摆渡人：找到水和木头，就能搭出渡河平台。", "en": "Ferry Keeper: Water and a log are enough to build a crossing platform." } ] },
+    { "id": "river-child", "giverNpcId": "npc-river-child", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-river-child", "radius": 240 } }, { "kind": "object-present", "typeId": "umbrella", "near": { "npcId": "npc-river-child", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "孩子：让小鸟飞过河，或者用伞飘到对岸。", "en": "Child: Let a bird fly across the river or float over with an umbrella." } ] }
+  ],
+  "challengeSlots": 4
+}

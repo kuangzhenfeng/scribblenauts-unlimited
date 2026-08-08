@@ -56,6 +56,7 @@ describe('StariteVision DOM shell', () => {
     const onSelect = vi.fn();
     const vision = new StariteVision({ collectibles, onToggle, onSelect });
     vision.setProjectedPositions({ 'near-shard': { x: 120, y: 80 }, 'far-star': { x: 220, y: 100 } });
+    vision.show();
     vision.setEnabled(true);
 
     expect(vision.visibleTargets).toHaveLength(2);
@@ -68,5 +69,21 @@ describe('StariteVision DOM shell', () => {
     vision.destroy();
     expect(document.querySelector('.starite-vision')).toBeNull();
   });
-});
+  it('支持挑战目标的图标、蓝色滤镜和移动目标投影', () => {
+    const vision = new StariteVision({
+      collectibles: [{ id: 'challenge-1', kind: 'challenge', x: 10, y: 20 }],
+    });
+    vision.show();
+    vision.setEnabled(true);
+    vision.setWorldPositions({ 'challenge-1': { x: 30, y: 40 } });
+    vision.setProjectedPositions({ 'challenge-1': { x: 140, y: 90 } });
 
+    expect(vision.visibleTargets[0]).toMatchObject({ id: 'challenge-1', x: 30, y: 40 });
+    expect(document.querySelector<HTMLElement>('.starite-vision__blue-filter')?.dataset.active).toBe('true');
+    expect(document.querySelector('.starite-vision__marker')?.getAttribute('aria-label')).toContain('未完成任务');
+
+    vision.hide();
+    expect(document.querySelector<HTMLElement>('.starite-vision__blue-filter')?.dataset.active).toBe('false');
+    vision.destroy();
+  });
+});

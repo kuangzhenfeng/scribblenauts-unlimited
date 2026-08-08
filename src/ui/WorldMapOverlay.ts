@@ -194,7 +194,20 @@ export class WorldMapOverlay {
       .world-map-overlay button:focus-visible { outline:3px solid #f0bd3c;outline-offset:3px; }
       @media (max-width:640px) {
         .world-map-overlay__panel { padding:16px 14px;gap:11px; }
-        .world-map-overlay__stage { min-height:250px; }
+        .world-map-overlay__stage { aspect-ratio:auto;flex:0 0 auto;min-height:0;overflow:visible; }
+        .world-map-overlay__routes { display:none; }
+        .world-map-overlay__nodes {
+          position:relative;inset:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+          gap:10px 8px;padding:14px 10px;box-sizing:border-box;
+        }
+        .world-map-overlay__node {
+          position:relative;left:auto!important;top:auto!important;width:100%;min-width:0;
+          transform:rotate(-1deg);
+        }
+        .world-map-overlay__node:nth-child(even) { transform:rotate(1deg); }
+        .world-map-overlay__node:hover:not(:disabled),.world-map-overlay__node:focus-visible {
+          transform:rotate(0deg) scale(1.04);
+        }
         .world-map-overlay__footer { align-items:stretch;flex-direction:column;gap:8px; }
         .world-map-overlay__enter { width:100%; }
       }

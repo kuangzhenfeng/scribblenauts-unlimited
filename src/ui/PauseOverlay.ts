@@ -1,8 +1,9 @@
 /**
  * 暂停遮罩 —— 窗口失焦或按 ESC 时显示的全屏暂停界面。
  *
- * 纸片风全屏半透明遮罩 + 居中「已暂停」卡片 + 继续按钮。
+ * 纸片风全屏半透明遮罩 + 居中「已暂停」卡片 + 继续/返回主菜单按钮。
  * 点击遮罩空白处或「继续游戏」按钮 → onResume 回调；
+ * 点击「返回主菜单」按钮 → onMainMenu 回调；
  * ESC 由 WorldScene 统一处理（避免与 Notebook/ConfirmDialog 的 ESC 冲突）。
  *
  * z-index 180：高于所有游戏内 UI（HUD/Notebook/进度面板等 ≤ 60），
@@ -18,7 +19,10 @@ export class PauseOverlay {
   private readonly resumeButton: HTMLButtonElement;
   private open = false;
 
-  constructor(private readonly onResume: () => void) {
+  constructor(
+    private readonly onResume: () => void,
+    private readonly onMainMenu: () => void,
+  ) {
     this.el = document.createElement('div');
     this.el.id = 'pause-overlay';
     this.el.setAttribute('role', 'dialog');
@@ -77,9 +81,11 @@ export class PauseOverlay {
     const resumeBtn = document.createElement('button');
     this.resumeButton = resumeBtn;
     resumeBtn.type = 'button';
+    resumeBtn.id = 'pause-overlay-resume';
     resumeBtn.textContent = t('pause.resume');
     resumeBtn.style.cssText = [
       'margin-top:6px',
+      'width:min(100%,270px)',
       'min-height:44px',
       'padding:11px 28px',
       `font-family:${UI_FONT}`,
@@ -102,7 +108,35 @@ export class PauseOverlay {
       resumeBtn.style.filter = 'brightness(1)';
     });
 
-    card.append(icon, title, hint, resumeBtn);
+    const mainMenuBtn = document.createElement('button');
+    mainMenuBtn.type = 'button';
+    mainMenuBtn.id = 'pause-overlay-main-menu';
+    mainMenuBtn.textContent = t('pause.mainMenu');
+    mainMenuBtn.style.cssText = [
+      'width:min(100%,270px)',
+      'min-height:40px',
+      'padding:9px 28px',
+      `font-family:${UI_FONT}`,
+      'font-size:15px',
+      'font-weight:800',
+      'color:#3d2200',
+      'background:transparent',
+      'border:2px solid #b28b4d',
+      'border-radius:10px',
+      'cursor:pointer',
+      'box-shadow:0 2px 0 #b28b4d',
+      'transition:transform 0.12s ease,background 0.12s ease,color 0.12s ease',
+    ].join(';');
+    mainMenuBtn.addEventListener('mouseenter', () => {
+      mainMenuBtn.style.transform = 'translateY(-1px)';
+      mainMenuBtn.style.background = '#fff8dd';
+    });
+    mainMenuBtn.addEventListener('mouseleave', () => {
+      mainMenuBtn.style.transform = 'translateY(0)';
+      mainMenuBtn.style.background = 'transparent';
+    });
+
+    card.append(icon, title, hint, resumeBtn, mainMenuBtn);
     this.el.appendChild(card);
 
     // 入场动画样式只服务暂停遮罩，避免与确认对话框共享变换原点。
@@ -127,6 +161,10 @@ export class PauseOverlay {
     resumeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.onResume();
+    });
+    mainMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.onMainMenu();
     });
 
     this.el.style.display = 'none';

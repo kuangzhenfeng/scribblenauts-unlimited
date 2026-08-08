@@ -1,10 +1,10 @@
 # 背景板提示词（标准化）
 
 > 游戏内远景背景用 GPT 生图双板替换程序化矢量远景层。
-> 远板为固定屏整图天空盒（`scrollFactor 0,0`），近板为水平无缝视差条带（`scrollFactor 0.5`）。
+> 远板为固定屏整图天空盒（`scrollFactor 0,0`），近板为低透明度水平无缝视差条带（`scrollFactorX 0.5、scrollFactorY 1`，垂直方向锚定世界地面），只提供层次，不覆盖成重复主场景。
 > 地面/平台/洞穴顶棚/传送门保持程序化，不在本规范范围；环境装饰使用 Sprite atlas。
 >
-> 生成后直接放入 `public/assets/backgrounds/{key}.png` 即生效，PreloadScene 自动加载，缺图时 Environment 回退程序化绘制。背景板为整幅不透明图，**无需**运行 `prepare-sprite.js` / `process-sprite.js` / `gen-atlas.js`（那是 sprite strip 透明处理流程）。
+> 生成后直接放入 `public/assets/backgrounds/{key}.png` 即生效，PreloadScene 自动加载，缺图时 Environment 回退程序化绘制。远板保持整幅不透明；近板允许顶部使用透明渐变以融入远板，**无需**运行 `prepare-sprite.js` / `process-sprite.js` / `gen-atlas.js`（那是 sprite strip 透明处理流程）。每个主关卡必须使用独立的 `LevelData.background` 键，并提供 `bg-far-{background}.png` 与 `bg-near-{background}.png`；`theme` 只用于地面/功能层调色，禁止用同一套主题背景代替不同区域的独立生图。
 
 ---
 
@@ -103,6 +103,6 @@
 | `bg-far-volcano` | 1920×1080 | 固定屏天空盒 | `public/assets/backgrounds/bg-far-volcano.png` |
 | `bg-near-volcano` | 1920×200 | 水平无缝条带 | `public/assets/backgrounds/bg-near-volcano.png` |
 
-**主题映射**：关卡 JSON 的 `theme` 字段 → `bg-far-{theme}` / `bg-near-{theme}`。
-当前主题：`jungle`（overworld-meadow 关卡）、`cave`（stage-cave 关卡）、`snow`（stage-snow 关卡）、`desert`（stage-desert 关卡）、`volcano`（stage-volcano 关卡）。
+**背景映射**：关卡 JSON 的 `background` 字段 → `bg-far-{background}` / `bg-near-{background}`；关卡 JSON 的 `theme` 字段只映射程序化地面、洞穴顶棚、火山顶棚和调色板。
+当前项目的 41 个主关卡均拥有独立 `background` 键和独立 far/near 文件；新增关卡必须同步生成两张背景板并更新 `tests/level-content.test.ts` 的资源唯一性校验。
 `meadow` 主题目前没有独立背景板；缺少对应贴图时由 Environment 回退程序化环境层（如需独立草地远景，补充贴图并同步加入 `PreloadScene` 的 `BACKGROUND_PLATES`）。

@@ -18,6 +18,9 @@
 | 自动补全 | Autocomplete | 输入时实时前缀补全下拉 |
 | 候选菜单 | Candidate Menu | 输入歧义时的多候选选择 UI |
 | 附着/组合 | Attach / Composite | 多个实体用刚性 Constraint 粘合为一个组合体 |
+| 穿戴部位 | Wear Slot | Maxwell 的服装关系部位：脸部、头部、身体、手部、腿部、脚部、背部、全身 |
+| 穿戴物 | Wearable | 通过词条声明穿戴部位并可附加飞行/跳跃能力的实体 |
+| 穿戴能力 | Wearable Effect | 穿戴物为玩家提供的运行时能力，如飞行或跳跃增强 |
 | 关卡 | Level | overworld 区域或自包含关卡 |
 | 挑战 | Challenge | NPC 给出的谜题任务（运行时由题库抽题装配） |
 | 题目 | Question | 题库中一道召唤题的静态定义（目标词条 + 形容词 + 双难度标注） |
@@ -27,10 +30,12 @@
 | 题目槽位 | Challenge Slot | 关卡内一道题的位置，存档以 slot id 去重 |
 | Starite | Starite | 完整星之碎块（解除石化诅咒） |
 | Starite 碎片 | Starite Shard | 10 个换 1 Starite |
+| Object Shard | Object Shard | 首次召唤词条的跨关非排他收集任务，分 Living/Food/Vehicle/Music/Tech/Weapon/Clothes/Misc 八类，10 个换 1 Starite |
+| Starite Vision | Starite Vision | 开启蓝色滤镜并标记当前区域未完成的 Starite/碎片任务与 NPC |
 | 矢量渲染器 | Vector Renderer | 程序绘制一个物体类别的函数 |
 | 笔记本输入 | Notebook Input | 玩家在笔记本中键入的文字 |
 | 候选 | Candidate | 输入解析后的一种可能切分结果 |
-| 移动模式 | Locomotion | 实体当前移动状态（idle/walk/fly/swim/attack） |
+| 移动模式 | Locomotion | 实体当前移动状态（idle/walk/jump/fall/fly/swim/attack/dead）；walk 表示地面移动/载具行驶循环，attack/dead 分别表示一次性攻击阶段与死亡状态 |
 | 朝向 | Facing | 实体朝左(-1)/朝右(1) |
 | 自定义物体 | Custom Object | 玩家在物体编辑器组合保存的词条（custom: 前缀） |
 | Filter | Filter | Phaser 4 后处理滤镜（Glow/Vignette/ColorMatrix/...） |

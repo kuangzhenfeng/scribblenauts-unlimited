@@ -1,0 +1,358 @@
+{
+  "id": "stage-syntax-station",
+  "type": "overworld",
+  "theme": "cave",
+  "background": "stage-syntax-station",
+  "bgm": "stage-syntax-station",
+  "bounds": {
+    "minX": -1600,
+    "minY": -300,
+    "maxX": 1600,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": 0,
+    "y": 542
+  },
+  "terrain": [
+    { "x": -1320, "y": 160, "w": 280, "h": 24 },
+    { "x": -980, "y": 90, "w": 200, "h": 24 },
+    { "x": -560, "y": 210, "w": 260, "h": 24 },
+    { "x": -170, "y": 120, "w": 200, "h": 24 },
+    { "x": 240, "y": 190, "w": 240, "h": 24 },
+    { "x": 610, "y": 70, "w": 220, "h": 24 },
+    { "x": 950, "y": 190, "w": 240, "h": 24 },
+    { "x": 1320, "y": 100, "w": 220, "h": 24 }
+  ],
+  "spawns": [
+    { "typeId": "mirror", "x": -1320, "y": 320, "layer": 0 },
+    { "typeId": "chalk", "x": -1200, "y": 320, "layer": 0 },
+    { "typeId": "scroll", "x": -980, "y": 320, "layer": 0 },
+    { "typeId": "stamp", "x": -820, "y": 320, "layer": 0 },
+    { "typeId": "radio", "x": -560, "y": 320, "layer": 0 },
+    { "typeId": "bell", "x": -470, "y": 320, "layer": 0 },
+    { "typeId": "candle", "x": -380, "y": 320, "layer": 0 },
+    { "typeId": "glasses", "x": -430, "y": 320, "layer": 0 },
+    { "typeId": "wire", "x": -180, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "pencil", "x": -80, "y": 320, "layer": 0 },
+    { "typeId": "crystal", "x": 180, "y": 320, "layer": 0 },
+    { "typeId": "window", "x": 300, "y": 320, "layer": 0 },
+    { "typeId": "eraser", "x": 580, "y": 320, "layer": 0 },
+    { "typeId": "sign", "x": 700, "y": 320, "layer": 0 },
+    { "typeId": "key", "x": 940, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "lock", "x": 1030, "y": 320, "layer": 0, "fixed": true },
+    { "typeId": "map", "x": 1140, "y": 320, "layer": 0 },
+    { "typeId": "compass-tool", "x": 1210, "y": 320, "layer": 0 },
+    { "typeId": "ruler", "x": 1320, "y": 320, "layer": 0 },
+    { "typeId": "door", "x": 1430, "y": 320, "layer": 0, "fixed": true }
+  ],
+  "npcs": [
+    {
+      "id": "npc-syntax-indexer",
+      "typeId": "human",
+      "x": -1320,
+      "y": 320,
+      "gender": "female",
+      "fixed": true,
+      "drawParams": { "shirtColor": "#3f7b3a", "pantsColor": "#2b3d2b", "hat": "miner" }
+    },
+    {
+      "id": "npc-syntax-scribe",
+      "typeId": "human",
+      "x": -980,
+      "y": 320,
+      "gender": "male",
+      "fixed": true,
+      "drawParams": { "shirtColor": "#7b4ab0", "pantsColor": "#3e2866" }
+    },
+    {
+      "id": "npc-syntax-echo",
+      "typeId": "human",
+      "x": -560,
+      "y": 320,
+      "gender": "female",
+      "fixed": true,
+      "drawParams": { "shirtColor": "#2d8b82", "pantsColor": "#1d4e4a" }
+    },
+    {
+      "id": "npc-syntax-repairer",
+      "typeId": "human",
+      "x": -180,
+      "y": 320,
+      "gender": "male",
+      "fixed": true,
+      "drawParams": { "shirtColor": "#b26d2b", "pantsColor": "#593b2a", "hat": "miner" }
+    },
+    {
+      "id": "npc-syntax-lens",
+      "typeId": "human",
+      "x": 180,
+      "y": 320,
+      "gender": "female",
+      "fixed": true,
+      "drawParams": { "shirtColor": "#d4a017", "pantsColor": "#6b4e16" }
+    },
+    {
+      "id": "npc-syntax-proofreader",
+      "typeId": "human",
+      "x": 580,
+      "y": 320,
+      "gender": "male",
+      "fixed": true,
+      "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b2b2b" }
+    },
+    {
+      "id": "npc-syntax-warden",
+      "typeId": "human",
+      "x": 940,
+      "y": 320,
+      "gender": "female",
+      "fixed": true,
+      "drawParams": { "shirtColor": "#34495e", "pantsColor": "#1f2d3d", "hat": "miner" }
+    },
+    {
+      "id": "npc-syntax-porter",
+      "typeId": "human",
+      "x": 1320,
+      "y": 320,
+      "gender": "male",
+      "fixed": true,
+      "drawParams": { "shirtColor": "#c34c75", "pantsColor": "#63314b" }
+    }
+  ],
+  "decorations": [
+    { "kind": "stalactite", "x": -1450, "y": 0 },
+    { "kind": "lantern", "x": -1160, "y": 540 },
+    { "kind": "crystal", "x": -820, "y": 560, "scale": 0.9 },
+    { "kind": "lantern", "x": -500, "y": 540 },
+    { "kind": "stalactite", "x": -180, "y": 0 },
+    { "kind": "mushroom", "x": 180, "y": 570 },
+    { "kind": "ruin-pillar", "x": 520, "y": 540 },
+    { "kind": "lantern", "x": 860, "y": 540 },
+    { "kind": "crystal", "x": 1180, "y": 560 },
+    { "kind": "stalactite", "x": 1450, "y": 0 }
+  ],
+  "transitions": [
+    {
+      "toLevelId": "overworld-meadow",
+      "at": { "minX": -1600, "minY": 350, "maxX": -1500, "maxY": 620 }
+    },
+    {
+      "toLevelId": "stage-clockwork",
+      "at": { "minX": 1500, "minY": 350, "maxX": 1600, "maxY": 620 }
+    }
+  ],
+  "starite": {
+    "x": 1380,
+    "y": 260
+  },
+  "authoredChallenges": [
+    {
+      "id": "syntax-indexer-mirrors",
+      "giverNpcId": "npc-syntax-indexer",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "mirror", "near": { "npcId": "npc-syntax-indexer", "radius": 240 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "chalk", "region": { "minX": -1500, "minY": 430, "maxX": -1150, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "索引员：对齐镜子，再用粉笔标出入口，索引就不会回声错位。",
+          "en": "Indexer: Align a mirror, then mark the entrance with chalk so the index stops echoing out of place."
+        }
+      ]
+    },
+    {
+      "id": "syntax-scribe-red-scroll",
+      "giverNpcId": "npc-syntax-scribe",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "all-of",
+            "conditions": [
+              { "kind": "object-present", "typeId": "scroll", "adjectives": ["red"], "near": { "npcId": "npc-syntax-scribe", "radius": 220 } },
+              { "kind": "npc-state", "npcId": "npc-syntax-scribe", "states": ["normal"] }
+            ]
+          }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "stamp", "region": { "minX": -1120, "minY": 430, "maxX": -760, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "抄写员：带来一卷红色卷轴，再把邮票放到旧目录旁，隐藏的语法就会显形。",
+          "en": "Scribe: Bring a red scroll, then place a stamp beside the old index so hidden syntax can appear."
+        }
+      ]
+    },
+    {
+      "id": "syntax-echo-broadcast",
+      "giverNpcId": "npc-syntax-echo",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "sequence",
+            "conditions": [
+              { "kind": "object-present", "typeId": "radio", "near": { "npcId": "npc-syntax-echo", "radius": 240 } },
+              {
+                "kind": "any-of",
+                "conditions": [
+                  { "kind": "object-present", "typeId": "bell", "near": { "npcId": "npc-syntax-echo", "radius": 240 } },
+                  { "kind": "object-present", "typeId": "candle", "near": { "npcId": "npc-syntax-echo", "radius": 240 } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "glasses", "region": { "minX": -730, "minY": 430, "maxX": -370, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "回声播报员：先让收音机同步，再用铃铛或蜡烛打出停顿，最后把眼镜放进回声槽。",
+          "en": "Broadcaster: Sync a radio, use a bell or candle to mark the pause, then place the glasses in the echo slot."
+        }
+      ]
+    },
+    {
+      "id": "syntax-wire-cutter",
+      "giverNpcId": "npc-syntax-repairer",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-destroyed", "typeId": "wire", "region": { "minX": -340, "minY": 430, "maxX": 0, "maxY": 600 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "pencil", "region": { "minX": -340, "minY": 430, "maxX": 0, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "修线工：剪断缠住句读台的电线，再把铅笔放到断口旁，停顿就能恢复。",
+          "en": "Repairer: Cut the wire wrapped around the punctuation desk, then place a pencil by the break to restore the pause."
+        }
+      ]
+    },
+    {
+      "id": "syntax-lens-window",
+      "giverNpcId": "npc-syntax-lens",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "all-of",
+            "conditions": [
+              { "kind": "object-present", "typeId": "crystal", "adjectives": ["blue"], "near": { "npcId": "npc-syntax-lens", "radius": 220 } },
+              { "kind": "npc-state", "npcId": "npc-syntax-lens", "states": ["normal"] }
+            ]
+          }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "window", "region": { "minX": 30, "minY": 430, "maxX": 380, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "透镜守护者：给我一块蓝水晶，再把窗户摆进光路，让断句看得见。",
+          "en": "Lens Keeper: Bring a blue crystal, then set a window into the light path so the pauses become visible."
+        }
+      ]
+    },
+    {
+      "id": "syntax-proofreader-sign",
+      "giverNpcId": "npc-syntax-proofreader",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "eraser", "near": { "npcId": "npc-syntax-proofreader", "radius": 220 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "sign", "region": { "minX": 410, "minY": 430, "maxX": 760, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "校对员：用橡皮擦净错误，再把招牌放到分岔口，旅人就不会读错方向。",
+          "en": "Proofreader: Erase the errors, then place a sign at the fork so travelers read the direction correctly."
+        }
+      ]
+    },
+    {
+      "id": "syntax-warden-return",
+      "giverNpcId": "npc-syntax-warden",
+      "kind": "starite-gate",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "all-of",
+            "conditions": [
+              { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-syntax-warden", "radius": 260 } },
+              { "kind": "npc-state", "npcId": "npc-syntax-warden", "states": ["normal"] }
+            ]
+          }
+        ]
+      },
+      "stages": [
+        {
+          "conditions": [
+            {
+              "kind": "sequence",
+              "conditions": [
+                { "kind": "entity-at", "typeId": "lock", "region": { "minX": 790, "minY": 430, "maxX": 1150, "maxY": 600 } },
+                {
+                  "kind": "any-of",
+                  "conditions": [
+                    { "kind": "object-present", "typeId": "map", "near": { "npcId": "npc-syntax-warden", "radius": 300 } },
+                    { "kind": "object-present", "typeId": "compass-tool", "near": { "npcId": "npc-syntax-warden", "radius": 300 } }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [
+        {
+          "zh": "回返守门人：钥匙先让门闩认出你，再把锁放进门框，最后用地图或圆规标出回程。",
+          "en": "Return Warden: Let a key identify you, set the lock in the frame, then mark the way back with a map or compass."
+        }
+      ]
+    },
+    {
+      "id": "syntax-porter-door",
+      "giverNpcId": "npc-syntax-porter",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "ruler", "near": { "npcId": "npc-syntax-porter", "radius": 220 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "object-destroyed", "typeId": "door", "region": { "minX": 1180, "minY": 430, "maxX": 1500, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "搬运员：量好尺子的间距，再拆掉旧门板，货道才能通往两侧。",
+          "en": "Porter: Measure the gap with a ruler, then remove the old door so the passage can reach both sides."
+        }
+      ]
+    }
+  ],
+  "challengeSlots": 8
+}

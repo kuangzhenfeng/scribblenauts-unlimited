@@ -2,6 +2,7 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 import { WorldMapOverlay, type WorldMapNode } from '@/ui/WorldMapOverlay';
+import { worldMapNodePosition } from '@/ui/WorldMapLayout';
 
 const nodes: WorldMapNode[] = [
   { id: 'meadow', title: '丛林草地', subtitle: '起点区域', x: 20, y: 50 },
@@ -14,6 +15,14 @@ afterEach(() => {
 });
 
 describe('WorldMapOverlay', () => {
+  it('完整关卡列表的节点不会因横坐标溢出而重叠', () => {
+    const positions = Array.from({ length: 41 }, (_, index) => worldMapNodePosition(index, 41));
+    const uniquePositions = new Set(positions.map((position) => `${position.x}:${position.y}`));
+
+    expect(uniquePositions).toHaveLength(41);
+    expect(positions.every(({ x, y }) => x >= 4 && x <= 96 && y >= 4 && y <= 96)).toBe(true);
+  });
+
   it('以当前已解锁关卡作为初始选择，并点击节点触发进入回调', () => {
     const entered: string[] = [];
     const overlay = new WorldMapOverlay({
@@ -58,4 +67,3 @@ describe('WorldMapOverlay', () => {
     overlay.destroy();
   });
 });
-

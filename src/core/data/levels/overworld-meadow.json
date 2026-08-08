@@ -2,6 +2,8 @@
   "id": "overworld-meadow",
   "type": "overworld",
   "theme": "jungle",
+  "background": "overworld-meadow",
+  "bgm": "overworld-meadow",
   "bounds": {
     "minX": -2000,
     "minY": -300,
@@ -183,6 +185,20 @@
       "y": 320,
       "layer": 0,
       "fixed": true
+    },
+    {
+      "typeId": "well",
+      "x": -740,
+      "y": 320,
+      "layer": 0,
+      "fixed": true
+    },
+    {
+      "typeId": "crate",
+      "x": -250,
+      "y": 320,
+      "layer": 0,
+      "fixed": true
     }
   ],
   "npcs": [
@@ -199,11 +215,26 @@
       }
     },
     {
+      "id": "npc-edwin",
+      "typeId": "human",
+      "x": -360,
+      "y": 320,
+      "gender": "male",
+      "fixed": true,
+      "avatarId": "sibling-01",
+      "drawParams": {
+        "shirtColor": "#3f7b3a",
+        "pantsColor": "#5a3b25",
+        "hat": "straw"
+      }
+    },
+    {
       "id": "npc-girl",
       "typeId": "human",
       "x": 260,
       "y": 320,
       "gender": "female",
+      "avatarId": "sibling-02",
       "drawParams": {
         "shirtColor": "#e64980",
         "pantsColor": "#8b3a5c"
@@ -421,6 +452,15 @@
   ],
   "transitions": [
     {
+      "toLevelId": "stage-storybook",
+      "at": {
+        "minX": -2000,
+        "minY": 350,
+        "maxX": -1900,
+        "maxY": 620
+      }
+    },
+    {
       "toLevelId": "stage-cave",
       "at": {
         "minX": 2300,
@@ -437,14 +477,14 @@
       "kind": "shard",
       "puzzle": {
         "conditions": [
-          { "kind": "counter", "typeId": "apple", "count": 2, "near": { "npcId": "npc-explorer", "radius": 180 } }
+          { "kind": "object-present", "typeId": "apple", "near": { "npcId": "npc-explorer", "radius": 180 } }
         ]
       },
       "stages": [
         { "conditions": [ { "kind": "entity-at", "typeId": "balloon", "region": { "minX": -300, "minY": 430, "maxX": 120, "maxY": 600 } } ] }
       ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "探险者：先给我两只苹果，再放一个气球标记营地。", "en": "Explorer: Bring me two apples, then mark camp with a balloon." } ]
+      "dialog": [ { "zh": "探险者：先给我苹果，再放一个气球标记营地。", "en": "Explorer: Bring me an apple, then mark camp with a balloon." } ]
     },
     {
       "id": "meadow-fisherman-catch",
@@ -456,10 +496,10 @@
         ]
       },
       "stages": [
-        { "conditions": [ { "kind": "counter", "typeId": "fish", "count": 2, "region": { "minX": -1250, "minY": 430, "maxX": -760, "maxY": 600 } } ] }
+        { "conditions": [ { "kind": "object-present", "typeId": "fish", "region": { "minX": -1250, "minY": 430, "maxX": -760, "maxY": 600 } } ] }
       ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "渔夫：先给我鱼竿，再把两条鱼放到河岸。", "en": "Fisher: Bring a fishing rod, then place two fish by the riverbank." } ]
+      "dialog": [ { "zh": "渔夫：先给我鱼竿，再把鱼放到河岸。", "en": "Fisher: Bring a fishing rod, then place a fish by the riverbank." } ]
     },
     {
       "id": "meadow-carpenter-repair",
@@ -471,10 +511,10 @@
         ]
       },
       "stages": [
-        { "conditions": [ { "kind": "counter", "typeId": "wood", "count": 2, "region": { "minX": 1150, "minY": 430, "maxX": 1650, "maxY": 600 } } ] }
+        { "conditions": [ { "kind": "object-present", "typeId": "wood", "region": { "minX": 1150, "minY": 430, "maxX": 1650, "maxY": 600 } } ] }
       ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "木匠：工具到位后，再送来两块木头修桥。", "en": "Carpenter: Once the tool is ready, bring two pieces of wood to repair the bridge." } ]
+      "dialog": [ { "zh": "木匠：工具到位后，再送来木头修桥。", "en": "Carpenter: Once the tool is ready, bring wood to repair the bridge." } ]
     },
     {
       "id": "meadow-witch-ritual",
@@ -502,10 +542,10 @@
       "id": "meadow-gardener-grove",
       "giverNpcId": "npc-gardener",
       "kind": "shard",
-      "puzzle": { "conditions": [ { "kind": "counter", "typeId": "flower", "count": 2, "near": { "npcId": "npc-gardener", "radius": 180 } } ] },
+      "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "flower", "near": { "npcId": "npc-gardener", "radius": 180 } } ] },
       "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-gardener", "radius": 180 } } ] } ],
       "reward": { "type": "shard", "count": 2 },
-      "dialog": [ { "zh": "园丁：先找两朵花，再用水浇醒这片花圃。", "en": "Gardener: Find two flowers, then water the garden back to life." } ]
+      "dialog": [ { "zh": "园丁：先找一朵花，再用水浇醒这片花圃。", "en": "Gardener: Find a flower, then water the garden back to life." } ]
     },
     {
       "id": "meadow-bridgekeeper-crossing",
@@ -531,7 +571,47 @@
       },
       "reward": { "type": "shard", "count": 2 },
       "dialog": [ { "zh": "孩子：这条绳索挡住了路，想办法清除它吧。", "en": "Child: This rope blocks the path. Find a way to clear it." } ]
+    },
+    {
+      "id": "meadow-edwin-good-deed",
+      "giverNpcId": "npc-edwin",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          {
+            "kind": "any-of",
+            "conditions": [
+              { "kind": "object-present", "typeId": "apple", "near": { "npcId": "npc-edwin", "radius": 220 } },
+              { "kind": "object-present", "typeId": "bread", "near": { "npcId": "npc-edwin", "radius": 220 } },
+              { "kind": "object-present", "typeId": "meat", "near": { "npcId": "npc-edwin", "radius": 220 } }
+            ]
+          }
+        ]
+      },
+      "stages": [
+        {
+          "conditions": [
+            { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-edwin", "radius": 220 } }
+          ]
+        },
+        {
+          "conditions": [
+            { "kind": "object-destroyed", "typeId": "crate", "region": { "minX": -500, "minY": 430, "maxX": -100, "maxY": 600 } }
+          ]
+        }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [
+        {
+          "zh": "Edwin：想救 Lily，就先从身边的好事开始。给我带点吃的和水，再想办法清掉挡路的木箱。",
+          "en": "Edwin: If you want to save Lily, start with a good deed. Bring me food and water, then find a way to clear the crate."
+        },
+        {
+          "zh": "提示：食物和水放到 Edwin 身边；木箱可以用火、投射物或其他有效方法处理。",
+          "en": "Hint: Place food and water beside Edwin. The crate can be handled with fire, a projectile, or any effective method."
+        }
+      ]
     }
   ],
-  "challengeSlots": 7
+  "challengeSlots": 8
 }

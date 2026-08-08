@@ -20,6 +20,7 @@ import { flatten, getMoodData, VOICE_VOLUMES, type FlattenedScore, type MusicMoo
 
 // 重新导出 MusicMood，保持外部从 @/audio/MusicDirector 导入的调用点零改动
 export type { MusicMood } from './scores';
+export { levelMood } from './scores';
 
 /** 展平后乐谱的步数 */
 const TOTAL_STEPS = 640;

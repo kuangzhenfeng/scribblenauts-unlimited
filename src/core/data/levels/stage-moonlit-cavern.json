@@ -1,0 +1,39 @@
+{
+  "id": "stage-moonlit-cavern",
+  "type": "self-contained",
+  "theme": "cave",
+  "background": "stage-moonlit-cavern",
+  "bgm": "stage-moonlit-cavern",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-verdant-grove", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-frost-fair", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "stone", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "lantern", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "bat", "x": -120, "y": 200, "layer": 0 },
+    { "typeId": "crystal", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "rope", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "mushroom", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "chest", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "torch", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-moon-miner", "typeId": "human", "x": -520, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#41698f", "pantsColor": "#2b2b2b", "hat": "miner" } },
+    { "id": "npc-moon-cartographer", "typeId": "human", "x": -80, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#8e44ad", "pantsColor": "#5b2c6f" } },
+    { "id": "npc-moon-keeper", "typeId": "human", "x": 360, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#c9932b", "pantsColor": "#6b4226", "hat": "straw" } },
+    { "id": "npc-moon-scout", "typeId": "human", "x": 720, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#566573", "pantsColor": "#273746", "hat": "miner" } }
+  ],
+  "decorations": [ { "kind": "stalactite", "x": -620, "y": 0 }, { "kind": "stalactite", "x": -180, "y": 0 }, { "kind": "stalactite", "x": 260, "y": 0 }, { "kind": "crystal", "x": 760, "y": 560, "scale": 0.9 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "moon-miner", "giverNpcId": "npc-moon-miner", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "lantern", "near": { "npcId": "npc-moon-miner", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-moon-miner", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "矿工：用灯照亮矿口后，再插一支火把指路。", "en": "Miner: Light the mine entrance with a lantern, then place a torch as a guide." } ] },
+    { "id": "moon-cartographer", "giverNpcId": "npc-moon-cartographer", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-moon-cartographer", "radius": 220 } }, { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-moon-cartographer", "radius": 220 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "制图师：用水晶标记洞穴，用绳索固定地图。", "en": "Cartographer: Mark the cavern with crystal and secure the map with rope." } ] },
+    { "id": "moon-keeper", "giverNpcId": "npc-moon-keeper", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "mushroom", "near": { "npcId": "npc-moon-keeper", "radius": 220 } }, { "kind": "object-present", "typeId": "chest", "near": { "npcId": "npc-moon-keeper", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守洞人：找到月光蘑菇，再把宝箱送到祭坛。", "en": "Cave Keeper: Find a moonlit mushroom, then bring the chest to the altar." } ] },
+    { "id": "moon-scout", "giverNpcId": "npc-moon-scout", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "bat", "near": { "npcId": "npc-moon-scout", "radius": 240 } }, { "kind": "object-present", "typeId": "frog", "near": { "npcId": "npc-moon-scout", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "探路者：让蝙蝠或青蛙带你找到隐藏出口。", "en": "Scout: Let a bat or frog lead you to the hidden exit." } ] }
+  ],
+  "challengeSlots": 4
+}

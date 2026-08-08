@@ -1,0 +1,21 @@
+{
+  "id": "stage-ellipsis-meadow",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-ellipsis-meadow",
+  "bgm": "stage-ellipsis-meadow",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-semicolon-volcano", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-bracket-cave", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "apple", "x": -520, "y": 320, "layer": 0 }, { "typeId": "tree", "x": -160, "y": 320, "layer": 0 }, { "typeId": "fish", "x": 220, "y": 260, "layer": 0 }, { "typeId": "boat", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-ellipsis-apple", "typeId": "human", "x": -520, "y": 320, "gender": "male" }, { "id": "npc-ellipsis-tree", "typeId": "human", "x": -120, "y": 320, "gender": "female" }, { "id": "npc-ellipsis-fisher", "typeId": "human", "x": 280, "y": 320, "gender": "male" }, { "id": "npc-ellipsis-sailor", "typeId": "human", "x": 640, "y": 320, "gender": "female" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "ellipsis-apple", "giverNpcId": "npc-ellipsis-apple", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "apple", "near": { "npcId": "npc-ellipsis-apple", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-ellipsis-apple", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "采果人：给我一棵树和一颗苹果，森林才会继续生长。", "en": "Forager: Give me a tree and an apple so the forest can keep growing." } ] },
+    { "id": "ellipsis-tree", "giverNpcId": "npc-ellipsis-tree", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-ellipsis-tree", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "apple", "near": { "npcId": "npc-ellipsis-tree", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "树语者：先让树站起来，再给它一颗成熟的果实。", "en": "Tree Speaker: Raise the tree, then give it a ripe fruit." } ] },
+    { "id": "ellipsis-fisher", "giverNpcId": "npc-ellipsis-fisher", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "fish", "near": { "npcId": "npc-ellipsis-fisher", "radius": 260 } }, { "kind": "object-present", "typeId": "boat", "near": { "npcId": "npc-ellipsis-fisher", "radius": 260 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-ellipsis-fisher", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "渔夫：鱼或船都能开始旅程，但岸边还要有树。", "en": "Fisher: A fish or boat can start the journey, but the shore still needs a tree." } ] },
+    { "id": "ellipsis-sailor", "giverNpcId": "npc-ellipsis-sailor", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "apple", "near": { "npcId": "npc-ellipsis-sailor", "radius": 520 } }, { "kind": "object-present", "typeId": "fish", "near": { "npcId": "npc-ellipsis-sailor", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "boat", "near": { "npcId": "npc-ellipsis-sailor", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "水手：先准备食物，再把鱼带上船，河道会自己打开。", "en": "Sailor: Prepare food first, bring the fish aboard, and the river will open." } ] }
+  ],
+  "challengeSlots": 4
+}

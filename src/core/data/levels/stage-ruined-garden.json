@@ -1,0 +1,39 @@
+{
+  "id": "stage-ruined-garden",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-ruined-garden",
+  "bgm": "stage-ruined-garden",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-sky-observatory", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-crystal-archive", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "rose", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "flower", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "bush", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "tree", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "rope", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "stone", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "rabbit", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "fox", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-ruin-gardener", "typeId": "human", "x": -520, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#5aa34b", "pantsColor": "#345c35" } },
+    { "id": "npc-ruin-archaeologist", "typeId": "human", "x": -80, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#b97732", "pantsColor": "#704b20", "hat": "straw" } },
+    { "id": "npc-ruin-keeper", "typeId": "human", "x": 360, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#7b4ab0", "pantsColor": "#3e2866" } },
+    { "id": "npc-ruin-child", "typeId": "human", "x": 720, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#e6a43b", "pantsColor": "#2e5d8a" } }
+  ],
+  "decorations": [ { "kind": "ruin-pillar", "x": -700, "y": 540 }, { "kind": "flower", "x": -260, "y": 560 }, { "kind": "bush", "x": 160, "y": 560 }, { "kind": "ruin-pillar", "x": 820, "y": 540 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "ruin-gardener", "giverNpcId": "npc-ruin-gardener", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "flower", "near": { "npcId": "npc-ruin-gardener", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-ruin-gardener", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "园丁：一朵花和清水，能唤醒废墟里的花园。", "en": "Gardener: A flower and clean water can wake the ruined garden." } ] },
+    { "id": "ruin-archaeologist", "giverNpcId": "npc-ruin-archaeologist", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "stone", "near": { "npcId": "npc-ruin-archaeologist", "radius": 240 } }, { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-ruin-archaeologist", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "考古学家：石块做支柱，绳索固定发掘现场。", "en": "Archaeologist: Stone makes a pillar and rope secures the dig site." } ] },
+    { "id": "ruin-keeper", "giverNpcId": "npc-ruin-keeper", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "rose", "near": { "npcId": "npc-ruin-keeper", "radius": 220 } }, { "kind": "object-present", "typeId": "tree", "near": { "npcId": "npc-ruin-keeper", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守护者：一朵玫瑰和一棵树，组成新的入口。", "en": "Keeper: A rose and a tree will form a new entrance." } ] },
+    { "id": "ruin-child", "giverNpcId": "npc-ruin-child", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "rabbit", "near": { "npcId": "npc-ruin-child", "radius": 240 } }, { "kind": "object-present", "typeId": "fox", "near": { "npcId": "npc-ruin-child", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "孩子：兔子或狐狸都能带我穿过荒园。", "en": "Child: A rabbit or a fox can lead me through the wild garden." } ] }
+  ],
+  "challengeSlots": 4
+}

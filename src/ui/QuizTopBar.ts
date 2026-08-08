@@ -1,7 +1,7 @@
 /**
  * 简易问答顶栏 —— 承载导航、当前局状态与全局词频设置。
  *
- * 左侧返回、中央回合/得分/连胜、右侧词频设置与换题；最高分继续持久化但不常驻界面。
+ * 左侧返回、中央回合/得分/连胜/最高分、右侧词频设置与换题；最高分以低强调度常驻。
  */
 
 import type { DifficultyStandard, DifficultyTier } from '@/core/types/question';
@@ -12,19 +12,20 @@ import {
   SAFE_LEFT,
   SAFE_RIGHT,
   QUIZ_CARD,
+  QUIZ_CARD_BRIGHT,
   QUIZ_INK,
   QUIZ_INK_SOFT,
   QUIZ_ACCENT,
   QUIZ_ACCENT_PRESS,
-  QUIZ_ACCENT_SOFT,
   QUIZ_YELLOW,
+  QUIZ_GOLD_DARK,
   QUIZ_BORDER,
   QUIZ_SHADOW,
-  QUIZ_SHADOW_BAR,
+  QUIZ_SHADOW_LIFT,
   QUIZ_RADIUS_SM,
   QUIZ_TIER_STYLES,
 } from './quizStyle';
-import { ICON_ARROW_LEFT, ICON_RESET, ICON_TROPHY, ICON_STAR, ICON_SETTINGS } from './icons';
+import { ICON_ARROW_LEFT, ICON_KEYBOARD, ICON_RESET, ICON_TROPHY, ICON_STAR, ICON_SETTINGS } from './icons';
 import { t } from '@/core/i18n/I18n';
 import { sfx } from '@/audio/SoundEffects';
 import { loadSettings } from '@/core/data/settings/SettingsStore';
@@ -75,11 +76,11 @@ export class QuizTopBar {
     this.el.id = 'quiz-topbar';
     this.el.style.cssText = [
       'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:70',
-      'display:flex', 'align-items:center', 'gap:10px',
-      `padding:${SAFE_TOP} ${SAFE_RIGHT} 8px ${SAFE_LEFT}`,
-      `background:${QUIZ_CARD}`, `border-bottom:2px solid ${QUIZ_BORDER}`,
-      `box-shadow:${QUIZ_SHADOW_BAR}`, `font-family:${UI_FONT}`, `color:${QUIZ_INK}`,
-      'box-sizing:border-box',
+      'display:grid', 'grid-template-columns:auto minmax(0,1fr) auto', 'align-items:start', 'gap:12px',
+      `padding:calc(${SAFE_TOP} + 8px) ${SAFE_RIGHT} 0 ${SAFE_LEFT}`,
+      'background:transparent', 'border-bottom:0', 'box-shadow:none',
+      `font-family:${UI_FONT}`, `color:${QUIZ_INK}`, 'box-sizing:border-box',
+      'pointer-events:none',
     ].join(';');
 
     this.backButton = this._actionButton(ICON_ARROW_LEFT, t('quiz.back'), () => this.cb.onBack());
@@ -122,9 +123,17 @@ export class QuizTopBar {
 
   render(round: number, score: number, streak: number): void {
     this.statsEl.innerHTML = '';
-    this.statsEl.appendChild(this._stat(t('quiz.round', { n: round }), '', QUIZ_CARD, QUIZ_INK));
-    this.statsEl.appendChild(this._stat(`${t('quiz.score')} ${score}`, ICON_TROPHY, QUIZ_ACCENT, '#ffffff'));
-    this.statsEl.appendChild(this._stat(`${t('quiz.streak')} ×${streak}`, ICON_STAR, QUIZ_YELLOW, QUIZ_INK));
+    const identity = document.createElement('div');
+    identity.className = 'quiz-topbar-identity';
+    identity.innerHTML = `${ICON_KEYBOARD}<span>${this._escape(t('quiz.title'))}</span>`;
+    this.statsEl.appendChild(identity);
+    const scoreboard = document.createElement('div');
+    scoreboard.className = 'quiz-scoreboard';
+    scoreboard.appendChild(this._stat(t('quiz.roundLabel'), String(round), '', QUIZ_CARD, QUIZ_INK, 'round'));
+    scoreboard.appendChild(this._stat(t('quiz.score'), String(score), ICON_TROPHY, QUIZ_YELLOW, QUIZ_INK, 'score'));
+    scoreboard.appendChild(this._stat(t('quiz.streak'), `×${streak}`, ICON_STAR, QUIZ_CARD_BRIGHT, QUIZ_INK, 'streak'));
+    scoreboard.appendChild(this._stat(t('quiz.best'), String(loadSettings().quizHighScore), ICON_TROPHY, QUIZ_CARD_BRIGHT, QUIZ_INK, 'best'));
+    this.statsEl.appendChild(scoreboard);
   }
 
   /** 切换界面语言时只刷新文案，不重建问答场景与当前回合。 */
@@ -163,14 +172,39 @@ export class QuizTopBar {
     const style = document.createElement('style');
     style.id = 'quiz-topbar-style';
     style.textContent = `
-      #quiz-topbar .quiz-topbar-tools { display:flex; align-items:center; gap:6px; flex:none; }
-      #quiz-topbar .quiz-topbar-action:hover, #quiz-topbar #quiz-settings-button:hover { background:${QUIZ_ACCENT_SOFT} !important; color:${QUIZ_ACCENT} !important; }
-      #quiz-topbar .quiz-topbar-action:active, #quiz-topbar #quiz-settings-button:active { transform:translateY(2px); border-color:${QUIZ_ACCENT_PRESS}; }
-      #quiz-topbar button:focus-visible, #quiz-difficulty-popover button:focus-visible { outline:3px solid ${QUIZ_YELLOW}; outline-offset:2px; }
+      #quiz-topbar .quiz-topbar-tools { display:flex; align-items:center; gap:5px; flex:none; pointer-events:auto; }
+      #quiz-topbar .quiz-topbar-action:hover, #quiz-topbar #quiz-settings-button:hover { background:#f6e7b4 !important; color:${QUIZ_GOLD_DARK} !important; }
+      #quiz-topbar .quiz-topbar-action:active, #quiz-topbar #quiz-settings-button:active { transform:translateY(2px); border-color:${QUIZ_ACCENT_PRESS}; box-shadow:none; }
+      #quiz-topbar button:focus-visible, #quiz-difficulty-popover button:focus-visible { outline:3px solid #fff8dd; outline-offset:3px; }
       #quiz-topbar button:disabled, #quiz-difficulty-popover button:disabled { opacity:.5; cursor:not-allowed; pointer-events:none; }
-      .quiz-topbar-stats { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; min-width:0; overflow:hidden; }
-      .quiz-topbar-stat { min-width:0; overflow:hidden; text-overflow:ellipsis; }
-      .quiz-topbar-stat span { overflow:hidden; text-overflow:ellipsis; }
+      .quiz-topbar-stats { display:flex; align-items:center; justify-content:center; gap:8px; min-width:0; overflow:hidden; pointer-events:none; }
+      .quiz-topbar-identity {
+        display:inline-flex;
+        align-items:center;
+        gap:7px;
+        min-height:44px;
+        padding:6px 12px;
+        box-sizing:border-box;
+        color:${QUIZ_INK};
+        background:${QUIZ_CARD};
+        border:2px solid ${QUIZ_GOLD_DARK};
+        border-radius:${QUIZ_RADIUS_SM};
+        box-shadow:0 2px 0 ${QUIZ_GOLD_DARK};
+        font-size:13px;
+        font-weight:950;
+        white-space:nowrap;
+        transform:rotate(-.6deg);
+      }
+      .quiz-topbar-identity svg { width:20px; height:20px; color:${QUIZ_GOLD_DARK}; }
+      .quiz-scoreboard { display:flex; align-items:stretch; gap:6px; min-width:0; }
+      .quiz-topbar-stat { position:relative; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; min-width:56px; min-height:44px; overflow:hidden; text-overflow:ellipsis; }
+      .quiz-topbar-stat .quiz-stat-label { color:${QUIZ_INK_SOFT}; font-size:10px; line-height:1; font-weight:800; white-space:nowrap; }
+      .quiz-topbar-stat .quiz-stat-value { margin-top:3px; color:${QUIZ_INK}; font-size:16px; line-height:1; font-weight:950; font-variant-numeric:tabular-nums; white-space:nowrap; }
+      .quiz-topbar-stat svg { position:absolute; top:5px; right:6px; width:14px; height:14px; color:${QUIZ_GOLD_DARK}; }
+      .quiz-topbar-stat[data-tone="score"] { border-color:${QUIZ_GOLD_DARK} !important; box-shadow:0 2px 0 ${QUIZ_GOLD_DARK}; }
+      .quiz-topbar-stat[data-tone="round"] { background:${QUIZ_CARD} !important; }
+      .quiz-topbar-stat[data-tone="round"] .quiz-stat-value { color:${QUIZ_ACCENT}; }
+      .quiz-topbar-stat[data-tone="best"] { opacity:.78; }
       .quiz-choice-button { transition:background 160ms ease-out, color 160ms ease-out, border-color 160ms ease-out, transform 120ms ease-out; }
       .quiz-choice-button:hover { border-color:${QUIZ_ACCENT} !important; color:${QUIZ_ACCENT} !important; }
       .quiz-choice-button:active { transform:translateY(2px); }
@@ -178,15 +212,22 @@ export class QuizTopBar {
       @keyframes quizPopoverIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
       @media (max-width:430px) {
         #quiz-topbar .quiz-action-label { display:none; }
-        #quiz-topbar { gap:6px !important; }
+        #quiz-topbar { gap:5px !important; grid-template-columns:auto minmax(0,1fr) auto !important; }
         #quiz-topbar .quiz-topbar-action, #quiz-topbar #quiz-settings-button { width:44px; padding:0 !important; }
         #quiz-topbar .quiz-topbar-tools { gap:3px; }
-        .quiz-topbar-stats { gap:3px; }
-        .quiz-topbar-stat { padding:5px 6px !important; font-size:11px !important; }
+        .quiz-topbar-stats { gap:4px; }
+        .quiz-scoreboard { gap:3px; }
+        .quiz-topbar-stat { min-width:44px; min-height:44px; padding:5px 5px !important; }
+        .quiz-topbar-stat .quiz-stat-label { font-size:9px !important; }
+        .quiz-topbar-stat .quiz-stat-value { font-size:13px !important; }
+        .quiz-topbar-stat svg { width:12px; height:12px; right:4px; }
+        .quiz-topbar-identity { min-width:42px; width:42px; justify-content:center; padding:6px; }
+        .quiz-topbar-identity span { display:none; }
+        .quiz-topbar-stat[data-tone="best"] { display:none; }
       }
       @media (max-width:360px) {
         #quiz-topbar { gap:3px !important; }
-        #quiz-topbar .quiz-topbar-stat { padding-left:4px !important; padding-right:4px !important; font-size:10px !important; }
+        #quiz-topbar .quiz-topbar-stat { min-width:41px; padding-left:4px !important; padding-right:4px !important; }
       }
       @media (prefers-reduced-motion:reduce) {
         #quiz-topbar *, #quiz-difficulty-popover { transition:none !important; animation:none !important; }
@@ -229,23 +270,24 @@ export class QuizTopBar {
     return [
       'min-width:44px', 'height:44px', 'padding:0 10px', 'display:inline-flex',
       'align-items:center', 'justify-content:center', 'gap:6px',
-      'flex:none', 'box-sizing:border-box', 'background:transparent', `border:2px solid ${QUIZ_BORDER}`, `border-radius:${QUIZ_RADIUS_SM}`,
+      'flex:none', 'box-sizing:border-box', `background:${QUIZ_YELLOW}`, `border:2px solid ${QUIZ_GOLD_DARK}`, `border-radius:${QUIZ_RADIUS_SM}`,
       `color:${QUIZ_INK}`, `font-family:${UI_FONT}`, 'font-size:12px', 'font-weight:700',
-      'cursor:pointer', 'touch-action:manipulation',
+      'cursor:pointer', 'touch-action:manipulation', 'pointer-events:auto',
+      `box-shadow:${QUIZ_SHADOW_LIFT}`,
       'transition:background 180ms cubic-bezier(.22,1,.36,1),color 180ms cubic-bezier(.22,1,.36,1),transform 120ms ease-out',
     ].join(';');
   }
 
-  private _stat(label: string, icon: string, bg: string, fg: string): HTMLDivElement {
+  private _stat(label: string, value: string, icon: string, bg: string, fg: string, tone: 'round' | 'score' | 'streak' | 'best'): HTMLDivElement {
     const stat = document.createElement('div');
     stat.className = 'quiz-topbar-stat';
     stat.style.cssText = [
-      'min-height:30px', 'padding:5px 8px', 'display:inline-flex', 'align-items:center',
-      'justify-content:center', 'gap:5px', `background:${bg}`, `color:${fg}`,
-      `border:1px solid ${QUIZ_BORDER}`, `border-radius:${QUIZ_RADIUS_SM}`,
-      'box-sizing:border-box', 'font-size:11px', 'font-weight:800', 'white-space:nowrap',
+      'padding:5px 9px', `background:${bg}`, `color:${fg}`,
+      `border:2px solid ${tone === 'score' ? QUIZ_GOLD_DARK : 'rgba(106,61,8,.26)'}`, `border-radius:${QUIZ_RADIUS_SM}`,
+      'box-sizing:border-box',
     ].join(';');
-    stat.innerHTML = `${icon}<span>${this._escape(label)}</span>`;
+    stat.dataset.tone = tone;
+    stat.innerHTML = `${icon}<span class="quiz-stat-label">${this._escape(label)}</span><span class="quiz-stat-value">${this._escape(value)}</span>`;
     return stat;
   }
 

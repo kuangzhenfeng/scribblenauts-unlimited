@@ -1,0 +1,39 @@
+{
+  "id": "stage-lava-laboratory",
+  "type": "self-contained",
+  "theme": "volcano",
+  "background": "stage-lava-laboratory",
+  "bgm": "stage-lava-laboratory",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-dune-caravan", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-wildwood-theater", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "robot", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "wire", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "magnet", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "metal", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "electricity", "x": 280, "y": 240, "layer": 0 },
+    { "typeId": "fire", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "anvil", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "wrench", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-lava-mechanic", "typeId": "human", "x": -520, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#566573", "pantsColor": "#273746", "hat": "miner" } },
+    { "id": "npc-lava-electrician", "typeId": "human", "x": -80, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#d49b2a", "pantsColor": "#33251d" } },
+    { "id": "npc-lava-smith", "typeId": "human", "x": 360, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#9b3d20", "pantsColor": "#33251d", "hat": "miner" } },
+    { "id": "npc-lava-director", "typeId": "human", "x": 720, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b2b2b" } }
+  ],
+  "decorations": [ { "kind": "ruin-pillar", "x": -700, "y": 540 }, { "kind": "lantern", "x": -260, "y": 540 }, { "kind": "ruin-pillar", "x": 160, "y": 540 }, { "kind": "lantern", "x": 820, "y": 540 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "lava-mechanic", "giverNpcId": "npc-lava-mechanic", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "metal", "near": { "npcId": "npc-lava-mechanic", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "hammer", "near": { "npcId": "npc-lava-mechanic", "radius": 240 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "维修工：金属和一把锤子，机器才能撑过熔岩。", "en": "Mechanic: Metal and a hammer can keep the machine alive in the lava." } ] },
+    { "id": "lava-electrician", "giverNpcId": "npc-lava-electrician", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "electricity", "near": { "npcId": "npc-lava-electrician", "radius": 240 } }, { "kind": "object-present", "typeId": "metal", "near": { "npcId": "npc-lava-electrician", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "电工：电力接上金属，实验室才能重新通电。", "en": "Electrician: Connect electricity to metal to power the laboratory." } ] },
+    { "id": "lava-smith", "giverNpcId": "npc-lava-smith", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "anvil", "near": { "npcId": "npc-lava-smith", "radius": 220 } }, { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-lava-smith", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "铁匠：铁砧和火焰齐备，熔炉就能锻造星光。", "en": "Smith: With anvil and fire, the forge can shape starlight." } ] },
+    { "id": "lava-director", "giverNpcId": "npc-lava-director", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-lava-director", "radius": 240 } }, { "kind": "object-present", "typeId": "magnet", "near": { "npcId": "npc-lava-director", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "实验室主管：机器人或磁铁，任选其一接管控制台。", "en": "Director: A robot or magnet can take control of the console." } ] }
+  ],
+  "challengeSlots": 4
+}

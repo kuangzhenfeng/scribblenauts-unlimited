@@ -139,7 +139,21 @@ export const miscEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.2, restitution: 0.1 },
     tags: tags(['cloth'], ['wing']),
     behaviors: [],
+    wearable: { slot: 'back', effects: ['fly'] },
     description: { zh: '装备到背部后可以自由飞行。', en: 'Equip on the back to fly freely.' },
+  },
+  {
+    id: 'jetpack',
+    zh: { name: '喷气背包', aliases: ['飞行背包', '喷射背包'] },
+    en: { name: 'jetpack', aliases: ['jet pack', 'helipack', 'rocket backpack'] },
+    category: 'object',
+    size: { width: 36, height: 44 },
+    appearance: { renderer: 'backpack', params: { w: 36, h: 44, color: '#9A9A9A' } },
+    physics: { shape: 'box', density: 0.006, friction: 0.4, restitution: 0.05 },
+    tags: tags(['metal'], ['flammable', 'breakable']),
+    behaviors: [],
+    wearable: { slot: 'back', effects: ['fly'] },
+    description: { zh: '装备到背部后可以飞行的喷气背包。', en: 'A back-worn jetpack that enables flight.' },
   },
   {
     id: 'bullet',
@@ -2420,6 +2434,7 @@ export const miscEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.002, friction: 0.3, restitution: 0.1 },
     tags: tags(['glass', 'plastic'], ['tool', 'fragile']),
     behaviors: [],
+    wearable: { slot: 'face' },
     description: { zh: '护眼的镜具。', en: 'An eye-protecting gear.' },
   },
   {
@@ -2432,6 +2447,7 @@ export const miscEntries: DictEntry[] = [
     physics: { shape: 'box', density: 0.001, friction: 0.4, restitution: 0.1 },
     tags: tags(['cloth'], ['tool', 'flammable']),
     behaviors: [],
+    wearable: { slot: 'body' },
     description: { zh: '遮身的工作裙。', en: 'A body-covering work garment.' },
   },
   {

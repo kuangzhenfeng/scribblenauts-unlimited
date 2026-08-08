@@ -1,0 +1,21 @@
+{
+  "id": "stage-question-cavern",
+  "type": "self-contained",
+  "theme": "cave",
+  "background": "stage-question-cavern",
+  "bgm": "stage-question-cavern",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-comma-canopy", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-exclaim-snowfield", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -520, "y": 220, "w": 240, "h": 24 }, { "x": -80, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 200, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "fire", "x": -520, "y": 320, "layer": 0 }, { "typeId": "torch", "x": -180, "y": 320, "layer": 0 }, { "typeId": "key", "x": 220, "y": 320, "layer": 0 }, { "typeId": "lock", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-question-flame", "typeId": "human", "x": -520, "y": 320, "gender": "male" }, { "id": "npc-question-guide", "typeId": "human", "x": -160, "y": 320, "gender": "female" }, { "id": "npc-question-locksmith", "typeId": "human", "x": 260, "y": 320, "gender": "male" }, { "id": "npc-question-keeper", "typeId": "human", "x": 640, "y": 320, "gender": "female" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "question-flame", "giverNpcId": "npc-question-flame", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-question-flame", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-question-flame", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "矿工：洞里没有光，给我火，再给我一支能带走的火把。", "en": "Miner: The cave has no light. Bring fire, then a torch I can carry." } ] },
+    { "id": "question-guide", "giverNpcId": "npc-question-guide", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-question-guide", "radius": 360 } }, { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-question-guide", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "lock", "near": { "npcId": "npc-question-guide", "radius": 440 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "向导：我需要光和钥匙，才能找到锁住的出口。", "en": "Guide: I need light and a key before I can find the locked exit." } ] },
+    { "id": "question-locksmith", "giverNpcId": "npc-question-locksmith", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-question-locksmith", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "lock", "near": { "npcId": "npc-question-locksmith", "radius": 240 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "锁匠：钥匙先到手，锁才会承认这条路。", "en": "Locksmith: Put the key in hand first, then the lock will recognize the path." } ] },
+    { "id": "question-keeper", "giverNpcId": "npc-question-keeper", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-question-keeper", "radius": 420 } }, { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-question-keeper", "radius": 420 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "lock", "near": { "npcId": "npc-question-keeper", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守门人：先照亮，再取钥匙，最后打开锁门。", "en": "Gatekeeper: Light the way, take the key, and open the lock last." } ] }
+  ],
+  "challengeSlots": 4
+}

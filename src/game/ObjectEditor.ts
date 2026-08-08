@@ -38,6 +38,8 @@ export interface CustomObjectDraft {
   adjectives: string[] | string;
   /** 已有渲染器参数覆盖，例如 color/bodyColor/w/h。 */
   appearanceOverrides?: Record<string, unknown>;
+  /** 组合部件：可传词条 id/名称，支持 `wheel@0:-18` 指定相对锚点。 */
+  attachments?: string[] | string;
 }
 
 export type ObjectEditorResult = CustomObjectDef | { error: string };
@@ -99,6 +101,9 @@ export class ObjectEditor {
       en: names.en ?? { name: `${existing.en.name} copy`, aliases: existing.en.aliases },
       baseTypeId: existing.baseTypeId,
       adjectives: [...existing.adjectives],
+      attachments: existing.attachments?.map(
+        (attachment) => `${attachment.childTypeId}@${attachment.anchor[0]}:${attachment.anchor[1]}`,
+      ),
       appearanceOverrides: existing.appearanceOverrides ? { ...existing.appearanceOverrides } : undefined,
     });
   }
@@ -126,15 +131,21 @@ export class ObjectEditor {
 
     const appearanceOverrides = normalizeAppearanceOverrides(draft.appearanceOverrides);
     if (appearanceOverrides === undefined) {
-      return { zh, en, baseTypeId: base.id, adjectives };
+      const attachments = normalizeAttachments(draft.attachments);
+      if (attachments && 'error' in attachments) return attachments;
+      return { zh, en, baseTypeId: base.id, adjectives, ...(attachments ? { attachments } : {}) };
     }
     if (isEditorError(appearanceOverrides)) return appearanceOverrides;
+
+    const attachments = normalizeAttachments(draft.attachments);
+    if (attachments && 'error' in attachments) return attachments;
 
     return {
       zh,
       en,
       baseTypeId: base.id,
       adjectives,
+      ...(attachments ? { attachments } : {}),
       ...(appearanceOverrides ? { appearanceOverrides } : {}),
     };
   }
@@ -221,6 +232,37 @@ function normalizeAppearanceOverrides(
     output.bodyColor = normalizedColor;
   }
   return output;
+}
+
+function normalizeAttachments(
+  input: string[] | string | undefined,
+): CustomObjectDef['attachments'] | { error: string } | undefined {
+  const raw = Array.isArray(input)
+    ? input
+    : (input ?? '').split(/[,，;；\n]/).map((value) => value.trim()).filter(Boolean);
+  if (raw.length === 0) return undefined;
+  if (raw.length > 8) return { error: '组合部件最多 8 个' };
+  const output: NonNullable<CustomObjectDef['attachments']> = [];
+  for (const [index, value] of raw.entries()) {
+    const token = typeof value === 'string' ? value.trim() : '';
+    if (!token) continue;
+    const [childText, anchorText] = token.split('@', 2);
+    const child = getEntry(childText.trim()) ?? lookupByCn(childText.trim()) ?? lookupByEn(childText.trim());
+    if (!child || child.id.startsWith('custom:')) return { error: `未找到组合部件：${childText.trim()}` };
+    const anchor = parseAttachmentAnchor(anchorText, index);
+    if ('error' in anchor) return anchor;
+    output.push({ childTypeId: child.id, anchor });
+  }
+  return output.length > 0 ? output : undefined;
+}
+
+function parseAttachmentAnchor(value: string | undefined, index: number): [number, number] | { error: string } {
+  if (!value?.trim()) return [0, -18 - index * 12];
+  const parts = value.split(':').map((part) => Number(part.trim()));
+  if (parts.length !== 2 || parts.some((part) => !Number.isFinite(part) || Math.abs(part) > 160)) {
+    return { error: '组合部件锚点格式应为 x:y，范围在 -160 到 160 之间' };
+  }
+  return [parts[0], parts[1]];
 }
 
 function unique(values: string[]): string[] {

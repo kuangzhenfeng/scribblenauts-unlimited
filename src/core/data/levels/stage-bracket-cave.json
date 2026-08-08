@@ -1,0 +1,21 @@
+{
+  "id": "stage-bracket-cave",
+  "type": "self-contained",
+  "theme": "cave",
+  "background": "stage-bracket-cave",
+  "bgm": "stage-bracket-cave",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-ellipsis-meadow", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-quote-snow", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "box", "x": -520, "y": 320, "layer": 0 }, { "typeId": "key", "x": -160, "y": 320, "layer": 0 }, { "typeId": "lock", "x": 220, "y": 320, "layer": 0 }, { "typeId": "torch", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-bracket-box", "typeId": "human", "x": -520, "y": 320, "gender": "female" }, { "id": "npc-bracket-key", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-bracket-lock", "typeId": "human", "x": 280, "y": 320, "gender": "female" }, { "id": "npc-bracket-torch", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "bracket-box", "giverNpcId": "npc-bracket-box", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-bracket-box", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-bracket-box", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "搬运工：先给我箱子，再找一把钥匙打开里面的路线图。", "en": "Carrier: Give me a box, then a key to open the route map inside." } ] },
+    { "id": "bracket-key", "giverNpcId": "npc-bracket-key", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-bracket-key", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "entity-at", "typeId": "lock", "region": { "minX": -600, "minY": 400, "maxX": 420, "maxY": 600 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "寻路者：钥匙在手，再把锁送进标记区域，洞路才会显形。", "en": "Pathfinder: Bring a key, then place the lock inside the marked chamber to reveal the cave route." } ] },
+    { "id": "bracket-lock", "giverNpcId": "npc-bracket-lock", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "lock", "near": { "npcId": "npc-bracket-lock", "radius": 240 } }, { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-bracket-lock", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-bracket-lock", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守锁人：箱子和锁都要到位，火把才照得见机关。", "en": "Lock Keeper: Set the box and lock in place so the torch can reveal the mechanism." } ] },
+    { "id": "bracket-torch", "giverNpcId": "npc-bracket-torch", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-bracket-torch", "radius": 520 } }, { "kind": "object-present", "typeId": "key", "near": { "npcId": "npc-bracket-torch", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "lock", "near": { "npcId": "npc-bracket-torch", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "洞窟守望者：先点亮入口，再取钥匙，最后打开锁。", "en": "Cave Watcher: Light the entrance, take the key, and open the lock last." } ] }
+  ],
+  "challengeSlots": 4
+}

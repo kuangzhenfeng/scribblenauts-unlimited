@@ -309,6 +309,10 @@ export class Notebook {
           return;
         }
         e.preventDefault();
+        if (!this.input.value.trim()) {
+          this.hide();
+          return;
+        }
         if (this.menu.isActive) {
           this.menu.confirm();
           return;

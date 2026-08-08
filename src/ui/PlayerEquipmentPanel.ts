@@ -1,18 +1,25 @@
 /**
- * Maxwell 装备与骑乘面板 —— 只读展示 PlayerController 的三类附着关系。
+ * Maxwell 装备与骑乘面板 —— 只读展示 PlayerController 的主动关系与穿戴部位。
  *
  * 面板不直接接触 Attachment，也不把“解除手持”复用为投掷；所有关系变化
  * 通过 PlayerController 的显式意图 API 完成，保证 UI 与物理状态只有一个事实来源。
  */
 
 import type { GameEntity } from '@/game/Entity';
-import type { PlayerEquipmentSlot, PlayerEquipmentSnapshot } from '@/game/PlayerController';
+import type { PlayerEquipmentSlot, PlayerEquipmentSnapshot, PlayerWearSlot } from '@/game/PlayerController';
+import { PLAYER_WEAR_SLOTS } from '@/game/PlayerController';
 import { getEntry } from '@/core/data/dictionary/Dictionary';
 import { entryName, t } from '@/core/i18n/I18n';
 import {
   ICON_CLOSE,
   ICON_BOOK,
+  ICON_BODY,
+  ICON_FACE,
+  ICON_FEET,
+  ICON_FULL_BODY,
   ICON_HAND,
+  ICON_HEAD,
+  ICON_LEGS,
   ICON_MAXWELL,
   ICON_RIDE,
   ICON_SPARKLES,
@@ -25,13 +32,15 @@ const PLAYER_EQUIPMENT_PANEL_STYLE_ID = 'player-equipment-panel-style';
 export interface PlayerEquipmentPanelCallbacks {
   getEquipment: () => PlayerEquipmentSnapshot;
   onUnequip: (slot: PlayerEquipmentSlot) => void;
+  onUnequipWearable?: (slot: PlayerWearSlot) => void;
   onUnequipAll: () => void;
   onUseNotebook: () => void;
   onAddAdjective: () => void;
 }
 
 interface SlotSpec {
-  slot: PlayerEquipmentSlot;
+  slot: PlayerEquipmentSlot | PlayerWearSlot;
+  wearableSlot?: PlayerWearSlot;
   label: string;
   empty: string;
   icon: string;
@@ -136,6 +145,14 @@ function ensureStyle(): void {
       display:flex;
       flex-direction:column;
       gap:7px;
+    }
+    #player-equipment-panel .player-equipment__section-heading {
+      margin:10px 0 0;
+      color:#805000;
+      font-size:10px;
+      font-weight:950;
+      letter-spacing:.1em;
+      text-transform:uppercase;
     }
     #player-equipment-panel .player-equipment__slot {
       display:flex;
@@ -274,6 +291,7 @@ export class PlayerEquipmentPanel {
   private readonly allButton: HTMLButtonElement;
   private readonly closeButton: HTMLButtonElement;
   private open = false;
+  private renderedEquipmentKey: string | undefined;
 
   constructor(private readonly cb: PlayerEquipmentPanelCallbacks) {
     ensureStyle();
@@ -377,19 +395,41 @@ export class PlayerEquipmentPanel {
 
   private render(): void {
     const snapshot = this.cb.getEquipment();
-    const filled = [snapshot.hand, snapshot.back, snapshot.mount].filter(Boolean).length;
+    const equipmentKey = snapshotKey(snapshot);
+    if (equipmentKey === this.renderedEquipmentKey) return;
+    this.renderedEquipmentKey = equipmentKey;
+    const back = wearableEntity(snapshot, 'back');
+    const wearableEntities = PLAYER_WEAR_SLOTS
+      .map((slot) => wearableEntity(snapshot, slot))
+      .filter((entity): entity is GameEntity => Boolean(entity));
+    const filled = [snapshot.hand, snapshot.mount, ...wearableEntities].filter(Boolean).length;
     this.subtitleEl.textContent = filled > 0
       ? t('playerPanel.subtitleFilled', { count: filled })
       : t('playerPanel.subtitleEmpty');
     this.summaryEl.textContent = capabilitySummary(snapshot);
     this.slotsEl.innerHTML = '';
 
-    const specs: SlotSpec[] = [
+    const relationSpecs: SlotSpec[] = [
       { slot: 'hand', label: t('playerPanel.hand'), empty: t('playerPanel.handEmpty'), icon: ICON_HAND, entity: snapshot.hand },
-      { slot: 'back', label: t('playerPanel.back'), empty: t('playerPanel.backEmpty'), icon: ICON_WING, entity: snapshot.back },
+      { slot: 'back', label: t('playerPanel.back'), empty: t('playerPanel.backEmpty'), icon: ICON_WING, entity: back },
       { slot: 'mount', label: t('playerPanel.mount'), empty: t('playerPanel.mountEmpty'), icon: ICON_RIDE, entity: snapshot.mount },
     ];
-    for (const spec of specs) this.slotsEl.appendChild(this.createSlot(spec));
+    for (const spec of relationSpecs) this.slotsEl.appendChild(this.createSlot(spec));
+
+    const wearHeading = document.createElement('div');
+    wearHeading.className = 'player-equipment__section-heading';
+    wearHeading.textContent = t('playerPanel.wearHeading');
+    this.slotsEl.appendChild(wearHeading);
+    const wearableSpecs: SlotSpec[] = [
+      { slot: 'face', wearableSlot: 'face', label: t('playerPanel.face'), empty: t('playerPanel.faceEmpty'), icon: ICON_FACE, entity: wearableEntity(snapshot, 'face') },
+      { slot: 'head', wearableSlot: 'head', label: t('playerPanel.head'), empty: t('playerPanel.headEmpty'), icon: ICON_HEAD, entity: wearableEntity(snapshot, 'head') },
+      { slot: 'body', wearableSlot: 'body', label: t('playerPanel.body'), empty: t('playerPanel.bodyEmpty'), icon: ICON_BODY, entity: wearableEntity(snapshot, 'body') },
+      { slot: 'hands', wearableSlot: 'hands', label: t('playerPanel.hands'), empty: t('playerPanel.handsEmpty'), icon: ICON_HAND, entity: wearableEntity(snapshot, 'hands') },
+      { slot: 'legs', wearableSlot: 'legs', label: t('playerPanel.legs'), empty: t('playerPanel.legsEmpty'), icon: ICON_LEGS, entity: wearableEntity(snapshot, 'legs') },
+      { slot: 'feet', wearableSlot: 'feet', label: t('playerPanel.feet'), empty: t('playerPanel.feetEmpty'), icon: ICON_FEET, entity: wearableEntity(snapshot, 'feet') },
+      { slot: 'full-body', wearableSlot: 'full-body', label: t('playerPanel.fullBody'), empty: t('playerPanel.fullBodyEmpty'), icon: ICON_FULL_BODY, entity: wearableEntity(snapshot, 'full-body') },
+    ];
+    for (const spec of wearableSpecs) this.slotsEl.appendChild(this.createSlot(spec));
     this.allButton.disabled = filled === 0;
     this.allButton.setAttribute('aria-label', `${t('playerPanel.unequipAll')}（${filled}）`);
   }
@@ -428,7 +468,8 @@ export class PlayerEquipmentPanel {
       : `${removeLabel(spec.slot)}（${spec.empty}）`);
     remove.addEventListener('click', () => {
       if (!filled) return;
-      this.cb.onUnequip(spec.slot);
+      if (spec.wearableSlot) this.cb.onUnequipWearable?.(spec.wearableSlot);
+      else this.cb.onUnequip(spec.slot as PlayerEquipmentSlot);
       this.liveEl.textContent = t('playerPanel.unequipDone', { name: entityName(spec.entity!) });
       this.render();
     });
@@ -447,23 +488,48 @@ export class PlayerEquipmentPanel {
   }
 }
 
+function snapshotKey(snapshot: PlayerEquipmentSnapshot): string {
+  return [
+    snapshot.hand?.id ?? '',
+    snapshot.hand?.tags.hasFlag('ranged') ? 'ranged' : '',
+    snapshot.mount?.id ?? '',
+    snapshot.mount?.tags.behavior.has('flying') ? 'flying' : '',
+    ...PLAYER_WEAR_SLOTS.flatMap((slot) => {
+      const entity = wearableEntity(snapshot, slot);
+      return [slot, entity?.id ?? '', entity?.wearable?.effects?.join(',') ?? (entity?.tags.hasFlag('wing') ? 'fly' : '')];
+    }),
+  ].join('|');
+}
+
 function entityName(entity: GameEntity): string {
   return entryName(getEntry(entity.typeId)) || entity.typeId;
 }
 
 function slotStatus(spec: SlotSpec): string {
   if (!spec.entity) return spec.empty;
+  if (spec.wearableSlot) {
+    if (hasWearableEffect(spec.entity, 'fly')) return t('playerPanel.wearableFlying');
+    if (hasWearableEffect(spec.entity, 'jump')) return t('playerPanel.wearableJumping');
+    return t('playerPanel.wearableEquipped');
+  }
   if (spec.slot === 'hand') {
     return spec.entity.tags.hasFlag('ranged') ? t('playerPanel.handRanged') : t('playerPanel.handEquipped');
   }
-  if (spec.slot === 'back') return t('playerPanel.backFlying');
+  if (spec.slot === 'back') return hasWearableEffect(spec.entity, 'fly')
+    ? t('playerPanel.backFlying')
+    : t('playerPanel.backEquipped');
   return spec.entity.tags.behavior.has('flying') ? t('playerPanel.mountFlying') : t('playerPanel.mountGround');
 }
 
 function capabilitySummary(snapshot: PlayerEquipmentSnapshot): string {
   const capabilities: string[] = [];
   if (snapshot.hand?.tags.hasFlag('ranged')) capabilities.push(t('playerPanel.capabilityRanged'));
-  if (snapshot.back) capabilities.push(t('playerPanel.capabilityFlyBack'));
+  if (PLAYER_WEAR_SLOTS.some((slot) => hasWearableEffect(wearableEntity(snapshot, slot), 'fly'))) {
+    capabilities.push(t('playerPanel.capabilityFlyBack'));
+  }
+  if (PLAYER_WEAR_SLOTS.some((slot) => hasWearableEffect(wearableEntity(snapshot, slot), 'jump'))) {
+    capabilities.push(t('playerPanel.capabilityJump'));
+  }
   if (snapshot.mount) capabilities.push(snapshot.mount.tags.behavior.has('flying')
     ? t('playerPanel.capabilityFlyMount')
     : t('playerPanel.capabilityMount'));
@@ -472,10 +538,35 @@ function capabilitySummary(snapshot: PlayerEquipmentSnapshot): string {
     : t('playerPanel.noActive');
 }
 
-function removeLabel(slot: PlayerEquipmentSlot): string {
+function wearableEntity(snapshot: PlayerEquipmentSnapshot, slot: PlayerWearSlot): GameEntity | undefined {
+  return snapshot.wearables?.[slot] ?? (slot === 'back' ? snapshot.back : undefined);
+}
+
+function hasWearableEffect(entity: GameEntity | undefined, effect: 'fly' | 'jump'): boolean {
+  if (!entity) return false;
+  return entity.wearable?.effects?.includes(effect) === true
+    || (effect === 'fly' && entity.tags.hasFlag('wing'));
+}
+
+function removeLabel(slot: PlayerEquipmentSlot | PlayerWearSlot): string {
   if (slot === 'hand') return t('playerPanel.unequipHand');
   if (slot === 'back') return t('playerPanel.unequipBack');
-  return t('playerPanel.dismount');
+  if (slot === 'mount') return t('playerPanel.dismount');
+  return t('playerPanel.unequipWearable', { slot: wearableLabel(slot) });
+}
+
+function wearableLabel(slot: PlayerWearSlot): string {
+  const keys: Record<PlayerWearSlot, string> = {
+    face: 'playerPanel.face',
+    head: 'playerPanel.head',
+    body: 'playerPanel.body',
+    hands: 'playerPanel.hands',
+    legs: 'playerPanel.legs',
+    feet: 'playerPanel.feet',
+    back: 'playerPanel.back',
+    'full-body': 'playerPanel.fullBody',
+  };
+  return t(keys[slot]);
 }
 
 function panelStyle(): string {

@@ -1,0 +1,39 @@
+{
+  "id": "stage-final-workshop",
+  "type": "self-contained",
+  "theme": "cave",
+  "background": "stage-final-workshop",
+  "bgm": "stage-final-workshop",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-wildwood-theater", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-comma-canopy", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "robot", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "wrench", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "radio", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "wheel", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "wire", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "magnet", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "clock", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "bell", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-final-mechanic", "typeId": "human", "x": -520, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#566573", "pantsColor": "#273746", "hat": "miner" } },
+    { "id": "npc-final-radio", "typeId": "human", "x": -80, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#d49b2a", "pantsColor": "#6b4226" } },
+    { "id": "npc-final-clockmaker", "typeId": "human", "x": 360, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#2b2b2b" } },
+    { "id": "npc-final-bellkeeper", "typeId": "human", "x": 720, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#c34c75", "pantsColor": "#63314b" } }
+  ],
+  "decorations": [ { "kind": "stalactite", "x": -700, "y": 0 }, { "kind": "lantern", "x": -260, "y": 540 }, { "kind": "crystal", "x": 160, "y": 540 }, { "kind": "stalactite", "x": 820, "y": 0 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "final-mechanic", "giverNpcId": "npc-final-mechanic", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "wire", "near": { "npcId": "npc-final-mechanic", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "wrench", "near": { "npcId": "npc-final-mechanic", "radius": 240 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "机械师：电线和扳手，才能修复终极装置。", "en": "Mechanic: Wire and a wrench can repair the final machine." } ] },
+    { "id": "final-radio", "giverNpcId": "npc-final-radio", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "radio", "near": { "npcId": "npc-final-radio", "radius": 240 } }, { "kind": "object-present", "typeId": "wheel", "near": { "npcId": "npc-final-radio", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "播音员：广播和齿轮转起来，整座工坊都会听见。", "en": "Radio Operator: Start the radio and wheel so the whole workshop can hear." } ] },
+    { "id": "final-clockmaker", "giverNpcId": "npc-final-clockmaker", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "clock", "near": { "npcId": "npc-final-clockmaker", "radius": 220 } }, { "kind": "object-present", "typeId": "magnet", "near": { "npcId": "npc-final-clockmaker", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "钟表匠：让时钟走起来，再用磁铁校准最后一格。", "en": "Clockmaker: Start the clock, then calibrate its final gear with a magnet." } ] },
+    { "id": "final-bellkeeper", "giverNpcId": "npc-final-bellkeeper", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "bell", "near": { "npcId": "npc-final-bellkeeper", "radius": 240 } }, { "kind": "object-present", "typeId": "robot", "near": { "npcId": "npc-final-bellkeeper", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "钟声守护者：敲响钟，或让机器人替你完成最后的仪式。", "en": "Bell Keeper: Ring the bell or let a robot complete the final ritual." } ] }
+  ],
+  "challengeSlots": 4
+}

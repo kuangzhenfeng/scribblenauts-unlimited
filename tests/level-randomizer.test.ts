@@ -71,4 +71,14 @@ describe('LevelRandomizer', () => {
     expect(first.spawns[0]).toEqual({ typeId: 'rope', x: 720, y: 320, fixed: true });
     expect(second.spawns[0]).toEqual({ typeId: 'rope', x: 720, y: 320, fixed: true });
   });
+
+  it('保留故事关键 NPC 的固定位置', () => {
+    const fixedNpc = { ...level.npcs[0], fixed: true };
+    const fixedLevel = { ...level, npcs: [fixedNpc, ...level.npcs.slice(1)] };
+    const first = randomizeLevelContent(fixedLevel, 'seed-a');
+    const second = randomizeLevelContent(fixedLevel, 'seed-b');
+
+    expect(first.npcs[0]).toEqual(fixedNpc);
+    expect(second.npcs[0]).toEqual(fixedNpc);
+  });
 });

@@ -1,0 +1,180 @@
+{
+  "id": "stage-storybook",
+  "type": "self-contained",
+  "theme": "jungle",
+  "background": "stage-storybook",
+  "bgm": "stage-storybook",
+  "bounds": {
+    "minX": -900,
+    "minY": -220,
+    "maxX": 900,
+    "maxY": 600
+  },
+  "playerStart": {
+    "x": -620,
+    "y": 542
+  },
+  "transitions": [
+    {
+      "toLevelId": "stage-volcano",
+      "at": {
+        "minX": -900,
+        "minY": 350,
+        "maxX": -800,
+        "maxY": 620
+      }
+    },
+    {
+      "toLevelId": "stage-clockwork",
+      "at": {
+        "minX": 800,
+        "minY": 350,
+        "maxX": 900,
+        "maxY": 620
+      }
+    }
+  ],
+  "terrain": [
+    { "x": -620, "y": 170, "w": 240, "h": 24 },
+    { "x": -160, "y": 90, "w": 180, "h": 24 },
+    { "x": 260, "y": 220, "w": 240, "h": 24 },
+    { "x": 680, "y": 120, "w": 180, "h": 24 }
+  ],
+  "spawns": [
+    { "typeId": "book", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "paper", "x": -340, "y": 320, "layer": 0 },
+    { "typeId": "castle", "x": 0, "y": 320, "layer": 0 },
+    { "typeId": "curtain", "x": 260, "y": 320, "layer": 0 },
+    { "typeId": "crown", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "horse", "x": 620, "y": 320, "layer": 0 },
+    { "typeId": "dragon", "x": 700, "y": 200, "layer": 0 },
+    { "typeId": "rose", "x": 380, "y": 320, "layer": 0 },
+    { "typeId": "rope", "x": 120, "y": 200, "layer": 0 },
+    { "typeId": "candle", "x": -40, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    {
+      "id": "npc-librarian",
+      "typeId": "human",
+      "x": -520,
+      "y": 320,
+      "gender": "female",
+      "drawParams": { "shirtColor": "#7b4ab0", "pantsColor": "#3e2866", "hat": "straw" }
+    },
+    {
+      "id": "npc-stagekeeper",
+      "typeId": "human",
+      "x": -80,
+      "y": 320,
+      "gender": "male",
+      "drawParams": { "shirtColor": "#c34c75", "pantsColor": "#63314b" }
+    },
+    {
+      "id": "npc-royal",
+      "typeId": "human",
+      "x": 360,
+      "y": 320,
+      "gender": "female",
+      "drawParams": { "shirtColor": "#d49b2a", "pantsColor": "#704b20", "hat": "straw" }
+    },
+    {
+      "id": "npc-storyteller",
+      "typeId": "human",
+      "x": 720,
+      "y": 320,
+      "gender": "male",
+      "drawParams": { "shirtColor": "#2e86c1", "pantsColor": "#1a5276" }
+    }
+  ],
+  "decorations": [
+    { "kind": "bush", "x": -760, "y": 560 },
+    { "kind": "flower", "x": -420, "y": 560 },
+    { "kind": "lantern", "x": -180, "y": 540 },
+    { "kind": "fence", "x": 80, "y": 560 },
+    { "kind": "flower", "x": 500, "y": 560 },
+    { "kind": "bush", "x": 820, "y": 560 }
+  ],
+  "starite": {
+    "x": 720,
+    "y": 260
+  },
+  "authoredChallenges": [
+    {
+      "id": "storybook-librarian",
+      "giverNpcId": "npc-librarian",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "book", "near": { "npcId": "npc-librarian", "radius": 200 } }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "paper", "region": { "minX": -760, "minY": 430, "maxX": -260, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "图书管理员：先把故事书带来，再把纸放到阅览台。", "en": "Librarian: Bring me a storybook, then place paper on the reading desk." } ]
+    },
+    {
+      "id": "storybook-stagekeeper",
+      "giverNpcId": "npc-stagekeeper",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "object-present", "typeId": "curtain", "near": { "npcId": "npc-stagekeeper", "radius": 200 } }
+        ]
+      },
+      "stages": [
+        {
+          "conditions": [
+            { "kind": "any-of", "conditions": [
+              { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-stagekeeper", "radius": 200 } },
+              { "kind": "object-present", "typeId": "candle", "near": { "npcId": "npc-stagekeeper", "radius": 200 } }
+            ] }
+          ]
+        }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "舞台管理员：挂好幕布，再找一盏灯让故事开场。", "en": "Stagekeeper: Hang the curtain, then find a light for the story to begin." } ]
+    },
+    {
+      "id": "storybook-royal",
+      "giverNpcId": "npc-royal",
+      "kind": "shard",
+      "puzzle": {
+        "conditions": [
+          { "kind": "all-of", "conditions": [
+            { "kind": "object-present", "typeId": "crown", "near": { "npcId": "npc-royal", "radius": 200 } },
+            { "kind": "object-present", "typeId": "horse", "near": { "npcId": "npc-royal", "radius": 240 } }
+          ] }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "entity-at", "typeId": "rose", "region": { "minX": 180, "minY": 430, "maxX": 780, "maxY": 600 } } ] }
+      ],
+      "reward": { "type": "shard", "count": 2 },
+      "dialog": [ { "zh": "王室使者：王冠和坐骑都准备好后，再把一朵玫瑰送进花园。", "en": "Royal Envoy: Prepare a crown and a mount, then bring a rose into the garden." } ]
+    },
+    {
+      "id": "storybook-gate",
+      "giverNpcId": "npc-storyteller",
+      "kind": "starite-gate",
+      "puzzle": {
+        "conditions": [
+          { "kind": "sequence", "conditions": [
+            { "kind": "object-present", "typeId": "book", "near": { "npcId": "npc-storyteller", "radius": 220 } },
+            { "kind": "object-present", "typeId": "dragon", "near": { "npcId": "npc-storyteller", "radius": 260 } }
+          ] }
+        ]
+      },
+      "stages": [
+        { "conditions": [ { "kind": "all-of", "conditions": [
+          { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-storyteller", "radius": 240 } },
+          { "kind": "entity-at", "typeId": "bridge", "region": { "minX": 520, "minY": 420, "maxX": 860, "maxY": 600 } }
+        ] } ] }
+      ],
+      "reward": { "type": "starite", "count": 1 },
+      "dialog": [ { "zh": "讲故事的人：先翻开故事，再请巨龙登场；最后搭桥走向下一页。", "en": "Storyteller: Open the story, call in a dragon, then build a bridge to the next page." } ]
+    }
+  ],
+  "challengeSlots": 4
+}

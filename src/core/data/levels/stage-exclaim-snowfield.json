@@ -1,0 +1,21 @@
+{
+  "id": "stage-exclaim-snowfield",
+  "type": "self-contained",
+  "theme": "snow",
+  "background": "stage-exclaim-snowfield",
+  "bgm": "stage-exclaim-snowfield",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-question-cavern", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-colon-dunes", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 250, "h": 24 }, { "x": -40, "y": 80, "w": 200, "h": 24 }, { "x": 440, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "ice", "x": -500, "y": 320, "layer": 0 }, { "typeId": "box", "x": -160, "y": 320, "layer": 0 }, { "typeId": "bird", "x": 220, "y": 260, "layer": 0 }, { "typeId": "lamp", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-exclaim-ice", "typeId": "human", "x": -500, "y": 320, "gender": "female" }, { "id": "npc-exclaim-courier", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-exclaim-birdwatcher", "typeId": "human", "x": 280, "y": 320, "gender": "female" }, { "id": "npc-exclaim-lampkeeper", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "exclaim-ice", "giverNpcId": "npc-exclaim-ice", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-exclaim-ice", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-exclaim-ice", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "雪匠：冰块已经有了，再给我一个箱子装下雪光。", "en": "Snowwright: The ice is ready. Bring a box to hold the snowlight." } ] },
+    { "id": "exclaim-courier", "giverNpcId": "npc-exclaim-courier", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-exclaim-courier", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-exclaim-courier", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "信使：把包裹装好，再找一只鸟把它送过雪原。", "en": "Courier: Pack the parcel, then find a bird to carry it across the snow." } ] },
+    { "id": "exclaim-birdwatcher", "giverNpcId": "npc-exclaim-birdwatcher", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "bird", "near": { "npcId": "npc-exclaim-birdwatcher", "radius": 260 } }, { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-exclaim-birdwatcher", "radius": 260 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "lamp", "near": { "npcId": "npc-exclaim-birdwatcher", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "观鸟员：鸟或冰都能标记方向，但还要一盏灯。", "en": "Birdwatcher: A bird or ice can mark the route, but I still need a lamp." } ] },
+    { "id": "exclaim-lampkeeper", "giverNpcId": "npc-exclaim-lampkeeper", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-exclaim-lampkeeper", "radius": 520 } }, { "kind": "object-present", "typeId": "lamp", "near": { "npcId": "npc-exclaim-lampkeeper", "radius": 300 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-exclaim-lampkeeper", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "灯守：先收纳灯芯，再用冰面反射最后一道光。", "en": "Lamplighter: Store the wick first, then reflect the final beam from ice." } ] }
+  ],
+  "challengeSlots": 4
+}

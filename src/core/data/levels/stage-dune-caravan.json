@@ -1,0 +1,39 @@
+{
+  "id": "stage-dune-caravan",
+  "type": "self-contained",
+  "theme": "desert",
+  "background": "stage-dune-caravan",
+  "bgm": "stage-dune-caravan",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-aurora-camp", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-lava-laboratory", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "camel", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "sand", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "cactus", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "water", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "chest", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "shovel", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "rope", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "compass-tool", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-dune-caravaner", "typeId": "human", "x": -520, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#b97732", "pantsColor": "#704b20", "hat": "straw" } },
+    { "id": "npc-dune-archaeologist", "typeId": "human", "x": -80, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#d6b26f", "pantsColor": "#6b4226", "hat": "straw" } },
+    { "id": "npc-dune-guard", "typeId": "human", "x": 360, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#704b20" } },
+    { "id": "npc-dune-scout", "typeId": "human", "x": 720, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#7b4ab0", "pantsColor": "#3e2866" } }
+  ],
+  "decorations": [ { "kind": "cactus", "x": -760, "y": 560 }, { "kind": "ruin-pillar", "x": -260, "y": 540 }, { "kind": "cactus", "x": 160, "y": 560 }, { "kind": "ruin-pillar", "x": 820, "y": 540 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "dune-caravaner", "giverNpcId": "npc-dune-caravaner", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "camel", "near": { "npcId": "npc-dune-caravaner", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "water", "near": { "npcId": "npc-dune-caravaner", "radius": 240 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "商队领队：一匹骆驼和水，就能走完下一个沙丘。", "en": "Caravaner: A camel and water can cross the next dune." } ] },
+    { "id": "dune-archaeologist", "giverNpcId": "npc-dune-archaeologist", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "shovel", "near": { "npcId": "npc-dune-archaeologist", "radius": 240 } }, { "kind": "object-present", "typeId": "rope", "near": { "npcId": "npc-dune-archaeologist", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "考古学家：铲子挖掘，绳索保护，遗迹不会坍塌。", "en": "Archaeologist: Dig with a shovel and protect the ruin with rope." } ] },
+    { "id": "dune-guard", "giverNpcId": "npc-dune-guard", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "cactus", "near": { "npcId": "npc-dune-guard", "radius": 220 } }, { "kind": "object-present", "typeId": "chest", "near": { "npcId": "npc-dune-guard", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守卫：用仙人掌辨认方向，再打开沙下宝箱。", "en": "Guard: Use a cactus to find the way, then open the chest beneath the sand." } ] },
+    { "id": "dune-scout", "giverNpcId": "npc-dune-scout", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "compass-tool", "near": { "npcId": "npc-dune-scout", "radius": 240 } }, { "kind": "object-present", "typeId": "camel", "near": { "npcId": "npc-dune-scout", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "侦察员：指南针或骆驼，都能带你穿过迷路区。", "en": "Scout: A compass or camel can guide you through the maze." } ] }
+  ],
+  "challengeSlots": 4
+}

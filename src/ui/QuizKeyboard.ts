@@ -1,7 +1,7 @@
 /**
  * 定制化问答键盘 —— 漫画召唤台的下屏输入界面。
  *
- * 浅青/米白纸面背景 + 米白实体键帽 + 亮黄生成键。
+ * 主世界纸片面板 + 米白实体键帽 + 草绿色生成键。
  * 逻辑全部保留：自维护 buffer 字符串 + 复用 completionQuery 候选补全 +
  * 桌面端物理键盘支持 + 形容词回填/名词提交。
  *
@@ -29,6 +29,7 @@ import {
   QUIZ_ACCENT,
   QUIZ_ACCENT_SOFT,
   QUIZ_YELLOW,
+  QUIZ_SUCCESS,
   QUIZ_KB_BG,
   QUIZ_KB_KEY,
   QUIZ_KB_KEY_SPECIAL,
@@ -37,6 +38,7 @@ import {
   QUIZ_KB_GAP,
   QUIZ_KB_KEY_HEIGHT,
   QUIZ_SHADOW_LIFT,
+  QUIZ_GOLD_DARK,
 } from './quizStyle';
 import { ICON_BACKSPACE, ICON_CLEAR, ICON_CHECK } from './icons';
 import { t } from '@/core/i18n/I18n';
@@ -82,13 +84,13 @@ export class QuizKeyboard {
   constructor(cb: QuizKeyboardCallbacks) {
     this.cb = cb;
 
-    // 定位壳同时承载独立下屏背景；键帽保持实色以确保文字对比度。
+    // 与世界里的 Notebook 同源：输入台是悬浮纸片，不再把下屏切成一块独立工具栏。
     this.el = document.createElement('div');
     this.el.id = 'quiz-keyboard';
     this.el.style.cssText = [
       'position:fixed',
-      'left:0',
-      'right:0',
+      'left:50%',
+      'right:auto',
       'bottom:0',
       'z-index:60',
       'pointer-events:auto',
@@ -97,45 +99,48 @@ export class QuizKeyboard {
       'box-sizing:border-box',
       'display:flex',
       'flex-direction:column',
-      'gap:7px',
-      // 默认宽度：竖屏占满，横屏/桌面居中限宽
-      'width:100vw',
-      'max-width:none',
+      'gap:6px',
+      'width:min(760px,calc(100vw - 20px))',
+      'max-width:760px',
       'margin:0',
+      'transform:translateX(-50%) rotate(.18deg)',
       'align-items:center',
-      `padding:8px ${SAFE_RIGHT} ${SAFE_BOTTOM} ${SAFE_LEFT}`,
-      `background:${QUIZ_KB_BG} url("assets/quiz/quiz-lower-bg.png") center/cover no-repeat`,
-      `border:2px solid ${QUIZ_BORDER}`,
-      `border-radius:${QUIZ_RADIUS_MD} ${QUIZ_RADIUS_MD} 0 0`,
-      'box-shadow:0 -4px 0 rgba(23,37,53,0.12)',
+      `padding:10px ${SAFE_RIGHT} calc(12px + ${SAFE_BOTTOM}) ${SAFE_LEFT}`,
+      `background:${QUIZ_KB_BG}`,
+      `border:2px solid ${QUIZ_GOLD_DARK}`,
+      `border-radius:${QUIZ_RADIUS_MD}`,
+      'box-shadow:0 4px 0 rgba(61,34,0,.58)',
     ].join(';');
 
     // 上区：输入显示 + 候选词，以纸面分区承载，不叠加悬浮卡片。
     this.appZoneEl = document.createElement('div');
+    this.appZoneEl.className = 'quiz-keyboard-input-zone';
+    this.appZoneEl.dataset.label = t('notebook.label');
     this.appZoneEl.style.cssText = [
       `background:${QUIZ_PANEL}`,
-      `border:2px solid ${QUIZ_BORDER}`,
+      'border:2px solid rgba(106,61,8,.22)',
       `border-radius:${QUIZ_RADIUS_SM}`,
-      'padding:8px 10px 7px',
+      'padding:25px 9px 8px',
       'box-sizing:border-box',
       'display:flex',
       'flex-direction:column',
-      'gap:7px',
+      'gap:5px',
       'width:min(720px,100%)',
-      `box-shadow:${QUIZ_SHADOW_LIFT}`,
+      'box-shadow:none',
     ].join(';');
     this.el.appendChild(this.appZoneEl);
 
-    // 顶部：输入显示区（iOS 文本框：灰底圆角无边框）
+    // 顶部：输入显示区（笔记本纸面分区，保留明确的金色输入边界）
     this.displayEl = document.createElement('div');
+    this.displayEl.className = 'quiz-input-display';
     this.displayEl.style.cssText = [
-      'min-height:36px',
-      'padding:8px 12px',
+      'min-height:44px',
+      'padding:8px 10px 7px',
       `background:${QUIZ_CARD_BRIGHT}`,
-      `border:2px solid ${QUIZ_BORDER}`,
+      `border:2px solid ${QUIZ_GOLD_DARK}`,
       `border-radius:${QUIZ_RADIUS_SM}`,
-      'font-size:17px',
-      'font-weight:600',
+      'font-size:18px',
+      'font-weight:700',
       'letter-spacing:0.02em',
       // 保留形容词与名词之间的空格；仍保持单行并由 overflow/text-overflow 截断。
       'white-space:pre',
@@ -153,14 +158,15 @@ export class QuizKeyboard {
 
     // 中部：候选词区
     this.candidateEl = document.createElement('div');
+    this.candidateEl.className = 'quiz-candidate-list';
     this.candidateEl.style.cssText = [
-      'min-height:40px',
-      'max-height:56px',
+      'min-height:42px',
+      'max-height:54px',
       'display:flex',
       'gap:6px',
       'overflow-x:auto',
       'overflow-y:hidden',
-      'padding:4px 2px',
+      'padding:3px 0',
       'scrollbar-width:thin',
     ].join(';');
     this.candidateEl.setAttribute('role', 'listbox');
@@ -171,7 +177,7 @@ export class QuizKeyboard {
     this.kbZoneEl = document.createElement('div');
     this.kbZoneEl.style.cssText = [
       'background:transparent',
-      'padding:2px 0 0',
+      'padding:3px 0 0',
       'box-sizing:border-box',
       'display:flex',
       'flex-direction:column',
@@ -207,6 +213,18 @@ export class QuizKeyboard {
     style.id = 'quiz-keyboard-style';
     style.textContent = `
       @keyframes quizCaret { 0%,50% { opacity:1 } 51%,100% { opacity:0 } }
+      #quiz-keyboard .quiz-keyboard-input-zone { position:relative; }
+      #quiz-keyboard .quiz-keyboard-input-zone::before {
+        content:attr(data-label);
+        position:absolute;
+        top:7px;
+        left:11px;
+        color:${QUIZ_GOLD_DARK};
+        font-size:10px;
+        font-weight:950;
+        letter-spacing:.08em;
+      }
+      #quiz-keyboard .quiz-candidate-list { scrollbar-color:${QUIZ_ACCENT} transparent; }
       #quiz-keyboard button:hover:not(:disabled) { filter:brightness(.97); }
       #quiz-keyboard button:focus-visible { outline:3px solid ${QUIZ_YELLOW}; outline-offset:2px; }
       #quiz-keyboard button:active:not(:disabled) { transform:translateY(2px); box-shadow:none !important; }
@@ -215,14 +233,14 @@ export class QuizKeyboard {
       #quiz-keyboard .quiz-candidate-chip:active:not(:disabled) { transform:translateY(2px); }
       @media (max-height:720px) {
         #quiz-keyboard { padding-top:6px !important; gap:5px !important; }
-        #quiz-keyboard > div:first-child { padding-top:6px !important; padding-bottom:6px !important; gap:5px !important; }
+        #quiz-keyboard > div:first-child { padding-top:23px !important; padding-bottom:5px !important; gap:4px !important; }
         #quiz-keyboard > div:first-child > div:nth-child(2) { min-height:44px !important; }
       }
       @media (max-width:390px) {
         #quiz-keyboard .quiz-clear-label { display:none; }
       }
       @media (orientation:landscape) and (max-height:520px) {
-        #quiz-keyboard { border-radius:0 !important; }
+        #quiz-keyboard { border-radius:${QUIZ_RADIUS_MD} !important; }
         #quiz-keyboard > div:first-child { width:min(720px,100%); }
       }
       @media (orientation:portrait) {
@@ -264,6 +282,7 @@ export class QuizKeyboard {
 
   /** 切换界面语言时刷新按键、占位提示与候选提示，保留当前输入缓冲。 */
   refreshLocale(): void {
+    this.appZoneEl.dataset.label = t('notebook.label');
     this.spaceButton.textContent = t('quiz.space');
     this.spaceButton.setAttribute('aria-label', t('quiz.space'));
     this._setClearButtonLabel(this.clearButton);
@@ -441,7 +460,7 @@ export class QuizKeyboard {
     btn.type = 'button';
     this._setSubmitButtonLabel(btn);
     btn.setAttribute('aria-label', t('quiz.submit'));
-    btn.style.cssText = this._fnKeyStyle(QUIZ_YELLOW, QUIZ_KB_KEY_TEXT, 'flex:2');
+    btn.style.cssText = this._fnKeyStyle(QUIZ_SUCCESS, '#f7ffe7', 'flex:2');
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this._submit();

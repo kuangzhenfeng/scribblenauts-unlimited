@@ -24,6 +24,35 @@ export const rules: Rule[] = [
     chainTag: 'fire-spread',
   },
 
+  // 1b. 火焰 × 爆炸物 → 范围爆炸
+  {
+    id: 'fire-detonates-explosive',
+    trigger: { kind: 'contact' },
+    match: {
+      kind: 'pair',
+      a: { state: ['burning'] },
+      b: { flags: ['explosive'], notState: ['dead'] },
+    },
+    effect: [{ kind: 'explode', target: 'b', radius: 140, damage: 100 }],
+    cooldownMs: 0,
+    priority: 10,
+    chainTag: 'explosion-spread',
+  },
+
+  // 1c. 容器 × 物品 → 收纳，取出动作由对象面板完成
+  {
+    id: 'container-stores-object',
+    trigger: { kind: 'collision' },
+    match: {
+      kind: 'pair',
+      a: { flags: ['container'] },
+      b: { category: ['object', 'food', 'weapon', 'tool', 'vehicle', 'element', 'plant', 'magic'], notFlags: ['container'] },
+    },
+    effect: [{ kind: 'store', container: 'a', item: 'b' }],
+    cooldownMs: 0,
+    priority: 3,
+  },
+
   // 2. 带电 × 导电金属 → 带电
   {
     id: 'electricity-conduct-metal',

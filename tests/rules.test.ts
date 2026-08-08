@@ -116,6 +116,61 @@ describe('rule: fire ignites flammable', () => {
   });
 });
 
+describe('rule: fire detonates explosive', () => {
+  it('damages every entity inside the blast radius and leaves distant entities alone', () => {
+    const fire = mockEntity('fire-blast', 'fire', ts({ state: ['burning'] }));
+    const bomb = mockEntity('bomb-blast', 'bomb', ts({ flags: ['explosive'] }));
+    const chainBomb = mockEntity('chain-bomb-blast', 'bomb', ts({ flags: ['explosive'] }));
+    const barrel = mockEntity('barrel-blast', 'barrel', ts({ flags: ['breakable'] }));
+    const distant = mockEntity('distant-blast', 'barrel', ts({ flags: ['breakable'] }));
+    fire.setBodyPosition(0, 0);
+    bomb.setBodyPosition(20, 0);
+    chainBomb.setBodyPosition(100, 0);
+    barrel.setBodyPosition(100, 0);
+    distant.setBodyPosition(230, 0);
+    const entities = [fire, bomb, chainBomb, barrel, distant];
+    const engine = new RuleEngine(
+      { all: () => entities, get: () => undefined },
+      tagIndex,
+      () => fakeNow,
+      makeDeps({ all: () => entities }),
+    );
+    engine.register(rules.find((r) => r.id === 'fire-detonates-explosive')!);
+    for (const e of entities) tagIndex.attach(e, e.tags);
+
+    engine.enqueueCollision({ a: fire, b: bomb, phase: 'active' });
+    engine.update(16);
+
+    expect(bomb.dead).toBe(true);
+    expect(chainBomb.dead).toBe(true);
+    expect(barrel.dead).toBe(true);
+    expect(distant.dead).toBe(true);
+    for (const e of entities) tagIndex.detach(e, e.tags);
+  });
+});
+
+describe('rule: container stores object', () => {
+  it('moves a colliding object into a container and leaves the container alive', () => {
+    const container = mockEntity('container1', 'box', ts({ flags: ['container'], category: 'object' }));
+    const item = mockEntity('item1', 'apple', ts({ flags: ['edible'], category: 'food' }));
+    const stored: Array<{ container: Entity; item: Entity }> = [];
+    const deps = makeDeps({ all: () => [container, item] });
+    deps.storeEntity = (parent, child) => {
+      stored.push({ container: parent, item: child });
+      parent.containedTypeIds = [...(parent.containedTypeIds ?? []), child.typeId];
+      child.dead = true;
+    };
+    const engine = new RuleEngine({ all: () => [container, item], get: () => undefined }, tagIndex, () => fakeNow, deps);
+    engine.register(rules.find((r) => r.id === 'container-stores-object')!);
+    engine.enqueueCollision({ a: container, b: item, phase: 'start' });
+    engine.update(16);
+    expect(stored).toHaveLength(1);
+    expect(stored[0].item).toBe(item);
+    expect(container.dead).toBe(false);
+    expect(container.containedTypeIds).toEqual(['apple']);
+  });
+});
+
 describe('rule: water extinguishes fire', () => {
   it('water removes burning from b', () => {
     const engine = new RuleEngine({ all: () => [], get: () => undefined }, tagIndex, () => fakeNow, makeDeps());

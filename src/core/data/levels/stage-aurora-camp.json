@@ -1,0 +1,39 @@
+{
+  "id": "stage-aurora-camp",
+  "type": "self-contained",
+  "theme": "snow",
+  "background": "stage-aurora-camp",
+  "bgm": "stage-aurora-camp",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [
+    { "toLevelId": "stage-crystal-archive", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } },
+    { "toLevelId": "stage-dune-caravan", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } }
+  ],
+  "terrain": [ { "x": -620, "y": 170, "w": 240, "h": 24 }, { "x": -160, "y": 90, "w": 180, "h": 24 }, { "x": 260, "y": 220, "w": 240, "h": 24 }, { "x": 680, "y": 120, "w": 180, "h": 24 } ],
+  "spawns": [
+    { "typeId": "snow", "x": -520, "y": 320, "layer": 0 },
+    { "typeId": "ice", "x": -360, "y": 320, "layer": 0 },
+    { "typeId": "sleigh", "x": -120, "y": 320, "layer": 0 },
+    { "typeId": "penguin", "x": 80, "y": 320, "layer": 0 },
+    { "typeId": "lantern", "x": 280, "y": 320, "layer": 0 },
+    { "typeId": "fish", "x": 480, "y": 320, "layer": 0 },
+    { "typeId": "umbrella", "x": 680, "y": 320, "layer": 0 },
+    { "typeId": "torch", "x": 780, "y": 320, "layer": 0 }
+  ],
+  "npcs": [
+    { "id": "npc-aurora-cook", "typeId": "human", "x": -520, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#d15b72", "pantsColor": "#4b3f72", "hat": "winter" } },
+    { "id": "npc-aurora-rider", "typeId": "human", "x": -80, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#3b6ea5", "pantsColor": "#273746", "hat": "winter" } },
+    { "id": "npc-aurora-guide", "typeId": "human", "x": 360, "y": 320, "gender": "female", "drawParams": { "shirtColor": "#7b4ab0", "pantsColor": "#3e2866" } },
+    { "id": "npc-aurora-child", "typeId": "human", "x": 720, "y": 320, "gender": "male", "drawParams": { "shirtColor": "#e6a43b", "pantsColor": "#2e5d8a" } }
+  ],
+  "decorations": [ { "kind": "snowflake", "x": -700, "y": 560 }, { "kind": "lantern", "x": -260, "y": 540 }, { "kind": "snowflake", "x": 160, "y": 560 }, { "kind": "snowflake", "x": 820, "y": 560 } ],
+  "starite": { "x": 720, "y": 260 },
+  "authoredChallenges": [
+    { "id": "aurora-cook", "giverNpcId": "npc-aurora-cook", "kind": "shard", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "fish", "near": { "npcId": "npc-aurora-cook", "radius": 220 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-aurora-cook", "radius": 220 } } ] } ], "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "营地厨师：一条鱼和一支火把，晚餐就有着落了。", "en": "Camp Cook: A fish and a torch will make dinner possible." } ] },
+    { "id": "aurora-rider", "giverNpcId": "npc-aurora-rider", "kind": "shard", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "sleigh", "near": { "npcId": "npc-aurora-rider", "radius": 240 } }, { "kind": "object-present", "typeId": "ice", "near": { "npcId": "npc-aurora-rider", "radius": 240 } } ] } ] }, "reward": { "type": "shard", "count": 2 }, "dialog": [ { "zh": "雪橇手：雪橇和冰道准备好，才能追上极光。", "en": "Rider: A sleigh and an ice track can chase the aurora." } ] },
+    { "id": "aurora-guide", "giverNpcId": "npc-aurora-guide", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "snow", "near": { "npcId": "npc-aurora-guide", "radius": 220 } }, { "kind": "object-present", "typeId": "lantern", "near": { "npcId": "npc-aurora-guide", "radius": 220 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "向导：堆起雪丘，再用灯笼标记极光营地。", "en": "Guide: Build a snow mound, then mark the aurora camp with a lantern." } ] },
+    { "id": "aurora-child", "giverNpcId": "npc-aurora-child", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "any-of", "conditions": [ { "kind": "object-present", "typeId": "penguin", "near": { "npcId": "npc-aurora-child", "radius": 240 } }, { "kind": "object-present", "typeId": "umbrella", "near": { "npcId": "npc-aurora-child", "radius": 240 } } ] } ] }, "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "孩子：企鹅会跳舞，伞也能在雪里飞起来。", "en": "Child: Penguins dance, and umbrellas can fly through snow." } ] }
+  ],
+  "challengeSlots": 4
+}

@@ -1,0 +1,21 @@
+{
+  "id": "stage-slash-volcano",
+  "type": "self-contained",
+  "theme": "volcano",
+  "background": "stage-slash-volcano",
+  "bgm": "stage-slash-volcano",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-dash-desert", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-parenthesis-grove", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 100, "w": 220, "h": 24 }, { "x": 420, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "bomb", "x": -520, "y": 320, "layer": 0 }, { "typeId": "fire", "x": -160, "y": 320, "layer": 0 }, { "typeId": "sword", "x": 220, "y": 320, "layer": 0 }, { "typeId": "box", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-slash-bomb", "typeId": "human", "x": -520, "y": 320, "gender": "male" }, { "id": "npc-slash-fire", "typeId": "human", "x": -120, "y": 320, "gender": "female" }, { "id": "npc-slash-sword", "typeId": "human", "x": 280, "y": 320, "gender": "male" }, { "id": "npc-slash-box", "typeId": "human", "x": 640, "y": 320, "gender": "female" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "slash-bomb", "giverNpcId": "npc-slash-bomb", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "grenade", "near": { "npcId": "npc-slash-bomb", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-slash-bomb", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "爆破工：准备一枚手雷，再用火焰打开熔口的门。", "en": "Blaster: Set a grenade, then use fire to open the vent gate." } ] },
+    { "id": "slash-fire", "giverNpcId": "npc-slash-fire", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-slash-fire", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "sword", "near": { "npcId": "npc-slash-fire", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "熔火师：点亮熔炉，再用锋刃切开旧锁。", "en": "Forge Keeper: Light the forge, then cut through the old lock." } ] },
+    { "id": "slash-sword", "giverNpcId": "npc-slash-sword", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "sword", "near": { "npcId": "npc-slash-sword", "radius": 240 } }, { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-slash-sword", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-slash-sword", "radius": 420 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "刀匠：锋剑和箱子准备好，火才有地方锻造。", "en": "Swordsmith: Prepare the blade and box so the fire has a place to forge." } ] },
+    { "id": "slash-box", "giverNpcId": "npc-slash-box", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "box", "near": { "npcId": "npc-slash-box", "radius": 520 } }, { "kind": "object-present", "typeId": "bomb", "near": { "npcId": "npc-slash-box", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-slash-box", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "仓管：先收好工具，再把爆炸物交给火焰处理。", "en": "Quartermaster: Store the tools first, then let the fire handle the explosive." } ] }
+  ],
+  "challengeSlots": 4
+}

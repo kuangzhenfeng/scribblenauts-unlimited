@@ -96,4 +96,22 @@ describe('Magic Backpack and ObjectEditor', () => {
     });
     expect(second).toEqual({ error: '名称「唯一测试物体」已存在' });
   });
+
+  it('normalizes multi-part composite attachments into stable entry ids and anchors', async () => {
+    const editor = new ObjectEditor(store);
+    const result = await editor.save({
+      zh: { name: '组合测试车' },
+      en: { name: 'composite test car' },
+      baseTypeId: 'car',
+      adjectives: [],
+      attachments: 'wheel@0:-18, lamp',
+    });
+    expect('error' in result).toBe(false);
+    if ('error' in result) return;
+    expect(result.attachments).toEqual([
+      { childTypeId: 'wheel', anchor: [0, -18] },
+      { childTypeId: 'lamp', anchor: [0, -30] },
+    ]);
+    expect((await store.load()).customObjects[0].attachments).toEqual(result.attachments);
+  });
 });

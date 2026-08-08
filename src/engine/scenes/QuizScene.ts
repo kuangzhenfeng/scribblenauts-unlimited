@@ -1,10 +1,10 @@
 /**
- * 简易问答场景 —— 面向手机竖屏的纸片舞台与笔记本输入玩法。
+ * 简易问答场景 —— 面向手机优先、兼顾桌面端的纸片自然情境与笔记本输入玩法。
  *
- * 四层布局（顶栏 / 任务条 / 画布 / 笔记本输入台）：
+ * 四层布局（透明顶栏 / 文字任务条 / 自然情境 / 笔记本输入台）：
  *  - QuizTopBar：返回 + 回合/得分/连胜状态 + 设置与换题
- *  - QuizQuestionCard：题面与提示，延续世界中的纸片任务语言
- *  - 画布：Phaser 视差背景 + 提问生物 + 生成物品视觉交互（趣味内核）
+ *  - QuizQuestionCard：纯文字题面与提示，使用简易模式专属横幅
+ *  - 画布：响应式纸片背景 + 提问生物 + 生成物品视觉交互（趣味内核）
  *  - QuizKeyboard：候选补全与定制键盘
  *
  * 与 WorldScene 的差异：无玩家/NPC 对话/规则引擎/行为系统/MousePicker/
@@ -26,7 +26,7 @@ import { QuizKeyboard } from '@/ui/QuizKeyboard';
 import { QuizHud } from '@/ui/QuizHud';
 import { QuizTopBar } from '@/ui/QuizTopBar';
 import { QuizQuestionCard } from '@/ui/QuizQuestionCard';
-import { QUIZ_BG_TOP, QUIZ_BG_BOTTOM, QUIZ_STAGE_LINE } from '@/ui/quizStyle';
+import { QUIZ_BG_TOP, QUIZ_BG_BOTTOM } from '@/ui/quizStyle';
 import { QuizRoundPicker } from '@/game/QuizRoundPicker';
 import { checkAnswer } from '@/game/QuizJudge';
 import { SaveStore } from '@/core/data/save/SaveStore';
@@ -40,16 +40,11 @@ import { music } from '@/audio/MusicDirector';
 import { sfx } from '@/audio/SoundEffects';
 import { L, t, type Lang } from '@/core/i18n/I18n';
 import type { GameEntity } from '@/game/Entity';
-import type { LevelData } from '@/core/types/level';
 import type { ParseCandidate } from '@/core/lex/InputParser';
 import { parse } from '@/core/lex/InputParser';
 import type { Question, DifficultyTier, DifficultyStandard } from '@/core/types/question';
 import { log } from '@/util/log';
 import { generateSeed, hashString, mulberry32 } from '@/util/rng';
-
-/** quiz-arena 关卡数据（import.meta.glob 构建期聚合，与 LevelManager 同源） */
-const levelModules = import.meta.glob<{ default: LevelData }>('@/core/data/levels/quiz-arena.json', { eager: true });
-const ARENA: LevelData = Object.values(levelModules)[0]!.default;
 
 /** 为每次进入简易模式创建独立会话种子，避免复用存档中的上一轮题序。 */
 export function createQuizSessionSeed(previousSeed: string): string {
@@ -105,7 +100,7 @@ export class QuizScene extends Phaser.Scene {
   private fxParticles!: FxParticles;
   private spawnFx!: SpawnFx;
   private roundPicker!: QuizRoundPicker;
-  /** 固定屏漫画舞台背景；纹理缺失时保留渐变回退。 */
+  /** 固定屏响应式自然情境背景；纹理缺失时保留天空到草地的渐变回退。 */
   private backgroundImage: Phaser.GameObjects.Image | undefined;
   /** 生成位置随机数（种子 RNG，与题序 RNG 解耦：仅用于物品落点扰动） */
   private spawnRng!: () => number;
@@ -127,6 +122,8 @@ export class QuizScene extends Phaser.Scene {
   private pendingQuestionSeed: string | undefined;
   /** resize 节流 */
   private resizeTimer: number | undefined;
+  /** 问答场景覆盖画布底色，退出时恢复其他场景的默认底色。 */
+  private previousCanvasBackground = '';
 
   constructor() {
     super({ key: 'QuizScene' });
@@ -167,12 +164,13 @@ export class QuizScene extends Phaser.Scene {
     // 物品落点 RNG：以 questionSeed 派生独立子流，与题序 RNG 解耦（同 seed 同落点序列）
     this.spawnRng = mulberry32(hashString(`quiz-spawn:${this.questionSeed}`));
 
-    // 漫画舞台：生成背景图优先，米白渐变作为纹理缺失回退。
+    // 独立问答情境：背景主体放在上半屏，底部保持低信息以容纳不同高度的键盘。
     this.cameras.main.setBackgroundColor(QUIZ_BG_TOP);
+    this.previousCanvasBackground = this.game.canvas.style.backgroundColor;
+    this.game.canvas.style.backgroundColor = QUIZ_BG_TOP;
     this._buildCanvasBackground();
-    this._buildStage();
-    this.camera.clampTo = ARENA.bounds;
-    this.camera.snapTo(CREATURE_X, CREATURE_Y - 100);
+    // 固定背景覆盖全屏，键盘只遮挡低信息草地，不改变题面和实体的语义位置。
+    this.camera.clampTo = undefined;
     music.setMood('meadow');
 
     // 视觉增强：保留粒子与生成动效（趣味性来源），跳过纸感氛围滤镜（学习软件要真实色彩）
@@ -233,8 +231,8 @@ export class QuizScene extends Phaser.Scene {
   }
 
   /**
-   * 应用画布视口：舞台从顶栏下方开始，任务条固定在舞台上沿；
-   * 下屏输入台从舞台高度中扣除，反馈 toast 在剩余舞台空间内定位。
+   * 应用画布视口：情境从透明顶栏下方开始，文字任务条固定在情境上沿；
+   * 输入台像主世界 Notebook 一样覆盖在情境下方，背景继续延伸到屏幕底部。
    */
   private _applyViewport(): void {
     const cam = this.cameras.main;
@@ -243,8 +241,8 @@ export class QuizScene extends Phaser.Scene {
     // 任务卡为 position:fixed 但不自带 top，须按顶栏实测高度钉位，否则落入文档流末尾
     this.questionCard?.setTop(topH);
     const cardH = this.questionCard?.getHeight() ?? 0;
-    // 竖屏时题面悬浮在舞台上；横屏优先让输入台贴底，只有空间不足时才改为从题面下方滚动。
-    const stageTop = topH;
+    // 竖屏时题面悬浮在情境上方；横屏优先让输入台贴底，只有空间不足时才改为从题面下方滚动。
+    const sceneTop = topH;
     const keyboardTop = topH + cardH;
     const landscape = this.scale.width > totalH;
     this.keyboard?.setLandscapeTop(undefined);
@@ -254,26 +252,37 @@ export class QuizScene extends Phaser.Scene {
       this.keyboard?.setLandscapeTop(keyboardTop + 6);
     }
     const kbH = this.keyboard?.getHeight() ?? 0;
-    const stageBottom = Math.max(stageTop, totalH - kbH);
+    const sceneBottom = Math.max(sceneTop, totalH - kbH);
     const feedbackHeight = 48;
-    const feedbackMaxTop = stageBottom - feedbackHeight - 8;
-    const feedbackTop = Math.max(stageTop + 8, Math.min(keyboardTop + 12, feedbackMaxTop));
+    const feedbackMaxTop = sceneBottom - feedbackHeight - 8;
+    const feedbackTop = Math.max(sceneTop + 8, Math.min(keyboardTop + 12, feedbackMaxTop));
     this.hud?.setTop(feedbackTop);
-    const minViewH = this.scale.width > totalH ? 0 : 120;
-    const viewH = Math.max(minViewH, totalH - stageTop - kbH);
-    cam.setViewport(0, stageTop, this.scale.width, viewH);
-    this._coverBackground(cam.width, cam.height);
-    // 重新居中到提问生物（视口变化后 scroll 需重算）
-    this.camera.snapTo(CREATURE_X, CREATURE_Y - 100);
+    // 主相机必须覆盖整个画布；如果从顶栏下方开始，视口外会显示全局深色清屏色，
+    // 透明顶栏就会落在黑边上而不是自然背景上。题面、顶栏和输入台均为 DOM 浮层，
+    // 世界内容可以自然地绘制到它们下方。
+    const viewH = totalH;
+    cam.setViewport(0, 0, this.scale.width, viewH);
+    // 背景独立覆盖整个浏览器画布，透明顶栏上方也必须显示同一张插画。
+    this._coverBackground(cam.x, cam.y);
+    // 把提问生物放在上半屏安全区：题面结束后留出少量呼吸空间，同时避开任意高度的输入台。
+    // 背景下半屏没有关键装饰，因此窄屏裁切时只会牺牲草地纹理，不会截断情境信息。
+    const focusMin = Math.max(sceneTop + 148, keyboardTop + 28);
+    const focusMax = sceneBottom - 88;
+    const idealFocusY = sceneTop + viewH * 0.4;
+    // 极端窄屏下题卡与键盘可能压缩到没有完整安全区，此时优先保持生物可见，交给键盘内部滚动避让题面。
+    const focusScreenY = focusMax >= focusMin
+      ? Math.min(focusMax, Math.max(focusMin, idealFocusY))
+      : Math.max(sceneTop + 148, Math.min(sceneBottom - 48, idealFocusY));
+    const focusWorldY = CREATURE_Y + (viewH / 2 - focusScreenY);
+    this.camera.snapTo(CREATURE_X, focusWorldY);
   }
 
   /**
-   * 画布纵向渐变底 —— 米白→略深米色，制造空间纵深而不喧宾夺主。
-   * 固定屏（scrollFactor 0,0），覆盖整个视口，resize 无需重建（Graphics 自动跟随相机尺寸）。
+   * 自然情境背景：固定屏纸片插画作为独立模式的识别锚点，纹理缺失时退回天空到草地渐变。
+   * 背景不参与世界坐标滚动，避免题面与输入台重排时边缘装饰发生位移。
    */
   private _buildCanvasBackground(): void {
     const g = this.add.graphics();
-    // fillGradientStyle(topLeft, topRight, bottomLeft, bottomRight) 纵向渐变
     g.fillGradientStyle(
       hexToNum(QUIZ_BG_TOP),
       hexToNum(QUIZ_BG_TOP),
@@ -281,51 +290,30 @@ export class QuizScene extends Phaser.Scene {
       hexToNum(QUIZ_BG_BOTTOM),
       1,
     );
-    // 覆盖一个足够大的世界区域（相机 clampTo ARENA.bounds）
-    const cx = (ARENA.bounds.minX + ARENA.bounds.maxX) / 2;
-    const cy = (ARENA.bounds.minY + ARENA.bounds.maxY) / 2;
-    const w = ARENA.bounds.maxX - ARENA.bounds.minX;
-    const h = ARENA.bounds.maxY - ARENA.bounds.minY;
-    g.fillRect(cx - w / 2, cy - h / 2, w, h);
+    g.fillRect(0, 0, this.scale.width, this.scale.height);
     g.setScrollFactor(0, 0);
     g.setDepth(-50);
-    if (this.textures.exists('quiz-upper-bg')) {
-      this.backgroundImage = this.add.image(0, 0, 'quiz-upper-bg');
-      this.backgroundImage.setOrigin(0.5, 0.5);
-      this.backgroundImage.setScrollFactor(0, 0);
-      this.backgroundImage.setDepth(-49);
-    }
+
+    if (!this.textures.exists('quiz-upper-bg')) return;
+    this.backgroundImage = this.add.image(0, 0, 'quiz-upper-bg');
+    this.backgroundImage.setOrigin(0.5, 0.5);
+    this.backgroundImage.setScrollFactor(0, 0);
+    this.backgroundImage.setDepth(-49);
   }
 
-  /** 独立按当前相机视口 cover，避免把整页高度误用于舞台背景缩放。 */
-  private _coverBackground(width: number, height: number): void {
+  /** 按整个浏览器画布 cover 背景插画；相机视口只负责约束交互实体。 */
+  private _coverBackground(viewportX: number, viewportY: number): void {
     if (!this.backgroundImage) return;
     const source = this.backgroundImage.texture.getSourceImage() as { width: number; height: number };
-    const scale = Math.max(width / source.width, height / source.height);
-    this.backgroundImage.setPosition(width / 2, height / 2);
+    const zoom = this.cameras.main.zoom || 1;
+    const canvasWidth = this.scale.width;
+    const canvasHeight = this.scale.height;
+    const scale = Math.max(canvasWidth / source.width, canvasHeight / source.height) / zoom;
+    this.backgroundImage.setPosition(
+      (canvasWidth / 2 - viewportX) / zoom,
+      (canvasHeight / 2 - viewportY) / zoom,
+    );
     this.backgroundImage.setScale(scale);
-  }
-
-  /**
-   * 精致站位分隔线 —— 学习 App 风替代游戏舞台底与物理地面。
-   * 生物脚下一条 1px 暖灰线 + 下方淡阴影渐变区，指示生物站位；
-   * 无物理刚体（去物理化），纯视觉承接。静态 Graphics 不依赖窗口尺寸，resize 无需重建。
-   */
-  private _buildStage(): void {
-    const g = this.add.graphics();
-    const w = ARENA.bounds.maxX - ARENA.bounds.minX;
-    const lineY = ARENA.bounds.maxY - 8;
-    // 站位线
-    g.lineStyle(1, hexToNum(QUIZ_STAGE_LINE), 1);
-    g.beginPath();
-    g.moveTo(ARENA.bounds.minX, lineY);
-    g.lineTo(ARENA.bounds.maxX, lineY);
-    g.strokePath();
-    // 下方淡阴影区（轻微填充，制造"地面"感而不厚重）
-    g.fillStyle(hexToNum(QUIZ_STAGE_LINE), 0.15);
-    g.fillRect(ARENA.bounds.minX, lineY, w, 40);
-    g.setScrollFactor(1, 1);
-    g.setDepth(-10);
   }
 
   /** 玩家点选名词候选 / 按生成 → 复用 parse 解析形容词+名词 → 生成物品 → 判定 */
@@ -336,6 +324,7 @@ export class QuizScene extends Phaser.Scene {
     if (candidates.length === 0) {
       log.warn('quiz parse empty', { text: fullText });
       this.roundPicker.recordWrong();
+      this.questionCard.setState('wrong');
       this.hud.render(t('quiz.wrong'));
       this.topBar.render(this.roundPicker.currentRound, this.roundPicker.currentScore, this.roundPicker.currentStreak);
       sfx.play('error');
@@ -352,15 +341,16 @@ export class QuizScene extends Phaser.Scene {
     if (r.reason) {
       log.warn('quiz spawn rejected', { reason: r.reason });
       this.roundPicker.recordWrong();
+      this.questionCard.setState('wrong');
       this.hud.render(t('quiz.wrong'));
       this.topBar.render(this.roundPicker.currentRound, this.roundPicker.currentScore, this.roundPicker.currentStreak);
       return;
     }
     // 无物理：不挂 body（占位 body 已由 stub 提供），GameObject 由 createEntityGraphics 创建即就位
     // 生成动效
-    const cam = this.camera.cam;
-    const fxSx = (spawnX - cam.scrollX) * cam.zoom + cam.x;
-    const fxSy = (spawnY - cam.scrollY) * cam.zoom + cam.y;
+    const spawnScreen = this.camera.worldToScreen(spawnX, spawnY);
+    const fxSx = spawnScreen.x;
+    const fxSy = spawnScreen.y;
     if (r.entity) this.spawnFx.playSpawn(r.entity, fxSx, fxSy);
 
     if (correct) {
@@ -370,6 +360,7 @@ export class QuizScene extends Phaser.Scene {
       const score = this.roundPicker.currentScore;
       this._updateHighScore(score);
       this.hud.render(t('quiz.correct'));
+      this.questionCard.setState('correct');
       this.topBar.render(this.roundPicker.currentRound, score, this.roundPicker.currentStreak);
       sfx.play('questComplete');
       this._playCreatureHappy();
@@ -380,6 +371,7 @@ export class QuizScene extends Phaser.Scene {
       this.roundPicker.recordWrong();
       if (r.entity) this.roundPicker.trackItem(r.entity.id);
       this.hud.render(t('quiz.wrong'));
+      this.questionCard.setState('wrong');
       this.topBar.render(this.roundPicker.currentRound, this.roundPicker.currentScore, this.roundPicker.currentStreak);
       sfx.play('error');
     }
@@ -418,7 +410,7 @@ export class QuizScene extends Phaser.Scene {
     const prompt = L(state.question.prompt);
     const hint = state.question.hint ? L(state.question.hint) : t('quiz.hint');
     this.questionCard.setQuestion(prompt, hint);
-    // 题面长度会改变委托条高度，必须立即重算横屏输入台与舞台视口。
+    // 题面长度会改变任务条高度，必须立即重算横屏输入台与自然情境视口。
     this._applyViewport();
     this.topBar.render(state.round, this.roundPicker.currentScore, this.roundPicker.currentStreak);
     log.info('quiz next question', { round: state.round, creature: state.creature.id, q: state.question.id });
@@ -601,6 +593,7 @@ export class QuizScene extends Phaser.Scene {
     this.creatureIdleTween?.remove();
     if (this.resizeTimer !== undefined) window.clearTimeout(this.resizeTimer);
     this.roundPicker?.clearItems();
+    this.game.canvas.style.backgroundColor = this.previousCanvasBackground;
     log.info('QuizScene shutdown');
   }
 }

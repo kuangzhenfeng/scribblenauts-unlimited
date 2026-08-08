@@ -1,12 +1,14 @@
 /**
- * 对话气泡 UI —— NPC 头顶需求陈述 + 操作提示。HTML 浮层，世界→屏幕定位。
+ * 对话气泡 UI —— 原版挑战条，展示 NPC 需求陈述与笔记本入口提示。
  *
- * 气泡先尝试置于 NPC 上方；当顶部空间不足时，按实体左右两侧的可用空间
- * 横向避让。职责边界仍只渲染文本与定位，不含触发逻辑（触发在 DialogSystem）。
+ * DialogSystem 仍按世界实体距离决定显示时机；本组件只负责把对话定位到 NPC
+ * 上方或侧边，避免文本层覆盖 NPC、玩家和正在观察的交互结果。
  */
 
 import type { Camera } from '@/engine/render/Camera';
-import { UI_FONT, PAPER_BG, INK, TORN_EDGE, PAPER_SHADOW } from './paperStyle';
+import { UI_FONT, PAPER_BG, INK, PAPER_SHADOW } from './paperStyle';
+import { ICON_MAXWELL, ICON_PENCIL } from './icons';
+import { t } from '@/core/i18n/I18n';
 
 const SPEECH_STYLE_ID = 'speech-bubble-layout-style';
 /** 气泡底边距 NPC 质心的垂直偏移（屏幕像素），避免覆盖实体轮廓。 */
@@ -21,27 +23,25 @@ function ensureStyle(): void {
   style.textContent = `
     #speech-bubble {
       box-sizing:border-box;
-      width:min(286px,calc(100vw - 32px));
-      max-width:min(286px,calc(100vw - 32px));
+      width:min(320px,calc(100vw - 32px));
+      max-width:min(320px,calc(100vw - 32px));
       max-height:min(190px,calc(100vh - 24px));
+      display:flex;
+      flex-direction:column;
       overflow:hidden;
-      padding:11px 14px;
-      border:2px solid rgba(43,43,43,.28);
-      background:${PAPER_BG};
+      border:3px solid #6a3d08;
+      border-radius:10px;
+      background:#f1bd3b;
       color:${INK};
-      box-shadow:${PAPER_SHADOW};
-      ${TORN_EDGE};
+      box-shadow:0 4px 0 rgba(61,34,0,.72),${PAPER_SHADOW};
       font-family:${UI_FONT};
-      font-size:14px;
-      font-weight:800;
-      line-height:1.35;
       text-align:center;
       pointer-events:none;
       user-select:none;
     }
-    #speech-bubble[data-placement="above"] { transform:translate(-50%,-100%) rotate(-.6deg); }
+    #speech-bubble[data-placement="above"] { transform:translate(-50%,-100%) rotate(-.2deg); }
     #speech-bubble[data-placement="side-left"],
-    #speech-bubble[data-placement="side-right"] { transform:translate(-50%,-50%) rotate(-.6deg); }
+    #speech-bubble[data-placement="side-right"] { transform:translate(-50%,-50%) rotate(-.2deg); }
     #speech-bubble[data-placement="side-left"]::after,
     #speech-bubble[data-placement="side-right"]::after {
       content:'';
@@ -50,42 +50,114 @@ function ensureStyle(): void {
       width:12px;
       height:12px;
       box-sizing:border-box;
-      background:${PAPER_BG};
-      border-top:2px solid rgba(43,43,43,.28);
-      border-right:2px solid rgba(43,43,43,.28);
+      background:#f1bd3b;
+      border-top:2px solid #6a3d08;
+      border-right:2px solid #6a3d08;
       transform:translateY(-50%) rotate(45deg);
     }
     #speech-bubble[data-placement="side-left"]::after { right:-7px; }
     #speech-bubble[data-placement="side-right"]::after { left:-7px; transform:translateY(-50%) rotate(225deg); }
+    #speech-bubble .speech-bubble__main {
+      display:grid;
+      grid-template-columns:58px minmax(0,1fr);
+      align-items:center;
+      min-height:58px;
+      background:#f5ca56;
+      text-align:left;
+    }
+    #speech-bubble .speech-bubble__avatar {
+      display:grid;
+      place-items:center;
+      align-self:stretch;
+      color:#c92c24;
+      background:${PAPER_BG};
+      border-right:2px solid #6a3d08;
+    }
+    #speech-bubble .speech-bubble__avatar svg { width:34px; height:34px; }
+    #speech-bubble .speech-bubble__copy {
+      min-width:0;
+      padding:8px 14px 7px;
+    }
     #speech-bubble .speech-bubble__text {
       overflow:hidden;
       white-space:pre-wrap;
+      color:#4e2f06;
+      font-size:15px;
+      font-weight:950;
+      line-height:1.3;
     }
     #speech-bubble .speech-bubble__hint {
-      margin-top:5px;
-      color:rgba(43,43,43,.7);
-      font-size:.76em;
-      font-style:italic;
-      font-weight:700;
-      line-height:1.3;
+      margin-top:3px;
+      overflow:hidden;
+      color:#7f5a18;
+      font-size:11px;
+      font-weight:800;
+      line-height:1.25;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    #speech-bubble .speech-bubble__cue {
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap:8px;
+      min-height:34px;
+      padding:5px 12px;
+      color:#fff5ce;
+      background:#d98e16;
+      border-top:2px solid #6a3d08;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.02em;
+      text-align:left;
+    }
+    #speech-bubble .speech-bubble__cue-icon {
+      display:grid;
+      place-items:center;
+      width:20px;
+      height:20px;
+      flex:none;
+    }
+    #speech-bubble .speech-bubble__cue-key {
+      display:inline-grid;
+      place-items:center;
+      min-width:42px;
+      min-height:22px;
+      padding:2px 7px;
+      margin-left:auto;
+      color:#4e2f06;
+      background:#f8dfa0;
+      border:1px solid #6a3d08;
+      border-radius:5px;
+      font-size:11px;
+      font-weight:950;
     }
     @media (max-width:600px) {
       #speech-bubble {
-        width:min(240px,calc(100vw - 24px));
-        max-width:min(240px,calc(100vw - 24px));
-        padding:8px 10px;
-        font-size:12px;
-        line-height:1.25;
+        width:min(260px,calc(100vw - 24px));
+        max-width:min(260px,calc(100vw - 24px));
       }
+      #speech-bubble .speech-bubble__main {
+        grid-template-columns:44px minmax(0,1fr);
+        min-height:50px;
+      }
+      #speech-bubble .speech-bubble__avatar svg { width:28px; height:28px; }
+      #speech-bubble .speech-bubble__copy { padding:6px 9px 5px; }
       #speech-bubble .speech-bubble__text {
         display:-webkit-box;
         -webkit-box-orient:vertical;
         -webkit-line-clamp:2;
+        font-size:12px;
+        line-height:1.25;
       }
-      #speech-bubble .speech-bubble__hint { display:none; }
+      #speech-bubble .speech-bubble__hint {
+        display:none;
+      }
     }
     @media (prefers-reduced-motion:reduce) {
-      #speech-bubble { transition:none !important; }
+      #speech-bubble[data-placement="above"] { transform:translate(-50%,-100%); }
+      #speech-bubble[data-placement="side-left"],
+      #speech-bubble[data-placement="side-right"] { transform:translate(-50%,-50%); }
     }
   `;
   document.head.appendChild(style);
@@ -117,16 +189,32 @@ export class SpeechBubble {
     const nextHint = hint ?? '';
     if (this.lastText !== text || this.lastHint !== nextHint) {
       this.el.innerHTML = '';
+      const main = document.createElement('div');
+      main.className = 'speech-bubble__main';
+      const avatar = document.createElement('div');
+      avatar.className = 'speech-bubble__avatar';
+      avatar.innerHTML = ICON_MAXWELL;
+      main.appendChild(avatar);
+
+      const copy = document.createElement('div');
+      copy.className = 'speech-bubble__copy';
       const textEl = document.createElement('div');
       textEl.className = 'speech-bubble__text';
       textEl.textContent = text;
-      this.el.appendChild(textEl);
+      copy.appendChild(textEl);
       if (nextHint) {
         const hintEl = document.createElement('div');
         hintEl.className = 'speech-bubble__hint';
         hintEl.textContent = nextHint;
-        this.el.appendChild(hintEl);
+        copy.appendChild(hintEl);
       }
+      main.appendChild(copy);
+      this.el.appendChild(main);
+
+      const cue = document.createElement('div');
+      cue.className = 'speech-bubble__cue';
+      cue.innerHTML = `<span class="speech-bubble__cue-icon">${ICON_PENCIL}</span><span>${t('actionPanel.use')}</span><span class="speech-bubble__cue-key">${t('actionPanel.useHint')}</span>`;
+      this.el.appendChild(cue);
       this.lastText = text;
       this.lastHint = nextHint;
     }
@@ -136,13 +224,12 @@ export class SpeechBubble {
     this.visible = true;
   }
 
-  /** 把气泡定位到世界坐标对应屏幕位置，优先上方，空间不足时横向避让。 */
+  /** 把气泡定位到 NPC 对应的屏幕位置，优先上方，空间不足时横向避让。 */
   positionAt(worldX: number, worldY: number, camera: Camera): void {
     if (!this.visible) return;
-    const cam = camera.cam;
-    // 世界坐标 → 屏幕 CSS 像素（getWorldPoint 方向相反，不可用）
-    const screenX = (worldX - cam.scrollX) * cam.zoom + cam.x;
-    const screenY = (worldY - cam.scrollY) * cam.zoom + cam.y;
+    const screen = camera.worldToScreen(worldX, worldY);
+    const screenX = screen.x;
+    const screenY = screen.y;
     const rect = this.el.getBoundingClientRect();
     const safeTop = window.innerWidth <= 600 ? 70 : VIEWPORT_MARGIN;
     const minCenterX = rect.width / 2 + VIEWPORT_MARGIN;
@@ -157,7 +244,7 @@ export class SpeechBubble {
       return;
     }
 
-    // 横向放置时，气泡的边缘与实体中心之间至少保留 ENTITY_GAP，避免压住实体。
+    // 横向放置时，气泡边缘与实体中心之间保留间距，避免压住实体。
     const leftCenter = screenX - rect.width / 2 - ENTITY_GAP;
     const rightCenter = screenX + rect.width / 2 + ENTITY_GAP;
     const canLeft = leftCenter - rect.width / 2 >= VIEWPORT_MARGIN;
@@ -175,8 +262,7 @@ export class SpeechBubble {
       return;
     }
 
-    // 极窄视口两侧都没有空间时，仍保持上方定位并贴在安全区内；此分支只会在
-    // 气泡几乎占满视口时触发，避免用横向位置把实体推入不可见区域。
+    // 极窄视口两侧都没有空间时，仍保持上方定位并贴在安全区内。
     this.el.dataset.placement = 'above';
     this.el.style.left = `${Math.max(minCenterX, Math.min(maxCenterX, screenX))}px`;
     this.el.style.top = `${Math.max(safeTop + rect.height, aboveAnchorY)}px`;

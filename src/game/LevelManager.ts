@@ -19,6 +19,7 @@ import { pickChallenges } from '@/core/data/questions/QuestionPicker';
 import { randomizeLevelContent } from '@/game/LevelRandomizer';
 import { log } from '@/util/log';
 import type { GameEntity } from '@/game/Entity';
+import { familyAvatarById } from '@/core/data/family/avatars';
 
 /** 动态加载关卡 JSON（import.meta.glob，构建期聚合） */
 const levelModules = import.meta.glob<{ default: LevelData }>('@/core/data/levels/*.json', { eager: true });
@@ -36,6 +37,42 @@ export class LevelManager {
     'stage-snow',
     'stage-desert',
     'stage-volcano',
+    'stage-storybook',
+    'stage-clockwork',
+    'stage-palindromeda',
+    'stage-syntax-station',
+    'stage-verdant-grove',
+    'stage-moonlit-cavern',
+    'stage-frost-fair',
+    'stage-sand-scriptorium',
+    'stage-ember-foundry',
+    'stage-river-market',
+    'stage-sky-observatory',
+    'stage-ruined-garden',
+    'stage-crystal-archive',
+    'stage-aurora-camp',
+    'stage-dune-caravan',
+    'stage-lava-laboratory',
+    'stage-wildwood-theater',
+    'stage-final-workshop',
+    'stage-comma-canopy',
+    'stage-question-cavern',
+    'stage-exclaim-snowfield',
+    'stage-colon-dunes',
+    'stage-semicolon-volcano',
+    'stage-ellipsis-meadow',
+    'stage-bracket-cave',
+    'stage-quote-snow',
+    'stage-dash-desert',
+    'stage-slash-volcano',
+    'stage-parenthesis-grove',
+    'stage-asterisk-archive',
+    'stage-plus-snowfield',
+    'stage-equals-desert',
+    'stage-hashtag-foundry',
+    'stage-arrow-meadow',
+    'stage-ampersand-cavern',
+    'stage-final-mark',
   ];
 
   /** 按 LEVEL_ORDER 返回所有关卡数据，供选关场景渲染卡片 */
@@ -47,6 +84,8 @@ export class LevelManager {
   /** NPC 实体 id 映射：npcSpawnId → entityId */
   private readonly npcEntities = new Map<string, string>();
   private readonly completed = new Set<string>();
+  /** 当前存档已开放的区域；未设置时保留纯逻辑调用的无门槛兼容行为。 */
+  private unlockedLevels: Set<string> | undefined;
 
   constructor(
     private readonly entities: EntityManager,
@@ -112,10 +151,20 @@ export class LevelManager {
     for (const t of this.current.transitions) {
       const b = t.at;
       if (px >= b.minX && px <= b.maxX && py >= b.minY && py <= b.maxY) {
+        if (!this.isLevelUnlocked(t.toLevelId)) continue;
         return t.toLevelId;
       }
     }
     return undefined;
+  }
+
+  /** 更新区域访问权，供世界场景在存档恢复或解锁后同步。 */
+  setUnlockedLevels(levelIds: readonly string[]): void {
+    this.unlockedLevels = new Set(levelIds);
+  }
+
+  isLevelUnlocked(levelId: string): boolean {
+    return this.unlockedLevels?.has(levelId) ?? true;
   }
 
   markChallengeDone(challengeId: string): void {
@@ -176,6 +225,13 @@ export class LevelManager {
     if (r.entity) {
       r.entity.critical = true;
       r.entity.drawParams.gender = n.gender;
+      const avatar = n.avatarId ? familyAvatarById(n.avatarId) : undefined;
+      if (avatar) {
+        r.entity.drawParams.avatarId = avatar.id;
+        r.entity.drawParams.shirtColor = avatar.shirtColor;
+        r.entity.drawParams.pantsColor = avatar.pantsColor;
+        r.entity.drawParams.skinColor = avatar.skinColor;
+      }
       Object.assign(r.entity.drawParams, n.drawParams ?? {});
       this.npcEntities.set(n.id, r.entity.id);
     }

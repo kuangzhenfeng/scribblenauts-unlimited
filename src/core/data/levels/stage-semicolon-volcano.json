@@ -1,0 +1,21 @@
+{
+  "id": "stage-semicolon-volcano",
+  "type": "self-contained",
+  "theme": "volcano",
+  "background": "stage-semicolon-volcano",
+  "bgm": "stage-semicolon-volcano",
+  "bounds": { "minX": -900, "minY": -220, "maxX": 900, "maxY": 600 },
+  "playerStart": { "x": -620, "y": 542 },
+  "transitions": [ { "toLevelId": "stage-colon-dunes", "at": { "minX": -900, "minY": 350, "maxX": -800, "maxY": 620 } }, { "toLevelId": "stage-ellipsis-meadow", "at": { "minX": 800, "minY": 350, "maxX": 900, "maxY": 620 } } ],
+  "terrain": [ { "x": -500, "y": 180, "w": 260, "h": 24 }, { "x": -40, "y": 80, "w": 200, "h": 24 }, { "x": 440, "y": 220, "w": 260, "h": 24 } ],
+  "spawns": [ { "typeId": "bomb", "x": -520, "y": 320, "layer": 0 }, { "typeId": "fire", "x": -160, "y": 320, "layer": 0 }, { "typeId": "crystal", "x": 220, "y": 320, "layer": 0 }, { "typeId": "torch", "x": 560, "y": 320, "layer": 0 } ],
+  "npcs": [ { "id": "npc-semicolon-bomber", "typeId": "human", "x": -520, "y": 320, "gender": "female" }, { "id": "npc-semicolon-flame", "typeId": "human", "x": -120, "y": 320, "gender": "male" }, { "id": "npc-semicolon-crystal", "typeId": "human", "x": 280, "y": 320, "gender": "female" }, { "id": "npc-semicolon-torch", "typeId": "human", "x": 640, "y": 320, "gender": "male" } ],
+  "starite": { "x": 700, "y": 260 },
+  "authoredChallenges": [
+    { "id": "semicolon-bomber", "giverNpcId": "npc-semicolon-bomber", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "dynamite", "near": { "npcId": "npc-semicolon-bomber", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-semicolon-bomber", "radius": 320 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "爆破师：准备好炸药，再用火焰打开熔岩通道。", "en": "Demolitionist: Set the dynamite, then use fire to open the lava passage." } ] },
+    { "id": "semicolon-flame", "giverNpcId": "npc-semicolon-flame", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-semicolon-flame", "radius": 240 } } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-semicolon-flame", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "火山向导：火在脚下，火把才能把路带到远处。", "en": "Volcano Guide: Fire is beneath us; a torch will carry the path farther." } ] },
+    { "id": "semicolon-crystal", "giverNpcId": "npc-semicolon-crystal", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "all-of", "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-semicolon-crystal", "radius": 240 } }, { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-semicolon-crystal", "radius": 360 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "torch", "near": { "npcId": "npc-semicolon-crystal", "radius": 360 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "晶石匠：晶体、火和火把，才能照出隐藏的矿脉。", "en": "Crystal Cutter: Crystal, fire, and a torch reveal the hidden vein." } ] },
+    { "id": "semicolon-torch", "giverNpcId": "npc-semicolon-torch", "kind": "starite-gate", "puzzle": { "conditions": [ { "kind": "sequence", "conditions": [ { "kind": "object-present", "typeId": "fire", "near": { "npcId": "npc-semicolon-torch", "radius": 520 } }, { "kind": "object-present", "typeId": "bomb", "near": { "npcId": "npc-semicolon-torch", "radius": 520 } } ] } ] }, "stages": [ { "conditions": [ { "kind": "object-present", "typeId": "crystal", "near": { "npcId": "npc-semicolon-torch", "radius": 300 } } ] } ], "reward": { "type": "starite", "count": 1 }, "dialog": [ { "zh": "守火人：先点燃，再引爆，最后用晶石照亮新路。", "en": "Fire Keeper: Ignite first, detonate second, and light the new path with crystal." } ] }
+  ],
+  "challengeSlots": 4
+}
